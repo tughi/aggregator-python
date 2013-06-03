@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+    <head>
+        <title>Abonnements von Tughi in Google Reader</title>
+    </head>
+    <body>
+        <outline text="appleinsider" title="appleinsider" type="rss" xmlUrl="http://www.appleinsider.com/appleinsider.rss" htmlUrl="http://appleinsider.com"/>
+        <outline text="Apps From The Bench" title="Apps From The Bench" type="rss" xmlUrl="http://appsfromthebench.wordpress.com/feed/" htmlUrl="http://appsfromthebench.wordpress.com"/>
+        <outline text="ars technica" title="ars technica" type="rss" xmlUrl="http://arstechnica.com/index.rssx" htmlUrl="http://arstechnica.com"/>
+        <outline text="coding horror" title="coding horror" type="rss" xmlUrl="http://feeds.feedburner.com/codinghorror/" htmlUrl="http://www.codinghorror.com/blog/"/>
+        <outline text="gentoo" title="gentoo" type="rss" xmlUrl="http://www.gentoo.org/rdf/en/gentoo-news.rdf" htmlUrl="http://www.gentoo.org/"/>
+        <outline text="gnome journal" title="gnome journal" type="rss" xmlUrl="http://gnomejournal.org/?atom=1&amp;section=article" htmlUrl="http://gnomejournal.org/"/>
+        <outline text="gsmarena" title="gsmarena" type="rss" xmlUrl="http://www.gsmarena.com/rss-news-reviews.php3" htmlUrl="http://www.gsmarena.com/"/>
+        <outline text="hacker news best" title="hacker news best" type="rss" xmlUrl="http://hnbest.heroku.com/rss" htmlUrl="https://news.ycombinator.com/best"/>
+        <outline text="haiku" title="haiku" type="rss" xmlUrl="http://haiku-os.org/rss.xml" htmlUrl="https://www.haiku-os.org"/>
+        <outline text="japan window" title="japan window" type="rss" xmlUrl="http://japanwindow.com/index.php?x=rss" htmlUrl="http://www.japanwindow.com/"/>
+        <outline text="llvm project" title="llvm project" type="rss" xmlUrl="http://blog.llvm.org/feeds/posts/default" htmlUrl="http://blog.llvm.org/"/>
+        <outline text="osnews" title="osnews" type="rss" xmlUrl="http://osnews.com/files/recent.xml" htmlUrl="http://www.osnews.com"/>
+        <outline text="slashdot" title="slashdot" type="rss" xmlUrl="http://rss.slashdot.org/Slashdot/slashdot" htmlUrl="http://slashdot.org/"/>
+        <outline text="ted dziuba" title="ted dziuba" type="rss" xmlUrl="http://teddziuba.com/atom.xml" htmlUrl="http://teddziuba.com/"/>
+        <outline text="the verge" title="the verge" type="rss" xmlUrl="http://theverge.com/rss/index.xml" htmlUrl="http://www.theverge.com/"/>
+        <outline text="Tughi" title="Tughi" type="rss" xmlUrl="http://www.tughi.com/feed" htmlUrl="http://www.tughi.com"/>
+        <outline text="What If?" title="What If?" type="rss" xmlUrl="http://what-if.xkcd.com/feed.atom" htmlUrl="http://what-if.xkcd.com"/>
+        <outline title="autoblog" text="autoblog">
+            <outline text="geneva motor show" title="geneva motor show" type="rss" xmlUrl="http://www.autoblog.com/category/geneva-motor-show/rss.xml" htmlUrl="http://www.autoblog.com"/>
+            <outline text="paris motor show" title="paris motor show" type="rss" xmlUrl="http://www.autoblog.com/category/paris-motor-show/rss.xml" htmlUrl="http://www.autoblog.com"/>
+        </outline>
+        <outline title="android" text="android">
+            <outline text="Android Bytes" title="Android Bytes" type="rss" xmlUrl="http://android.bytearrays.com/feed/" htmlUrl="http://android.bytearrays.com"/>
+            <outline text="android developers blog" title="android developers blog" type="rss" xmlUrl="http://feeds.feedburner.com/blogspot/hsDu" htmlUrl="http://android-developers.blogspot.com/"/>
+            <outline text="Android Engineer" title="Android Engineer" type="rss" xmlUrl="http://www.androidengineer.com/feeds/posts/default" htmlUrl="http://www.androidengineer.com/"/>
+            <outline text="android niceties" title="android niceties" type="rss" xmlUrl="http://androidniceties.tumblr.com/rss" htmlUrl="http://androidniceties.tumblr.com/"/>
+            <outline text="android patterns" title="android patterns" type="rss" xmlUrl="http://www.androidpatterns.com/feed" htmlUrl="http://www.androidpatterns.com"/>
+            <outline text="android ui patterns" title="android ui patterns" type="rss" xmlUrl="http://www.androiduipatterns.com/feeds/posts/default" htmlUrl="http://www.androiduipatterns.com/"/>
+            <outline text="android ui | ux" title="android ui | ux" type="rss" xmlUrl="http://androiduiux.com/feed/" htmlUrl="http://androiduiux.com"/>
+            <outline text="androiddevblog" title="androiddevblog" type="rss" xmlUrl="http://androiddevblog.wordpress.com/feed/" htmlUrl="http://androiddevblog.wordpress.com"/>
+            <outline text="code adventures" title="code adventures" type="rss" xmlUrl="http://devisnik.blogspot.com/feeds/posts/default" htmlUrl="http://devisnik.blogspot.com/"/>
+            <outline text="connect-utb" title="connect-utb" type="rss" xmlUrl="http://connect-utb.com/index.php?format=feed&amp;type=rss" htmlUrl="http://connect-utb.com/index.php/component/content/?view=featured"/>
+            <outline text="cyanogenmod" title="cyanogenmod" type="rss" xmlUrl="http://www.cyanogenmod.org/feed" htmlUrl="http://www.cyanogenmod.org"/>
+            <outline text="cyanogenmod" title="cyanogenmod" type="rss" xmlUrl="http://feeds.feedburner.com/cyanogenmod/web" htmlUrl="http://www.cyanogenmod.com/"/>
+            <outline text="Droid Dev Stream" title="Droid Dev Stream" type="rss" xmlUrl="http://droiddevelop.tumblr.com/rss" htmlUrl="http://droiddevelop.tumblr.com/"/>
+            <outline text="grokking android" title="grokking android" type="rss" xmlUrl="http://feeds.feedburner.com/GrokkingAndroid" htmlUrl="http://www.grokkingandroid.com"/>
+            <outline text="Matt Oakes" title="Matt Oakes" type="rss" xmlUrl="http://blog.matto1990.com/feed/" htmlUrl="http://blog.matto1990.com"/>
+            <outline text="replica island" title="replica island" type="rss" xmlUrl="http://replicaisland.blogspot.com/feeds/posts/default" htmlUrl="http://replicaisland.blogspot.com/"/>
+            <outline text="Romain Guy" title="Romain Guy" type="rss" xmlUrl="http://www.curious-creature.org/feed/" htmlUrl="http://www.curious-creature.org"/>
+            <outline text="Tech Droid" title="Tech Droid" type="rss" xmlUrl="http://techdroid.kbeanie.com/feeds/posts/default" htmlUrl="http://techdroid.kbeanie.com/"/>
+            <outline text="the art of software" title="the art of software" type="rss" xmlUrl="http://wweems.blogspot.com/feeds/posts/default" htmlUrl="http://wweems.blogspot.com/"/>
+            <outline text="Think Android" title="Think Android" type="rss" xmlUrl="http://thinkandroid.wordpress.com/feed/" htmlUrl="http://thinkandroid.wordpress.com"/>
+            <outline text="Ugo Sangiorgi" title="Ugo Sangiorgi" type="rss" xmlUrl="http://ugosan.org/feed/" htmlUrl="http://ugosan.org"/>
+        </outline>
+        <outline title="java" text="java">
+            <outline text="a wicket diary" title="a wicket diary" type="rss" xmlUrl="http://martijndashorst.com/blog/feed/" htmlUrl="http://martijndashorst.com/blog"/>
+            <outline text="ptrthomas" title="ptrthomas" type="rss" xmlUrl="http://ptrthomas.wordpress.com/feed/" htmlUrl="http://ptrthomas.wordpress.com"/>
+        </outline>
+        <outline title="comics" text="comics">
+            <outline text="comedity" title="comedity" type="rss" xmlUrl="http://www.comedity.com/rss.php" htmlUrl="http://www.comedity.com"/>
+            <outline text="fortune's fools" title="fortune's fools" type="rss" xmlUrl="http://www.ffools.com/rss.php" htmlUrl="http://www.google.com/reader/view/feed%2Fhttp%3A%2F%2Fwww.ffools.com%2Frss.php"/>
+            <outline text="john &amp; john" title="john &amp; john" type="rss" xmlUrl="http://www.johnandjohn.nl/rss.php" htmlUrl="http://www.johnandjohn.nl"/>
+            <outline text="questionable content" title="questionable content" type="rss" xmlUrl="http://www.questionablecontent.net/QCRSS.xml" htmlUrl="http://www.questionablecontent.net"/>
+            <outline text="wulffmorgenthaler" title="wulffmorgenthaler" type="rss" xmlUrl="http://feeds.feedburner.com/wulffmorgenthaler" htmlUrl="http://wumo.com/?"/>
+            <outline text="xkcd.com" title="xkcd.com" type="rss" xmlUrl="http://xkcd.com/atom.xml" htmlUrl="http://xkcd.com/"/>
+        </outline>
+        <outline title="design" text="design">
+            <outline text="dribbble - android" title="dribbble - android" type="rss" xmlUrl="http://dribbble.com/tags/android.rss" htmlUrl="http://dribbble.com/"/>
+            <outline text="Subtle Patterns" title="Subtle Patterns" type="rss" xmlUrl="http://feeds.feedburner.com/SubtlePatterns" htmlUrl="http://subtlepatterns.com"/>
+        </outline>
+    </body>
+</opml>
