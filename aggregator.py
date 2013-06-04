@@ -9,36 +9,38 @@ app = Bottle()
 app.database = open_database()
 
 
-def success(result=None):
+def success(content=None):
     """
     Creates a success response.
 
-    @param result: optional data to be bundled with the response
+    @param content: optional content to be bundled with the response
     @return: a response dict
     """
 
     return {
         'result': 'success',
-        'content': result
+        'content': content
     }
 
 
-def error(code, message):
+def error(message, content=None):
     """
     Creates an error response.
 
-    @param code: error code
     @param message: error message
+    @param content: optional content to be bundled with the response
     @return: a response dict
     """
 
-    return {
+    response = {
         'result': 'error',
-        'content': {
-            'code': code,
-            'message': message
-        }
+        'message': message
     }
+
+    if content:
+        response['content'] = content
+
+    return response
 
 
 @app.post('/feeds')
@@ -49,23 +51,28 @@ def new_feed():
     if not url:
         return error(-1, 'missing url parameter')
 
-    # TODO: create temporary database feed + entries
+    store = Store(app.database)
+
+    # find existing database feed for the provided url
+    feed = store.find(Feed, url=url).one()
+
+    if feed:
+        return error('feed already exists', {'title': feed.title})
+
+    data = feedparser.parse(url)
+
+    if not data:
+        return error('failed to load the feed')
 
     if not title:
-        # validate the provided feed url
+        title = data.feed.title
 
-        data = feedparser.parse(url)
+    feed = store.add(Feed(url=url, title=unicode(title), etag=data.get('etag'), modified=data.get('modified')))
 
-        # TODO: handle parser errors
+    # TODO: store feed entries too
 
-        return success({
-            'title': data.feed.title
-        })
-    else:
-        # create database feed
+    store.commit()
 
-        store = Store(app.database)
-        store.add(Feed(url, unicode(title)))
-        store.commit()
-
-        return success()
+    return success({
+        'title': feed.title
+    })
