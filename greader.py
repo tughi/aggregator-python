@@ -18,7 +18,7 @@ def import_outline(store, outline):
 if __name__ == '__main__':
     outlines = opml.parse('subscriptions.xml')
 
-    store = persistence.open_store()
+    store = persistence.open_database()
 
     import_outline(store, outlines)
 
