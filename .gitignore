@@ -12,3 +12,5 @@
 # pycharm files
 /.idea
 
+# system files
+.DS_Store
