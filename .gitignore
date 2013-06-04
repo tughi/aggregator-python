@@ -1,7 +1,7 @@
 *.py[cod]
 
 # virtualenv
-/env
+/environment
 
 # database
 *.db
