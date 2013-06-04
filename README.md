@@ -1,16 +1,21 @@
-Aggregator
-==========
+# Aggregator
 
 Python based feeds reader/aggregator.
 
-Installation
-------------
+The idea behind this project is to create a replacement for Google Reader that serves one user and runs on a Raspberry Pi.
 
-First make sure you have virtualenv:
+Planned features:
+- [ ] Support for RSS and Atom feeds
+- [ ] Entry filtering support
+- [ ] Feed aggregation / syndication
+- [ ] OPML import / export
+- [ ] JSON-based API
+- [ ] Android client
 
+### Quick Project Setup:
+
+	# make sure virtualenv is installed
 	pip install virtualenv
-
-Setup virtual environment:
 
 	# go to the project dir
 	cd <proj-dir>
