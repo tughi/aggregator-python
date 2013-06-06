@@ -1,16 +1,16 @@
-from bottle import Bottle, request, response
+import json
+
+from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
 from persistence import open_database, Feed, Entry
-
 import feedparser
 
 
-app = Bottle()
+app = Bottle(autojson=False)
 app.database = open_database()
 
-
-if True:
-    # debug mode
+if DEBUG:
+    import traceback
 
     import storm.tracer
 
@@ -24,11 +24,51 @@ if True:
     storm.tracer.install_tracer(PrintStatementTracer())
 
 
-@app.get('/feeds')
-def feeds():
-    result = []
+class ServiceException(BaseException):
+    pass
 
-    store = Store(app.database)
+
+def service(requires_store=False):
+    def factory(func):
+        def decorator(*args, **kwargs):
+            response.headers['Content-Type'] = 'application/json'
+
+            if requires_store:
+                store = Store(app.database)
+
+                try:
+                    result = func(store, *args, **kwargs)
+                except BaseException, e:
+                    store.rollback()
+
+                    service_exception = isinstance(e, ServiceException)
+
+                    response.status = 500
+                    result = {
+                        'type': 'handled' if service_exception else 'system',
+                        'message': e.message
+                    }
+
+                    if not service_exception:
+                        traceback.print_exc()
+                else:
+                    store.commit()
+                finally:
+                    store.close()
+            else:
+                result = func(*args, **kwargs)
+
+            return json.dumps(result, indent=True)
+
+        return decorator
+
+    return factory
+
+
+@app.get('/feeds')
+@service(True)
+def feeds(store):
+    result = []
 
     feeds = store.find(Feed)
     for feed in feeds:
@@ -42,28 +82,24 @@ def feeds():
 
 
 @app.post('/feeds')
-def new_feed():
+@service(True)
+def new_feed(store):
     url = request.forms.get('url')
     title = request.forms.get('title')
 
     if not url:
-        response.status = 400
-        return 'missing url parameter'
-
-    store = Store(app.database)
+        raise ServiceException('missing url parameter')
 
     # find existing database feed for the provided url
     feed = store.find(Feed, url=url).one()
 
     if feed:
-        response.status = 409
-        return 'a feed already exists with this url: %d' % feed.id
+        raise ServiceException('feed %d already exists for this url' % feed.id)
 
     data = feedparser.parse(url)
 
     if not data:
-        response.status = 400
-        return 'failed to load the feed'
+        raise ServiceException('failed to load the feed')
 
     feed = {
         'url': url,
@@ -75,7 +111,7 @@ def new_feed():
 
     # TODO: store feed entries too
 
-    store.commit()
+    store.flush()
 
     return {
         'id': feed.id,
@@ -83,17 +119,8 @@ def new_feed():
     }
 
 
-@app.delete('/feeds/<id:int>')
-def delete_feed(id):
-    store = Store(app.database)
-    try:
-        store.find(Entry, feed_id=id).remove()
-        store.find(Feed, id=id).remove()
-    except RuntimeError:
-        store.rollback()
-
-        response.status = 409
-        return e.args
-    else:
-        store.commit()
-    return
+@app.delete('/feeds/<feed_id:int>')
+@service(True)
+def delete_feed(store, feed_id):
+    store.find(Entry, feed_id=feed_id).remove()
+    store.find(Feed, id=feed_id).remove()
