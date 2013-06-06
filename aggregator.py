@@ -1,4 +1,5 @@
 import json
+import traceback
 
 from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
@@ -10,8 +11,6 @@ app = Bottle(autojson=False)
 app.database = open_database()
 
 if DEBUG:
-    import traceback
-
     import storm.tracer
 
     class PrintStatementTracer(object):
