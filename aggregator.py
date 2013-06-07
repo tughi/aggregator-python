@@ -1,9 +1,10 @@
 import json
 import traceback
+from time import mktime
 
 from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
-from persistence import open_database, Feed, Entry
+from persistence import open_database, Feed, Entry, Content
 import feedparser
 
 
@@ -38,18 +39,18 @@ def service(requires_store=False):
                 try:
                     result = func(store, *args, **kwargs)
                 except BaseException, e:
-                    store.rollback()
-
                     service_exception = isinstance(e, ServiceException)
+
+                    if not service_exception:
+                        traceback.print_exc()
+
+                    store.rollback()
 
                     response.status = 500
                     result = {
                         'type': 'handled' if service_exception else 'system',
                         'message': e.message
                     }
-
-                    if not service_exception:
-                        traceback.print_exc()
                 else:
                     store.commit()
                 finally:
@@ -90,36 +91,63 @@ def new_feed(store):
         raise ServiceException('missing url parameter')
 
     # find existing database feed for the provided url
-    feed = store.find(Feed, url=url).one()
+    store_feed = store.find(Feed, url=url).one()
 
-    if feed:
-        raise ServiceException('feed %d already exists for this url' % feed.id)
+    if store_feed:
+        raise ServiceException('feed %d already exists for this url' % store_feed.id)
 
     data = feedparser.parse(url)
 
     if not data:
         raise ServiceException('failed to load the feed')
 
-    feed = {
-        'url': url,
-        'title': unicode(title or data.feed.title),
-        'etag': str(data.etag) if 'etag' in data else None,
-        'modified': str(data.modified) if 'modified' in data else None,
-    }
-    feed = store.add(Feed(**feed))
+    store_feed = store.add(Feed(
+        url=url,
+        title=title or data.feed.title,
+        etag=data.get('etag'),
+        modified=data.get('modified')
+    ))
 
-    # TODO: store feed entries too
+    for entry in data.entries:
+        store_entry = store.add(Entry(
+            id=entry.id,
+            feed=store_feed,
+            link=entry.link,
+            title=entry.title,
+            published=mktime(entry.published_parsed),
+            updated=mktime(entry.updated_parsed)
+        ))
 
-    store.flush()
+        summary = entry.get('summary_detail')
+        if summary:
+            store_entry.summary = store.add(Content(
+                feed=store_feed,
+                entry=store_entry,
+                type=summary.type,
+                language=summary.language,
+                value=summary.value,
+                index=-1
+            ))
+
+        for index, content in enumerate(entry.get('content', [])):
+            store.add(Content(
+                feed=store_feed,
+                entry=store_entry,
+                type=content.type,
+                language=content.language,
+                value=content.value,
+                index=index
+            ))
 
     return {
-        'id': feed.id,
-        'title': feed.title
+        'id': store_feed.id,
+        'title': store_feed.title
     }
 
 
 @app.delete('/feeds/<feed_id:int>')
 @service(True)
 def delete_feed(store, feed_id):
+    store.find(Content, feed_id=feed_id).remove()
     store.find(Entry, feed_id=feed_id).remove()
     store.find(Feed, id=feed_id).remove()

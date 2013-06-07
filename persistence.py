@@ -21,18 +21,50 @@ class Feed(object):
 
 class Entry(object):
     __storm_table__ = 'entry'
-    id = storm.properties.Int(primary=True)
+    id = storm.properties.Chars(primary=True)
     feed_id = storm.properties.Int()
     feed = storm.references.Reference(feed_id, Feed.id)
-    url = storm.properties.Chars()
+    link = storm.properties.Chars()
+    title = storm.properties.Unicode()
+    summary_id = storm.properties.Int()
     published = storm.properties.Int()
     updated = storm.properties.Int()
-    title = storm.properties.Unicode()
-    content = storm.properties.Unicode()
-    description = storm.properties.Unicode()
+
+    def __init__(self, id=None, feed=None, link=None, title=None, published=None, updated=None):
+        self.id = str(id) if id else None
+        self.feed = feed
+        self.link = str(link) if link else None
+        self.title = title
+        self.published = published
+        self.updated = updated
 
 
 Feed.entries = storm.references.ReferenceSet(Feed.id, Entry.feed_id)
+
+
+class Content(object):
+    __storm_table__ = 'content'
+    id = storm.properties.Int(primary=True)
+    feed_id = storm.properties.Int()
+    feed = storm.references.Reference(feed_id, Feed.id)
+    entry_id = storm.properties.Chars()
+    entry = storm.references.Reference(entry_id, Entry.id)
+    type = storm.properties.Chars()
+    language = storm.properties.Chars()
+    value = storm.properties.Unicode()
+    index = storm.properties.Int()
+
+    def __init__(self, feed=None, entry=None, type=None, language=None, value=None, index=None):
+        self.feed = feed
+        self.entry = entry
+        self.type = str(type)
+        self.language = str(language)
+        self.value = value
+        self.index = index
+
+
+Entry.summary = storm.references.Reference(Entry.summary_id, Content.id)
+Entry.content = storm.references.ReferenceSet(Entry.id, Content.entry_id, order_by=Content.index)
 
 
 def open_database():
@@ -53,14 +85,24 @@ def open_database():
         ''')
         store.execute('''
             CREATE TABLE entry (
+                id TEXT PRIMARY KEY,
+                feed_id INTEGER NOT NULL,
+                link TEXT,
+                title TEXT,
+                summary_id INTEGER,
+                published INTEGER,
+                updated INTEGER
+            )
+        ''')
+        store.execute('''
+            CREATE TABLE content (
                 id INTEGER PRIMARY KEY,
                 feed_id INTEGER NOT NULL,
-                url TEXT,
-                published INTEGER,
-                upadted INTEGER,
-                title TEXT,
-                content TEXT,
-                description TEXT
+                entry_id TEXT NOT NULL,
+                type TEXT,
+                language TEXT,
+                value TEXT,
+                `index` INTEGER NOT NULL
             )
         ''')
         store.execute('PRAGMA user_version = 1')
