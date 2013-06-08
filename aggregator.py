@@ -1,6 +1,7 @@
 import json
 import traceback
 from time import mktime
+import inspect
 
 from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
@@ -29,45 +30,45 @@ class ServiceException(BaseException):
     pass
 
 
-def service(requires_store=False):
-    def factory(func):
-        def decorator(*args, **kwargs):
-            response.headers['Content-Type'] = 'application/json'
+def service(func):
+    func_args = inspect.getargspec(func)
+    requires_store = func_args and 'store' in func_args[0]
 
-            if requires_store:
-                store = Store(app.database)
+    def decorator(*args, **kwargs):
+        response.headers['Content-Type'] = 'application/json'
 
-                try:
-                    result = func(store, *args, **kwargs)
-                except BaseException, e:
-                    service_exception = isinstance(e, ServiceException)
+        if requires_store:
+            store = Store(app.database)
 
-                    if not service_exception:
-                        traceback.print_exc()
+            try:
+                result = func(store, *args, **kwargs)
+            except BaseException, e:
+                service_exception = isinstance(e, ServiceException)
 
-                    store.rollback()
+                if not service_exception:
+                    traceback.print_exc()
 
-                    response.status = 500
-                    result = {
-                        'type': 'handled' if service_exception else 'system',
-                        'message': e.message
-                    }
-                else:
-                    store.commit()
-                finally:
-                    store.close()
+                store.rollback()
+
+                response.status = 500
+                result = {
+                    'type': 'handled' if service_exception else 'system',
+                    'message': e.message
+                }
             else:
-                result = func(*args, **kwargs)
+                store.commit()
+            finally:
+                store.close()
+        else:
+            result = func(*args, **kwargs)
 
-            return json.dumps(result, indent=True)
+        return json.dumps(result, indent=True)
 
-        return decorator
-
-    return factory
+    return decorator
 
 
 @app.get('/feeds')
-@service(True)
+@service
 def feeds(store):
     result = []
 
@@ -83,7 +84,7 @@ def feeds(store):
 
 
 @app.post('/feeds')
-@service(True)
+@service
 def new_feed(store):
     url = request.forms.get('url')
     title = request.forms.get('title')
@@ -147,12 +148,36 @@ def new_feed(store):
 
 
 @app.delete('/feeds/<feed_id:int>')
-@service(True)
+@service
 def delete_feed(store, feed_id):
     store.find(Content, Content.id.is_in(
         Select(Content.id, (Content.entry_id == Entry.id) & (Entry.feed_id == feed_id)))).remove()
     store.find(Entry, feed_id=feed_id).remove()
     store.find(Feed, id=feed_id).remove()
+
+
+@app.get('/entries')
+@service
+def entries(store):
+    result = []
+
+    def content_to_dict(content):
+        return {
+            'type': content.type,
+            'language': content.language,
+            'value': content.value,
+        }
+
+    for entry in store.find(Entry).order_by(Entry.published):
+        result.append({
+            'id': entry.id,
+            'title': entry.title,
+            'link': entry.link,
+            'summary': content_to_dict(entry.summary) if entry.summary else None,
+            'content': [content_to_dict(content) for content in entry.content.find(Content.index >= 0)]
+        })
+
+    return result
 
 
 if __name__ == '__main__':

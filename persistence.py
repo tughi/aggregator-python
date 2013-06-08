@@ -15,8 +15,8 @@ class Feed(object):
     def __init__(self, url=None, title=None, etag=None, modified=None):
         self.url = url
         self.title = title
-        self.etag = etag
-        self.modified = modified
+        self.etag = str(etag) if etag else None
+        self.modified = str(modified) if modified else None
 
 
 class Entry(object):
@@ -54,8 +54,8 @@ class Content(object):
 
     def __init__(self, entry=None, type=None, language=None, value=None, index=None):
         self.entry = entry
-        self.type = str(type)
-        self.language = str(language)
+        self.type = str(type) if type else None
+        self.language = str(language) if language else None
         self.value = value
         self.index = index
 
