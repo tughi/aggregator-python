@@ -4,6 +4,7 @@ from time import mktime
 
 from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
+from storm.expr import Select
 from persistence import open_database, Feed, Entry, Content
 import feedparser
 
@@ -118,10 +119,11 @@ def new_feed(store):
             updated=mktime(entry.updated_parsed)
         ))
 
+        store.flush()
+
         summary = entry.get('summary_detail')
         if summary:
             store_entry.summary = store.add(Content(
-                feed=store_feed,
                 entry=store_entry,
                 type=summary.type,
                 language=summary.language,
@@ -131,7 +133,6 @@ def new_feed(store):
 
         for index, content in enumerate(entry.get('content', [])):
             store.add(Content(
-                feed=store_feed,
                 entry=store_entry,
                 type=content.type,
                 language=content.language,
@@ -148,6 +149,13 @@ def new_feed(store):
 @app.delete('/feeds/<feed_id:int>')
 @service(True)
 def delete_feed(store, feed_id):
-    store.find(Content, feed_id=feed_id).remove()
+    store.find(Content, Content.id.is_in(
+        Select(Content.id, (Content.entry_id == Entry.id) & (Entry.feed_id == feed_id)))).remove()
     store.find(Entry, feed_id=feed_id).remove()
     store.find(Feed, id=feed_id).remove()
+
+
+if __name__ == '__main__':
+    from bottle import run
+
+    run(app, port=4280)

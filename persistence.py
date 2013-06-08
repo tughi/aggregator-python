@@ -45,8 +45,6 @@ Feed.entries = storm.references.ReferenceSet(Feed.id, Entry.feed_id)
 class Content(object):
     __storm_table__ = 'content'
     id = storm.properties.Int(primary=True)
-    feed_id = storm.properties.Int()
-    feed = storm.references.Reference(feed_id, Feed.id)
     entry_id = storm.properties.Chars()
     entry = storm.references.Reference(entry_id, Entry.id)
     type = storm.properties.Chars()
@@ -54,8 +52,7 @@ class Content(object):
     value = storm.properties.Unicode()
     index = storm.properties.Int()
 
-    def __init__(self, feed=None, entry=None, type=None, language=None, value=None, index=None):
-        self.feed = feed
+    def __init__(self, entry=None, type=None, language=None, value=None, index=None):
         self.entry = entry
         self.type = str(type)
         self.language = str(language)
@@ -97,7 +94,6 @@ def open_database():
         store.execute('''
             CREATE TABLE content (
                 id INTEGER PRIMARY KEY,
-                feed_id INTEGER NOT NULL,
                 entry_id TEXT NOT NULL,
                 type TEXT,
                 language TEXT,
