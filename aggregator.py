@@ -1,7 +1,7 @@
 import json
 import traceback
-from time import mktime
 import inspect
+import time
 
 from bottle import Bottle, request, response, DEBUG
 from storm.store import Store
@@ -74,11 +74,7 @@ def feeds(store):
 
     feeds = store.find(Feed)
     for feed in feeds:
-        result.append({
-            'id': feed.id,
-            'title': feed.title,
-            'url': feed.url
-        })
+        result.append(feed.as_dict())
 
     return result
 
@@ -112,12 +108,12 @@ def new_feed(store):
 
     for entry in data.entries:
         store_entry = store.add(Entry(
-            id=entry.id,
+            guid=entry.id,
             feed=store_feed,
             link=entry.link,
             title=entry.title,
-            published=mktime(entry.published_parsed),
-            updated=mktime(entry.updated_parsed)
+            published=time.mktime(entry.published_parsed),
+            updated=time.mktime(entry.updated_parsed)
         ))
 
         store.flush()
@@ -141,10 +137,7 @@ def new_feed(store):
                 index=index
             ))
 
-    return {
-        'id': store_feed.id,
-        'title': store_feed.title
-    }
+    return store_feed.as_dict()
 
 
 @app.delete('/feeds/<feed_id:int>')
@@ -161,21 +154,8 @@ def delete_feed(store, feed_id):
 def entries(store):
     result = []
 
-    def content_to_dict(content):
-        return {
-            'type': content.type,
-            'language': content.language,
-            'value': content.value,
-        }
-
     for entry in store.find(Entry).order_by(Entry.published):
-        result.append({
-            'id': entry.id,
-            'title': entry.title,
-            'link': entry.link,
-            'summary': content_to_dict(entry.summary) if entry.summary else None,
-            'content': [content_to_dict(content) for content in entry.content.find(Content.index >= 0)]
-        })
+        result.append(entry.as_dict())
 
     return result
 
