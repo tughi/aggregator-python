@@ -18,6 +18,13 @@ def server_request(method, path, **data):
     raise Exception(response.content, response.status_code)
 
 
+def server_upload(method, path, files):
+    response = method(SERVER + path, files=files)
+    if response.status_code == 200:
+        return json.loads(response.content)
+    raise Exception(response.content, response.status_code)
+
+
 class ServerTest(unittest.TestCase):
     def setUp(self):
         # make sure the are no feeds
@@ -28,9 +35,14 @@ class ServerTest(unittest.TestCase):
 
             self.assertTrue(not server_request(GET, '/feeds'))
 
-    def test_add_feed(self):
+    def _test_add_feed(self):
         server_request(POST, '/feeds', url='http://www.theverge.com/rss/index.xml')
-        server_request(POST, '/feeds', url='http://tughi.com/feed')
+        server_request(POST, '/feeds', url='http://feeds.gawker.com/gizmodo/full')
+        server_request(POST, '/feeds', url='http://www.engadget.com/rss.xml')
+        print(len(server_request(GET, '/entries')))
+
+    def test_import_opml(self):
+        print server_upload(POST, '/opml/import', files={'opml': open('subscriptions.xml', 'rb')})
 
 
 if __name__ == '__main__':

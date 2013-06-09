@@ -14,7 +14,7 @@ class Feed(object):
 
     def __init__(self, url=None, title=None, etag=None, modified=None):
         self.url = url
-        self.title = title
+        self.title = unicode(title) if title else None
         self.etag = str(etag) if etag else None
         self.modified = str(modified) if modified else None
 
