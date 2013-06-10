@@ -2,21 +2,22 @@ import storm.properties
 import storm.database
 import storm.store
 import storm.references
+import json
 
 
 class Feed(object):
     __storm_table__ = 'feed'
     id = storm.properties.Int(primary=True)
-    url = storm.properties.Chars()
+    url = storm.properties.Unicode()
     title = storm.properties.Unicode()
-    etag = storm.properties.Chars()
-    modified = storm.properties.Chars()
+    etag = storm.properties.Unicode()
+    modified = storm.properties.Unicode()
 
-    def __init__(self, url=None, title=None, etag=None, modified=None):
+    def __init__(self, url, title, etag, modified):
         self.url = url
         self.title = unicode(title) if title else None
-        self.etag = str(etag) if etag else None
-        self.modified = str(modified) if modified else None
+        self.etag = unicode(etag) if etag else None
+        self.modified = unicode(modified) if modified else None
 
     def as_dict(self):
         return {
@@ -31,61 +32,21 @@ class Entry(object):
     id = storm.properties.Int(primary=True)
     feed_id = storm.properties.Int()
     feed = storm.references.Reference(feed_id, Feed.id)
-    guid = storm.properties.Chars()
-    link = storm.properties.Chars()
-    title = storm.properties.Unicode()
-    summary_id = storm.properties.Int()
-    published = storm.properties.Int()
+    guid = storm.properties.Unicode()
     updated = storm.properties.Int()
+    data = storm.properties.Chars()
 
-    def __init__(self, guid=None, feed=None, link=None, title=None, published=None, updated=None):
-        self.guid = str(guid) if guid else None
+    def __init__(self, feed, data):
         self.feed = feed
-        self.link = str(link) if link else None
-        self.title = title
-        self.published = published
-        self.updated = updated
+        self.guid = data['id']
+        self.updated = data['timestamp']
+        self.data = json.dumps(data)
 
     def as_dict(self):
-        return {
-            'id': self.guid,
-            'title': self.title,
-            'link': self.link,
-            'summary': self.summary.as_dict() if self.summary else None,
-            'content': [content.as_dict() for content in self.content.find(Content.index >= 0)]
-        }
+        return json.loads(self.data)
 
 
 Feed.entries = storm.references.ReferenceSet(Feed.id, Entry.feed_id)
-
-
-class Content(object):
-    __storm_table__ = 'content'
-    id = storm.properties.Int(primary=True)
-    entry_id = storm.properties.Int()
-    entry = storm.references.Reference(entry_id, Entry.id)
-    type = storm.properties.Chars()
-    language = storm.properties.Chars()
-    value = storm.properties.Unicode()
-    index = storm.properties.Int()
-
-    def __init__(self, entry=None, type=None, language=None, value=None, index=None):
-        self.entry = entry
-        self.type = str(type) if type else None
-        self.language = str(language) if language else None
-        self.value = value
-        self.index = index
-
-    def as_dict(self):
-        return {
-            'type': self.type,
-            'language': self.language,
-            'value': self.value,
-        }
-
-
-Entry.summary = storm.references.Reference(Entry.summary_id, Content.id)
-Entry.content = storm.references.ReferenceSet(Entry.id, Content.entry_id, order_by=Content.index)
 
 
 def open_database():
@@ -109,21 +70,10 @@ def open_database():
                 id INTEGER PRIMARY KEY,
                 feed_id INTEGER NOT NULL,
                 guid TEXT NOT NULL,
-                link TEXT,
-                title TEXT,
-                summary_id INTEGER,
-                published INTEGER,
-                updated INTEGER
-            )
-        ''')
-        store.execute('''
-            CREATE TABLE content (
-                id INTEGER PRIMARY KEY,
-                entry_id INTEGER NOT NULL,
-                type TEXT,
-                language TEXT,
-                value TEXT,
-                `index` INTEGER NOT NULL
+                updated INTEGER,
+                data TEXT NOT NULL,
+                UNIQUE (feed_id, guid)
+                FOREIGN KEY (feed_id) REFERENCES feed (id)
             )
         ''')
         store.execute('PRAGMA user_version = 1')

@@ -95,9 +95,10 @@ class Scheduler(threading.Thread):
 
             store = Store(database)
             aggregator.update_feeds(store)
+            store.commit()
             store.close()
 
-            time.sleep(60 - time.time() + start_time)
+            time.sleep(15 * 60 - time.time() + start_time)
 
 
 if __name__ == '__main__':
