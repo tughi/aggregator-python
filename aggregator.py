@@ -58,7 +58,7 @@ def __as_entry_data(data):
     return OrderedDict([
         ('id', data.get('id') or data.link),
         ('title', data.title),
-        ('link', data.link),
+        ('link', data.get('link')),
         ('summary', __as_content(data.get('summary_detail'))),
         ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
         ('published', data.get('published')),
@@ -101,10 +101,12 @@ def update_feeds(store):
                 # not updated since entry doesn't exist
                 store.add(Entry(feed, poll, data))
 
-        feed.etag = data.get('etag')
-        feed.modified = data.get('modified')
+        feed.etag = __as_unicode(data.get('etag'))
+        feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
 
+def __as_unicode(data):
+    return unicode(data) if data else None
 
 def delete_feed(store, feed_id):
     store.find(Entry, Entry.feed_id == feed_id).remove()
