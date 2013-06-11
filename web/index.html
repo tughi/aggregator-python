@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="assets/css/bootstrap.css" rel="stylesheet" media="screen">
 
     <style type="text/css">
         body {
@@ -11,8 +11,12 @@
             padding-bottom: 40px;
         }
 
-        iframe.entry-content {
-            width: 100%;
+        #entries .accordion-heading {
+            background-color: #e5e5e5;
+        }
+
+        #entries .accordion-heading .unread {
+            font-weight: bold;
         }
     </style>
 
@@ -25,16 +29,16 @@
                 dataType: "json",
                 success: function (data) {
                     $.each(data, function (index, entry) {
-                        var $entry = $("<div class='entry' />").appendTo("#entries");
-                        $("<div class='entry-header' />").appendTo($entry).text(entry.title);
-                        var $entryContent = $("<iframe class='entry-content' />").appendTo($entry).contents().find('html');
-                        if (entry.summary) {
-                            $entryContent.html(entry.summary.value);
-                        } else {
-                            $.each(entry.content, function (index, content) {
-                                $entryContent.html(content.value);
-                            });
-                        }
+                        var $entry = $("<div class='accordion-group' />").appendTo("#entries");
+                        $("<div class='accordion-heading' />").appendTo($entry).append(
+                                $("<span class='accordion-toggle unread'/>")
+                                        .append($("<i class='icon-star icon-white'/>"))
+                                        .append($("<span/>").text(entry.title))
+                                        .append($("<i class='icon-globe pull-right'/>")));
+                        var $entryContent = $("<div class='accordion-body' />").appendTo($entry);
+
+                        var content = entry.summary ? entry.summary.value : entry.content && entry.content.length ? entry.content[0].value : "";
+                        $entryContent.html($("<div class='accordion-inner' />").html(content));
                     });
                 }
             });
@@ -43,19 +47,23 @@
 </head>
 
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="navbar-inner">
-            <div class="container-fluid">
-                <a class="brand" href="#">Aggregator</a>
-                <ul class="nav pull-right">
-                    <li class="divider-vertical"></li>
-                    <li><a id="refresh" href="#"><i class="icon-refresh icon-white"></i> Refresh</a></li>
-                </ul>
-            </div>
+
+<div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <a class="brand" href="#">Aggregator</a>
+            <ul class="nav pull-right">
+                <li class="divider-vertical"></li>
+                <li><a id="refresh" href="#"><i class="icon-refresh icon-white"></i> Refresh</a></li>
+            </ul>
         </div>
     </div>
+</div>
 
-    <div id="entries" class="container-fluid">
+<div class="container-fluid">
+    <div id="entries" class="accordion">
     </div>
+</div>
+
 </body>
 </html>
