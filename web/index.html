@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <style type="text/css">
+        body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+        }
+
+        iframe.entry-content {
+            width: 100%;
+        }
+    </style>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "/api/entries",
+                dataType: "json",
+                success: function (data) {
+                    $.each(data, function (index, entry) {
+                        var $entry = $("<div class='entry' />").appendTo("#entries");
+                        $("<div class='entry-header' />").appendTo($entry).text(entry.title);
+                        var $entryContent = $("<iframe class='entry-content' />").appendTo($entry).contents().find('html');
+                        if (entry.summary) {
+                            $entryContent.html(entry.summary.value);
+                        } else {
+                            $.each(entry.content, function (index, content) {
+                                $entryContent.html(content.value);
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container-fluid">
+                <a class="brand" href="#">Aggregator</a>
+                <ul class="nav pull-right">
+                    <li class="divider-vertical"></li>
+                    <li><a id="refresh" href="#"><i class="icon-refresh icon-white"></i> Refresh</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="entries" class="container-fluid">
+    </div>
+</body>
+</html>
