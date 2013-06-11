@@ -28,21 +28,21 @@ def server_upload(method, path, files):
 class ServerTest(unittest.TestCase):
     def setUp(self):
         # make sure the are no feeds
-        feeds = server_request(GET, '/feeds')
+        feeds = server_request(GET, '/api/feeds')
         if feeds:
             for feed in feeds:
-                server_request(DELETE, '/feeds/%d' % feed['id'])
+                server_request(DELETE, '/api/feeds/%d' % feed['id'])
 
-            self.assertTrue(not server_request(GET, '/feeds'))
+            self.assertTrue(not server_request(GET, '/api/feeds'))
 
     def _test_add_feed(self):
-        server_request(POST, '/feeds', url='http://www.theverge.com/rss/index.xml')
-        server_request(POST, '/feeds', url='http://feeds.gawker.com/gizmodo/full')
-        server_request(POST, '/feeds', url='http://www.engadget.com/rss.xml')
-        print(len(server_request(GET, '/entries')))
+        server_request(POST, '/api/feeds', url='http://www.theverge.com/rss/index.xml')
+        server_request(POST, '/api/feeds', url='http://feeds.gawker.com/gizmodo/full')
+        server_request(POST, '/api/feeds', url='http://www.engadget.com/rss.xml')
+        print(len(server_request(GET, '/api/entries')))
 
     def test_import_opml(self):
-        print server_upload(POST, '/opml/import', files={'opml': open('subscriptions.xml', 'rb')})
+        print server_upload(POST, '/api/opml/import', files={'opml': open('subscriptions.xml', 'rb')})
 
 
 if __name__ == '__main__':

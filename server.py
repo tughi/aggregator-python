@@ -3,14 +3,14 @@ import json
 import threading
 import traceback
 import time
-from bottle import Bottle, response, request
+from bottle import Bottle, response, request, static_file
 from persistence import open_database
 from storm.store import Store
 import aggregator
 
 database = open_database()
 
-app = Bottle(autojson=False)
+api = Bottle(autojson=False)
 
 
 class ServiceException(BaseException):
@@ -55,15 +55,15 @@ class ServicePlugin(object):
         return decorator
 
 
-app.install(ServicePlugin())
+api.install(ServicePlugin())
 
 
-@app.get('/feeds')
+@api.get('/feeds')
 def feeds(store):
     return aggregator.get_feeds(store)
 
 
-@app.post('/feeds')
+@api.post('/feeds')
 def add_feed(store):
     url = request.forms.get('url')
     title = request.forms.get('title')
@@ -71,22 +71,30 @@ def add_feed(store):
     return aggregator.add_feed(store, url, title)
 
 
-@app.delete('/feeds/<feed_id:int>')
+@api.delete('/feeds/<feed_id:int>')
 def delete_feed(store, feed_id):
     aggregator.delete_feed(store, feed_id)
 
 
-@app.post('/opml/import')
+@api.post('/opml/import')
 def import_opml(store):
     upload = request.files.get('opml')
     print('Importing OPML file: %s' % upload.filename)
     return aggregator.import_opml(store, upload.file)
 
 
-@app.get('/entries')
+@api.get('/entries')
 def entries(store):
     return aggregator.get_entries(store)
 
+
+server = Bottle()
+server.mount('/api', api)
+
+
+@server.route('/<path:path>')
+def web(path):
+    return static_file(path, 'web')
 
 class Scheduler(threading.Thread):
     def run(self):
@@ -120,4 +128,4 @@ if __name__ == '__main__':
 
         storm.tracer.install_tracer(PrintStatementTracer())
 
-    run(app, port=4280, debug=aggregator.DEBUG)
+    run(server, port=4280, debug=aggregator.DEBUG)
