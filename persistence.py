@@ -12,12 +12,14 @@ class Feed(object):
     title = storm.properties.Unicode()
     etag = storm.properties.Unicode()
     modified = storm.properties.Unicode()
+    poll = storm.properties.Int()
 
-    def __init__(self, url, title, etag, modified):
+    def __init__(self, url, title, etag, modified, poll):
         self.url = url
         self.title = unicode(title) if title else None
         self.etag = unicode(etag) if etag else None
         self.modified = unicode(modified) if modified else None
+        self.poll = poll
 
     def as_dict(self):
         return {
@@ -33,11 +35,13 @@ class Entry(object):
     feed_id = storm.properties.Int()
     feed = storm.references.Reference(feed_id, Feed.id)
     guid = storm.properties.Unicode()
+    poll = storm.properties.Int()
     updated = storm.properties.Int()
     data = storm.properties.Chars()
 
-    def __init__(self, feed, data):
+    def __init__(self, feed, poll, data):
         self.feed = feed
+        self.poll = poll
         self.guid = data['id']
         self.updated = data['timestamp']
         self.data = json.dumps(data)
@@ -62,7 +66,8 @@ def open_database():
                 url TEXT UNIQUE NOT NULL,
                 title TEXT NOT NULL,
                 etag TEXT,
-                modified TEXT
+                modified TEXT,
+                poll INT NOT NULL
             )
         ''')
         store.execute('''
@@ -70,6 +75,7 @@ def open_database():
                 id INTEGER PRIMARY KEY,
                 feed_id INTEGER NOT NULL,
                 guid TEXT NOT NULL,
+                poll INT NOT NULL,
                 updated INTEGER,
                 data TEXT NOT NULL,
                 UNIQUE (feed_id, guid)
