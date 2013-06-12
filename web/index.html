@@ -24,7 +24,7 @@
         background-color: #e5e5e5;
     }
 
-    #entries .unread .accordion-heading #entry-title {
+    #entries .new .accordion-heading #entry-title {
         font-weight: bold;
     }
 
@@ -147,7 +147,7 @@
 
     $(document).ready(function () {
         var $entries = $("#entries");
-        var $entryTemplate = $entries.children("#entry-template").remove().attr("id", null);
+        var $entryTemplate = $entries.children("#entry-template").remove();
         $.ajax({
             url: "/api/entries",
             dataType: "json",
@@ -157,7 +157,9 @@
 
                 $.each(data, function (index, entry) {
                     var $entry = $entryTemplate.clone().appendTo("#entries");
+                    $entry.attr("id", entry.id);
                     $entry.find("#entry-title").html(entry.title);
+                    $entry.find("#entry-link").attr("href", entry.link);
                     var content = entry.summary ? entry.summary.value : entry.content && entry.content.length ? entry.content[0].value : "";
                     $entry.find("#entry-content").html(content);
 
@@ -177,10 +179,20 @@
     });
 
     $(document).on("click", "#entries .accordion-toggle", function () {
-        var $entry = $(this).closest(".accordion-group").toggleClass("open").addClass("active");
-        $("#entries > .accordion-group.open").not($entry).removeClass("open");
-        $("#entries > .accordion-group.active").not($entry).removeClass("active");
+        var $entry = $(this).closest(".accordion-group");
+        $entry.addClass("active");
+        $("#entries > .active").not($entry).removeClass("active");
+        toggleEntry($entry);
         showEntry($entry)
+    });
+
+    $(document).on("click", "#entries .accordion-heading #entry-link", function (event) {
+        event.stopPropagation();
+    });
+
+    $(document).on("click", "#entries .accordion-heading .icon-star", function (event) {
+        event.stopPropagation();
+        toggleStarredEntry($(this).closest(".accordion-group"));
     });
 
     function showEntry($entry) {
@@ -205,6 +217,26 @@
         }
     }
 
+    function markReadEntry($entry, unread) {
+        if (unread) {
+            $entry.addClass("new");
+        } else {
+            $entry.removeClass("new");
+        }
+        // TODO: send state
+    }
+
+    function toggleStarredEntry($entry) {
+        $entry.find(".icon-star").toggleClass("icon-white");
+        // TODO: send state
+    }
+
+    function toggleEntry($entry) {
+        $entry.toggleClass("open");
+        $("#entries > .open").not($entry).removeClass("open");
+        markReadEntry($entry);
+    }
+
     $(document).on("keydown", function (event) {
         var $activeEntry = $("#entries > .active");
 
@@ -216,12 +248,6 @@
             }
         }
 
-        function toggleEntry() {
-            $activeEntry.toggleClass("open");
-            $("#entries > .open").not($activeEntry).removeClass("open");
-            // TODO: mark as read
-        }
-
         function prevEntry() {
             ($activeEntry = $activeEntry.prev()).addClass("active").next().removeClass("active");
         }
@@ -229,23 +255,23 @@
         switch (event.which) {
             case 74: // j
                 nextEntry();
-                toggleEntry();
+                toggleEntry($activeEntry);
                 showEntry($activeEntry);
                 break;
             case 75: // k
                 prevEntry();
-                toggleEntry();
+                toggleEntry($activeEntry);
                 showEntry($activeEntry);
                 break;
             case 77: // m
-                // TODO: toggle read/unread
+                markReadEntry($activeEntry, !$activeEntry.hasClass("new"));
                 break;
             case 78: // n
                 nextEntry();
                 showEntry($activeEntry);
                 break;
             case 79: // o
-                toggleEntry();
+                toggleEntry($activeEntry);
                 showEntry($activeEntry);
                 break;
             case 80: // p
@@ -256,11 +282,11 @@
                 // TODO: reload
                 break;
             case 83: // s
-                $activeEntry.find(".icon-star").toggleClass("icon-white");
-                // TODO: toggle star
+                toggleStarredEntry($activeEntry);
                 break;
             case 86: // v
-                alert("TODO: open entry in new window");
+                window.open($activeEntry.find(".accordion-heading #entry-link").attr("href"));
+                markReadEntry($activeEntry);
                 break;
             default:
                 console.log("unhandled keydown: " + event.which);
@@ -285,7 +311,7 @@
 
 <div id="entries-scroller">
     <div id="entries" class="accordion">
-        <div id="entry-template" class="accordion-group unread">
+        <div id="entry-template" class="accordion-group new">
             <div class="accordion-heading">
                 <span class="accordion-toggle">
                     <a href="#"><i class="icon-star icon-white"></i></a>
@@ -295,7 +321,7 @@
                     <span>
                         <span></span><span id="entry-date">09:56 PM</span>
                     </span>
-                    <a href="#"><i class="icon-globe"></i></a>
+                    <a id="entry-link" target="_blank"><i class="icon-globe"></i></a>
                 </span>
             </div>
             <div class="accordion-body">
