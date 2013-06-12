@@ -6,9 +6,18 @@
     <link href="assets/css/bootstrap.css" rel="stylesheet" media="screen">
 
     <style type="text/css">
-        body {
-            padding-top: 60px;
-            padding-bottom: 20px;
+        #entries-scroller {
+            position: absolute;
+            top: 40px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow: auto;
+        }
+
+        #entries.accordion {
+            margin: 0;
+            padding: 20px;
         }
 
         #entries .accordion-heading {
@@ -66,7 +75,7 @@
             background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
             background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
             background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);*/
-            background-image: linear-gradient(to right, rgba(226, 226, 226, 0), #e5e5e5);
+            background-image: linear-gradient(to right, rgba(229, 229, 229, 0), #e5e5e5);
             padding-left: 20px;
         }
 
@@ -93,6 +102,23 @@
 
         #entries .open .accordion-body {
             display: block;
+        }
+
+        #entries .accordion-group.active {
+            border-color: #33b5e5;
+        }
+    
+        #entries .accordion-group.active .accordion-toggle {
+            background-color: #33b5e5;
+        }
+
+        #entries .accordion-group.active .accordion-toggle > span > span {
+            background-color: #33b5e5;
+        }
+
+        #entries .accordion-group.active .accordion-toggle > span > span:first-child {
+            background-color: transparent;
+            background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
         }
     </style>
 
@@ -151,8 +177,93 @@
         });
 
         $(document).on("click", "#entries .accordion-toggle", function () {
-            var $entry = $(this).closest(".accordion-group").toggleClass("open");
+            var $entry = $(this).closest(".accordion-group").toggleClass("open").addClass("active");
             $("#entries > .accordion-group.open").not($entry).removeClass("open");
+            $("#entries > .accordion-group.active").not($entry).removeClass("active");
+        });
+
+        $(document).on("keydown", function (event) {
+            var $activeEntry = $("#entries > .active");
+
+            function showEntry() {
+                if (!$activeEntry.length) {
+                    // nothing to show
+                    return;
+                }
+
+                var $entriesScroller = $activeEntry.closest("#entries-scroller");
+                var scrollTop = $entriesScroller.scrollTop();
+                var scrollBottom = scrollTop + $entriesScroller.height();
+                var currentTop = $activeEntry.position().top - $activeEntry.parent().position().top;
+                var currentBottom = currentTop + $activeEntry.height();
+                if (currentTop < scrollTop) {
+                    $entriesScroller.scrollTop(currentTop - 20);
+                } else if (currentBottom > scrollBottom) {
+                    if ($activeEntry.height() > $entriesScroller.height()) {
+                        $entriesScroller.scrollTop(currentTop - 20);
+                    } else {
+                        $entriesScroller.scrollTop(currentBottom - $entriesScroller.height() + 20);
+                    }
+                }
+            }
+
+            function nextEntry() {
+                if ($activeEntry.length) {
+                    ($activeEntry = $activeEntry.next()).addClass("active").prev().removeClass("active");
+                } else {
+                    $("#entries > :first-child").addClass("active");
+                }
+            }
+
+            function toggleEntry() {
+                $activeEntry.toggleClass("open");
+                $("#entries > .open").not($activeEntry).removeClass("open");
+                // TODO: mark as read
+            }
+
+            function prevEntry() {
+                ($activeEntry = $activeEntry.prev()).addClass("active").next().removeClass("active");
+            }
+
+            switch (event.which) {
+            case 74: // j
+                nextEntry();
+                toggleEntry();
+                showEntry();
+                break;
+            case 75: // k
+                prevEntry();
+                toggleEntry();
+                showEntry();
+                break;
+            case 77: // m
+                // TODO: toggle read/unread
+                break;
+            case 78: // n
+                nextEntry();
+                showEntry();
+                break;
+            case 79: // o
+                toggleEntry();
+                showEntry();
+                break;
+            case 80: // p
+                prevEntry();
+                showEntry();
+                break;
+            case 82: // r
+                // TODO: reload
+                break;
+            case 83: // s
+                $activeEntry.find(".icon-star").toggleClass("icon-white");
+                // TODO: toggle star
+                break;
+            case 86: // v
+                alert("TODO: open entry in new window");
+                break;
+            default:
+                console.log("unhandled keydown: " + event.which);
+            }
         });
     </script>
 </head>
@@ -171,7 +282,7 @@
     </div>
 </div>
 
-<div class="container-fluid">
+<div id="entries-scroller">
     <div id="entries" class="accordion">
         <div id="entry-template" class="accordion-group">
             <div class="accordion-heading">
@@ -181,7 +292,7 @@
                         <span id="entry-title">Title</span>
                     </div>
                     <span>
-                        <span>&nbsp;&nbsp;&nbsp;</span><span id="entry-date">09:56 PM</span>
+                        <span></span><span id="entry-date">09:56 PM</span>
                     </span>
                     <a href="#"><i class="icon-globe"></i></a>
                 </span>
