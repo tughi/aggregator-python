@@ -160,8 +160,10 @@
                     $entry.attr("id", entry.id);
                     $entry.find("#entry-title").html(entry.title);
                     $entry.find("#entry-link").attr("href", entry.link);
-                    var content = entry.summary ? entry.summary.value : entry.content && entry.content.length ? entry.content[0].value : "";
-                    $entry.find("#entry-content").html(content);
+
+                    if (entry.content.length || entry.summary) {
+                        $entry.data("content", entry.content.length ? entry.content : [entry.summary]);
+                    }
 
                     var $entryDate = $entry.find("#entry-date");
                     var entryTimestamp = new Date(entry.timestamp);
@@ -232,6 +234,15 @@
     }
 
     function toggleEntry($entry) {
+        var $entryContent = $entry.find("#entry-content:empty");
+        if ($entryContent.length) {
+            var content = $entry.data("content");
+            for (var key in content) {
+                var value = content[key].value;
+                $entryContent.append(value);
+            }
+        }
+
         $entry.toggleClass("open");
         $("#entries > .open").not($entry).removeClass("open");
         markReadEntry($entry);
@@ -325,11 +336,10 @@
                 </span>
             </div>
             <div class="accordion-body">
-                <div id="entry-content" class="accordion-inner">
-</body>
-</div>
-</div>
-</div>
+                <div id="entry-content" class="accordion-inner"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 </body>
