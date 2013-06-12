@@ -1,255 +1,256 @@
 <!doctype html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="assets/css/bootstrap.css" rel="stylesheet" media="screen">
+<link href="assets/css/bootstrap.css" rel="stylesheet" media="screen">
 
-    <style type="text/css">
-        #entries-scroller {
-            position: absolute;
-            top: 40px;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            overflow: auto;
+<style type="text/css">
+    #entries-scroller {
+        position: absolute;
+        top: 40px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow: auto;
+    }
+
+    #entries.accordion {
+        margin: 0;
+        padding: 20px;
+    }
+
+    #entries .accordion-heading {
+        background-color: #e5e5e5;
+    }
+
+    #entries .unread .accordion-heading #entry-title {
+        font-weight: bold;
+    }
+
+    #entries .accordion-toggle {
+        position: relative;
+        padding: 0;
+        margin: 0;
+    }
+
+    #entries .accordion-toggle > a,
+    #entries .accordion-toggle > span,
+    #entries .accordion-toggle > div {
+        display: block;
+        padding: 4px 0;
+    }
+
+    #entries .accordion-toggle > a {
+        width: 20px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #entries .accordion-toggle > a:first-child {
+        padding-left: 4px;
+    }
+
+    #entries .accordion-toggle > a:last-child {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding-right: 4px;
+    }
+
+    #entries .accordion-toggle > span {
+        position: absolute;
+        top: 0;
+        right: 24px;
+    }
+
+    #entries .accordion-toggle > span > span {
+        background: #e5e5e5;
+        padding-left: 4px;
+    }
+
+    #entries .accordion-toggle > span > span:first-child {
+        background-color: transparent;
+        /*background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
+        background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
+        background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
+        background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);*/
+        background-image: linear-gradient(to right, rgba(229, 229, 229, 0), #e5e5e5);
+        padding-left: 20px;
+    }
+
+    #entries .accordion-toggle > div {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        overflow: hidden;
+        margin-left: 26px;
+        margin-right: 26px;
+    }
+
+    #entries .accordion-toggle > div > span {
+        white-space: nowrap;
+    }
+
+    #entries .accordion-body {
+        display: none;
+        position: relative;
+        overflow: auto;
+    }
+
+    #entries .open .accordion-body {
+        display: block;
+    }
+
+    #entries .accordion-group.active {
+        border-color: #33b5e5;
+    }
+
+    #entries .accordion-group.active .accordion-toggle {
+        background-color: #33b5e5;
+    }
+
+    #entries .accordion-group.active .accordion-toggle > span > span {
+        background-color: #33b5e5;
+    }
+
+    #entries .accordion-group.active .accordion-toggle > span > span:first-child {
+        background-color: transparent;
+        background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+    }
+</style>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+
+<script>
+    var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    function formatDate(date) {
+        var day = date.getDate();
+        var month = MONTH_NAMES[date.getMonth()];
+        return month + ' ' + day;
+    }
+
+    function formatTime(date) {
+        var hours = date.getHours();
+        if (hours < 10) {
+            hours = '0' + hours;
         }
-
-        #entries.accordion {
-            margin: 0;
-            padding: 20px;
+        var minutes = date.getMinutes();
+        if (minutes < 10) {
+            minutes = '0' + minutes;
         }
+        return hours + ':' + minutes;
+    }
 
-        #entries .accordion-heading {
-            background-color: #e5e5e5;
-        }
+    $(document).ready(function () {
+        var $entries = $("#entries");
+        var $entryTemplate = $entries.children("#entry-template").remove().attr("id", null);
+        $.ajax({
+            url: "/api/entries",
+            dataType: "json",
+            success: function (data) {
+                var currentDate = formatDate(new Date());
+                var currentYear = new Date().getFullYear();
 
-        #entries .accordion-heading .unread {
-            font-weight: bold;
-        }
+                $.each(data, function (index, entry) {
+                    var $entry = $entryTemplate.clone().appendTo("#entries");
+                    $entry.find("#entry-title").html(entry.title);
+                    var content = entry.summary ? entry.summary.value : entry.content && entry.content.length ? entry.content[0].value : "";
+                    $entry.find("#entry-content").html(content);
 
-        #entries .accordion-toggle {
-            position: relative;
-            padding: 0;
-            margin: 0;
-        }
-
-        #entries .accordion-toggle > a,
-        #entries .accordion-toggle > span,
-        #entries .accordion-toggle > div {
-            display: block;
-            padding: 4px 0;
-        }
-
-        #entries .accordion-toggle > a {
-            width: 20px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        #entries .accordion-toggle > a:first-child {
-            padding-left: 4px;
-        }
-
-        #entries .accordion-toggle > a:last-child {
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding-right: 4px;
-        }
-
-        #entries .accordion-toggle > span {
-            position: absolute;
-            top: 0;
-            right: 24px;
-        }
-
-        #entries .accordion-toggle > span > span {
-            background: #e5e5e5;
-            padding-left: 4px;
-        }
-
-        #entries .accordion-toggle > span > span:first-child {
-            background-color: transparent;
-            /*background-image: -moz-linear-gradient(top, #ffffff, #e6e6e6);
-            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#e6e6e6));
-            background-image: -webkit-linear-gradient(top, #ffffff, #e6e6e6);
-            background-image: -o-linear-gradient(top, #ffffff, #e6e6e6);*/
-            background-image: linear-gradient(to right, rgba(229, 229, 229, 0), #e5e5e5);
-            padding-left: 20px;
-        }
-
-        #entries .accordion-toggle > div {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            overflow: hidden;
-            margin-left: 26px;
-            margin-right: 26px;
-        }
-
-        #entries .accordion-toggle > div > span {
-            white-space: nowrap;
-        }
-
-        #entries .accordion-body {
-            display: none;
-            position: relative;
-            overflow: auto;
-        }
-
-        #entries .open .accordion-body {
-            display: block;
-        }
-
-        #entries .accordion-group.active {
-            border-color: #33b5e5;
-        }
-    
-        #entries .accordion-group.active .accordion-toggle {
-            background-color: #33b5e5;
-        }
-
-        #entries .accordion-group.active .accordion-toggle > span > span {
-            background-color: #33b5e5;
-        }
-
-        #entries .accordion-group.active .accordion-toggle > span > span:first-child {
-            background-color: transparent;
-            background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
-        }
-    </style>
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
-
-    <script>
-        var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-        function formatDate(date) {
-            var day = date.getDate();
-            var month = MONTH_NAMES[date.getMonth()];
-            return month + ' ' + day;
-        }
-
-        function formatTime(date) {
-            var hours = date.getHours();
-            if (hours < 10) {
-                hours = '0' + hours;
-            }
-            var minutes = date.getMinutes();
-            if (minutes < 10) {
-                minutes = '0' + minutes;
-            }
-            return hours + ':' + minutes;
-        }
-
-        $(document).ready(function () {
-            var $entries = $("#entries");
-            var $entryTemplate = $entries.children("#entry-template").remove().attr("id", null);
-            $.ajax({
-                url: "/api/entries",
-                dataType: "json",
-                success: function (data) {
-                    var currentDate = formatDate(new Date());
-                    var currentYear = new Date().getFullYear();
-
-                    $.each(data, function (index, entry) {
-                        var $entry = $entryTemplate.clone().appendTo("#entries");
-                        $entry.find("#entry-title").html(entry.title);
-                        var content = entry.summary ? entry.summary.value : entry.content && entry.content.length ? entry.content[0].value : "";
-                        $entry.find("#entry-content").html(content);
-
-                        var $entryDate = $entry.find("#entry-date");
-                        var entryTimestamp = new Date(entry.timestamp);
-                        var entryDate = formatDate(entryTimestamp);
-                        if (entryTimestamp.getFullYear() != currentYear) {
-                            $entryDate.html(entryDate + ' ' + entryTimestamp.getFullYear());
-                        } else if (entryDate !== currentDate) {
-                            $entryDate.html(entryDate);
-                        } else {
-                            $entryDate.html(formatTime(entryTimestamp));
-                        }
-                    });
-                }
-            });
-        });
-
-        $(document).on("click", "#entries .accordion-toggle", function () {
-            var $entry = $(this).closest(".accordion-group").toggleClass("open").addClass("active");
-            $("#entries > .accordion-group.open").not($entry).removeClass("open");
-            $("#entries > .accordion-group.active").not($entry).removeClass("active");
-        });
-
-        $(document).on("keydown", function (event) {
-            var $activeEntry = $("#entries > .active");
-
-            function showEntry() {
-                if (!$activeEntry.length) {
-                    // nothing to show
-                    return;
-                }
-
-                var $entriesScroller = $activeEntry.closest("#entries-scroller");
-                var scrollTop = $entriesScroller.scrollTop();
-                var scrollBottom = scrollTop + $entriesScroller.height();
-                var currentTop = $activeEntry.position().top - $activeEntry.parent().position().top;
-                var currentBottom = currentTop + $activeEntry.height();
-                if (currentTop < scrollTop) {
-                    $entriesScroller.scrollTop(currentTop - 20);
-                } else if (currentBottom > scrollBottom) {
-                    if ($activeEntry.height() > $entriesScroller.height()) {
-                        $entriesScroller.scrollTop(currentTop - 20);
+                    var $entryDate = $entry.find("#entry-date");
+                    var entryTimestamp = new Date(entry.timestamp);
+                    var entryDate = formatDate(entryTimestamp);
+                    if (entryTimestamp.getFullYear() != currentYear) {
+                        $entryDate.html(entryDate + ' ' + entryTimestamp.getFullYear());
+                    } else if (entryDate !== currentDate) {
+                        $entryDate.html(entryDate);
                     } else {
-                        $entriesScroller.scrollTop(currentBottom - $entriesScroller.height() + 20);
+                        $entryDate.html(formatTime(entryTimestamp));
                     }
-                }
+                });
             }
+        });
+    });
 
-            function nextEntry() {
-                if ($activeEntry.length) {
-                    ($activeEntry = $activeEntry.next()).addClass("active").prev().removeClass("active");
-                } else {
-                    $("#entries > :first-child").addClass("active");
-                }
+    $(document).on("click", "#entries .accordion-toggle", function () {
+        var $entry = $(this).closest(".accordion-group").toggleClass("open").addClass("active");
+        $("#entries > .accordion-group.open").not($entry).removeClass("open");
+        $("#entries > .accordion-group.active").not($entry).removeClass("active");
+        showEntry($entry)
+    });
+
+    function showEntry($entry) {
+        if (!$entry.length) {
+            // nothing to show
+            return;
+        }
+
+        var $entriesScroller = $entry.closest("#entries-scroller");
+        var scrollTop = $entriesScroller.scrollTop();
+        var scrollBottom = scrollTop + $entriesScroller.height();
+        var currentTop = $entry.position().top - $entry.parent().position().top;
+        var currentBottom = currentTop + $entry.height();
+        if (currentTop < scrollTop) {
+            $entriesScroller.scrollTop(currentTop - 20);
+        } else if (currentBottom > scrollBottom) {
+            if ($entry.height() > $entriesScroller.height()) {
+                $entriesScroller.scrollTop(currentTop - 20);
+            } else {
+                $entriesScroller.scrollTop(currentBottom - $entriesScroller.height() + 20);
             }
+        }
+    }
 
-            function toggleEntry() {
-                $activeEntry.toggleClass("open");
-                $("#entries > .open").not($activeEntry).removeClass("open");
-                // TODO: mark as read
+    $(document).on("keydown", function (event) {
+        var $activeEntry = $("#entries > .active");
+
+        function nextEntry() {
+            if ($activeEntry.length) {
+                ($activeEntry = $activeEntry.next()).addClass("active").prev().removeClass("active");
+            } else {
+                $("#entries > :first-child").addClass("active");
             }
+        }
 
-            function prevEntry() {
-                ($activeEntry = $activeEntry.prev()).addClass("active").next().removeClass("active");
-            }
+        function toggleEntry() {
+            $activeEntry.toggleClass("open");
+            $("#entries > .open").not($activeEntry).removeClass("open");
+            // TODO: mark as read
+        }
 
-            switch (event.which) {
+        function prevEntry() {
+            ($activeEntry = $activeEntry.prev()).addClass("active").next().removeClass("active");
+        }
+
+        switch (event.which) {
             case 74: // j
                 nextEntry();
                 toggleEntry();
-                showEntry();
+                showEntry($activeEntry);
                 break;
             case 75: // k
                 prevEntry();
                 toggleEntry();
-                showEntry();
+                showEntry($activeEntry);
                 break;
             case 77: // m
                 // TODO: toggle read/unread
                 break;
             case 78: // n
                 nextEntry();
-                showEntry();
+                showEntry($activeEntry);
                 break;
             case 79: // o
                 toggleEntry();
-                showEntry();
+                showEntry($activeEntry);
                 break;
             case 80: // p
                 prevEntry();
-                showEntry();
+                showEntry($activeEntry);
                 break;
             case 82: // r
                 // TODO: reload
@@ -263,9 +264,9 @@
                 break;
             default:
                 console.log("unhandled keydown: " + event.which);
-            }
-        });
-    </script>
+        }
+    });
+</script>
 </head>
 
 <body>
@@ -284,7 +285,7 @@
 
 <div id="entries-scroller">
     <div id="entries" class="accordion">
-        <div id="entry-template" class="accordion-group">
+        <div id="entry-template" class="accordion-group unread">
             <div class="accordion-heading">
                 <span class="accordion-toggle">
                     <a href="#"><i class="icon-star icon-white"></i></a>
@@ -298,10 +299,11 @@
                 </span>
             </div>
             <div class="accordion-body">
-                <div id="entry-content" class="accordion-inner"></body>
-            </div>
-        </div>
-    </div>
+                <div id="entry-content" class="accordion-inner">
+</body>
+</div>
+</div>
+</div>
 </div>
 
 </body>
