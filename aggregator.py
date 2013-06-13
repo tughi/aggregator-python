@@ -64,7 +64,7 @@ def __as_entry_data(data):
         ('published', data.get('published')),
         ('updated', data.get('updated')),
         ('timestamp', int(
-            time.mktime(data.get('updated_parsed') or data.get('published_parsed') or time.gmtime()) * 1000
+            time.mktime(data.get('updated_parsed') or data.get('published_parsed') or time.localtime()) * 1000
         ))
     ])
 
@@ -136,6 +136,8 @@ def get_entries(store):
     result = []
 
     for entry in store.find(Entry).order_by(Entry.updated):
-        result.append(entry.as_dict())
+        entry_values = entry.as_dict()
+        entry_values['id'] = entry.id
+        result.append(entry_values)
 
     return result
