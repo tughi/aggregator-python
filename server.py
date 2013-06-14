@@ -96,6 +96,10 @@ server.mount('/api', api)
 def web(path):
     return static_file(path, 'web')
 
+@server.route('/')
+def entries():
+    return static_file('index.html', 'web')
+
 class Scheduler(threading.Thread):
     def run(self):
         while True:
