@@ -106,6 +106,8 @@ def update_feeds(store):
         feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
 
+        store.commit()
+
 def __as_unicode(data):
     return unicode(data) if data else None
 
