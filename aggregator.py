@@ -93,9 +93,10 @@ def update_feeds(store):
         for entry_data in data.entries:
             data = __as_entry_data(entry_data)
             values = {
-                'data': json.dumps(data),
-                'updated': data['timestamp']
+                'data': json.dumps(data)
             }
+            if entry_data.get('updated_parsed') or entry_data.get('published_parsed'):
+                values['updated'] = data['timestamp']
             result = store.execute(Update(values, (Entry.feed_id == feed.id) & (Entry.guid == data['id']), Entry))
             if not result.rowcount:
                 # not updated since entry doesn't exist
