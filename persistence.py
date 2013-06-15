@@ -13,6 +13,7 @@ class Feed(object):
     etag = storm.properties.Unicode()
     modified = storm.properties.Unicode()
     poll = storm.properties.Int()
+    next_poll = storm.properties.Int()
 
     def __init__(self, url, title, etag, modified, poll):
         self.url = url
@@ -67,7 +68,8 @@ def open_database():
                 title TEXT NOT NULL,
                 etag TEXT,
                 modified TEXT,
-                poll INT NOT NULL
+                poll INTEGER NOT NULL,
+                next_poll INTEGER NOT NULL DEFAULT 0
             )
         ''')
         store.execute('''

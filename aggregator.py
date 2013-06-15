@@ -1,11 +1,11 @@
 import time
 import json
+from collections import OrderedDict
 
 from storm.expr import Update
 from persistence import Feed, Entry
 import feedparser
 import opml
-from collections import OrderedDict
 
 
 DEBUG = False
@@ -77,8 +77,14 @@ def __as_content(data):
     ]) if data else None
 
 
+MINUTE_MILLIS = 60000
+HOUR_MILLIS = 60 * MINUTE_MILLIS
+DAY_MILLIS = 24 * HOUR_MILLIS
+WEEK_MILLIS = 7 * DAY_MILLIS
+
+
 def update_feeds(store):
-    for feed in store.find(Feed):
+    for feed in store.find(Feed, Feed.next_poll <= time.time() * 1000):
         if DEBUG:
             print('Updating feed: %s' % feed.url)
 
@@ -102,14 +108,39 @@ def update_feeds(store):
                 # not updated since entry doesn't exist
                 store.add(Entry(feed, poll, data))
 
+        weekly_entries_count = store.find(Entry, (Entry.feed == feed) & (Entry.updated >= poll - WEEK_MILLIS)).count()
+        if weekly_entries_count < 1:
+            # schedule new poll in 7 days
+            feed.next_poll = poll + WEEK_MILLIS
+        elif weekly_entries_count < 5:
+            # schedule new poll in 1 day
+            feed.next_poll = poll + DAY_MILLIS
+        elif weekly_entries_count < 20:
+            # schedule new poll in 12 hours
+            feed.next_poll = poll + HOUR_MILLIS * 12
+        elif weekly_entries_count < 40:
+            # schedule new poll in 6 hours
+            feed.next_poll = poll + HOUR_MILLIS * 6
+        elif weekly_entries_count < 80:
+            # schedule new poll in 1 hour
+            feed.next_poll = poll + HOUR_MILLIS
+        elif weekly_entries_count < 160:
+            # schedule new poll in 30 minutes
+            feed.next_poll = poll + MINUTE_MILLIS * 30
+        else:
+            # schedule new poll in 15 minutes
+            feed.next_poll = poll + MINUTE_MILLIS * 15
+
         feed.etag = __as_unicode(data.get('etag'))
         feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
 
         store.commit()
 
+
 def __as_unicode(data):
     return unicode(data) if data else None
+
 
 def delete_feed(store, feed_id):
     store.find(Entry, Entry.feed_id == feed_id).remove()
