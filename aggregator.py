@@ -89,7 +89,8 @@ def update_feeds(store):
         data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
 
         if not data:
-            # TODO: log warning
+            if DEBUG:
+                print('ERROR: Failed to parse feed')
             continue
 
         for entry_data in data.entries:
