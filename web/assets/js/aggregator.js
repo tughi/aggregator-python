@@ -48,6 +48,14 @@ $(document).ready(function () {
                 } else {
                     $entryDate.html(formatTime(entryTimestamp));
                 }
+
+                if (entry.tags.indexOf("read") >= 0) {
+                    $entry.removeClass("unread");
+                }
+
+                if (entry.tags.indexOf("star") >= 0) {
+                    $entry.find(".icon-star").removeClass("icon-white");
+                }
             });
         }
     });
@@ -98,12 +106,28 @@ function markReadEntry($entry, unread) {
     } else {
         $entry.removeClass("new");
     }
-    // TODO: send state
+
+    $.ajax({
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("new") ? "-" : "+") + "read",
+        method: "PUT",
+        dataType: "json",
+        fail: function () {
+            console.log("Failed to tag/untag entry as read: " + $entry.attr("id"));
+        }
+    });
 }
 
 function toggleStarredEntry($entry) {
-    $entry.find(".icon-star").toggleClass("icon-white");
-    // TODO: send state
+    var $icon = $entry.find(".icon-star").toggleClass("icon-white");
+
+    $.ajax({
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($icon.hasClass("icon-white") ? "-" : "+") + "star",
+        method: "PUT",
+        dataType: "json",
+        fail: function () {
+            console.log("Failed to tag/untag entry as read: " + $entry.attr("id"));
+        }
+    });
 }
 
 function toggleEntry($entry) {

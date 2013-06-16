@@ -89,6 +89,16 @@ def entries(store):
     return aggregator.get_entries(store)
 
 
+@api.put('/entries/<entry_id:int>/tags/+<tag:re:[\w\d]+>')
+def tag_entry(store, entry_id, tag):
+    aggregator.tag_entry(store, entry_id, tag)
+
+
+@api.put('/entries/<entry_id:int>/tags/-<tag:re:[\w\d]+>')
+def untag_entry(store, entry_id, tag):
+    aggregator.untag_entry(store, entry_id, tag)
+
+
 server = Bottle()
 server.mount('/api', api)
 
@@ -97,9 +107,11 @@ server.mount('/api', api)
 def web(path):
     return static_file(path, 'web')
 
+
 @server.route('/')
 def entries():
     return static_file('index.html', 'web')
+
 
 class Scheduler(threading.Thread):
     def run(self):
@@ -127,7 +139,7 @@ if __name__ == '__main__':
             def connection_raw_execute(self, connection, raw_cursor, statement, params):
                 if params:
                     for param in params:
-                        statement = statement.replace('?', repr(param.get()), 1)
+                        statement = statement.replace('?', repr(param.get() if hasattr(param, 'get') else param), 1)
                 print('STORM: %s' % statement)
 
         storm.tracer.install_tracer(PrintStatementTracer())

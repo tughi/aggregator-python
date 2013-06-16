@@ -1,8 +1,9 @@
+# coding=utf-8
 import time
 import json
 from collections import OrderedDict
 
-from storm.expr import Update
+from storm.expr import Update, Like, Not
 from persistence import Feed, Entry
 import feedparser
 import opml
@@ -163,13 +164,29 @@ def import_opml(store, opml_source):
     return result
 
 
-def get_entries(store):
+def get_entries(store, entry_tags=None):
     result = []
+
+    where = Not(Like(Entry.reader_tags, '%|read|%'))
+    # where = None
 
     for entry in store.find(Entry).order_by(Entry.updated):
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
         entry_values['timestamp'] = entry.updated
+        entry_values['tags'] = entry.get_tags()
+
         result.append(entry_values)
 
     return result
+
+
+def tag_entry(store, entry_id, tag):
+    store.execute('UPDATE entry SET reader_tags = reader_tags || ? || \'|\' WHERE id = ?', (tag, entry_id))
+    store.commit()
+
+
+def untag_entry(store, entry_id, tag):
+    store.execute('UPDATE entry SET reader_tags = replace(reader_tags, \'|\' || ? || \'|\', \'|\') WHERE id = ?',
+                  (tag, entry_id))
+    store.commit()

@@ -1,8 +1,10 @@
+# coding=utf-8
+import json
+
 import storm.properties
 import storm.database
 import storm.store
 import storm.references
-import json
 
 
 class Feed(object):
@@ -39,6 +41,8 @@ class Entry(object):
     poll = storm.properties.Int()
     updated = storm.properties.Int()
     data = storm.properties.Chars()
+    reader_tags = storm.properties.Unicode()
+    server_tags = storm.properties.Unicode()
 
     def __init__(self, feed, poll, guid, data, updated):
         self.feed = feed
@@ -50,6 +54,18 @@ class Entry(object):
     def as_dict(self):
         return json.loads(self.data)
 
+    def get_tags(self):
+        tags = set()
+
+        reader_tags = self.reader_tags.strip('|')
+        if reader_tags:
+            tags.update(reader_tags.split('|'))
+
+        server_tags = self.server_tags.strip('|')
+        if server_tags:
+            tags.update(server_tags.split('|'))
+
+        return list(tags)
 
 Feed.entries = storm.references.ReferenceSet(Feed.id, Entry.feed_id)
 
@@ -80,6 +96,8 @@ def open_database():
                 poll INT NOT NULL,
                 updated INTEGER,
                 data TEXT NOT NULL,
+                reader_tags TEXT NOT NULL DEFAULT '|',
+                server_tags TEXT NOT NULL DEFAULT '|',
                 UNIQUE (feed_id, guid)
                 FOREIGN KEY (feed_id) REFERENCES feed (id)
             )
