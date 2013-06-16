@@ -39,7 +39,7 @@ $(document).ready(function () {
                 }
 
                 var $entryDate = $entry.find("#entry-date");
-                var entryTimestamp = new Date(entry.timestamp);
+                var entryTimestamp = new Date(entry.timestamp * 1000);
                 var entryDate = formatDate(entryTimestamp);
                 if (entryTimestamp.getFullYear() != currentYear) {
                     $entryDate.html(entryDate + ' ' + entryTimestamp.getFullYear());

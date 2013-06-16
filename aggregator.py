@@ -30,7 +30,8 @@ def add_feed(store, url, title):
         raise AggregatorException('The url parameter is required')
 
     url = unicode(url)
-    poll = int(time.time() * 1000)
+    poll_time = time.localtime()
+    poll = time.mktime(poll_time)
 
     if DEBUG:
         print('Adding feed: %s' % url)
@@ -49,24 +50,24 @@ def add_feed(store, url, title):
     feed = store.add(Feed(url, title or data.feed.title, data.get('etag'), data.get('modified'), poll))
 
     for entry_data in data.entries:
-        store.add(Entry(feed, poll, __as_entry_data(entry_data)))
+        store.add(Entry(feed, poll, *__as_entry_data(entry_data, poll_time)))
 
     return feed.as_dict()
 
 
-def __as_entry_data(data):
-    return OrderedDict([
-        ('id', data.get('id') or data.link),
-        ('title', data.title),
-        ('link', data.get('link')),
-        ('summary', __as_content(data.get('summary_detail'))),
-        ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
-        ('published', data.get('published')),
-        ('updated', data.get('updated')),
-        ('timestamp', int(
-            time.mktime(data.get('updated_parsed') or data.get('published_parsed') or time.localtime()) * 1000
-        ))
-    ])
+def __as_entry_data(data, poll_time):
+    return (
+        data.get('id') or data.link,
+        OrderedDict([
+            ('title', data.title),
+            ('link', data.get('link')),
+            ('summary', __as_content(data.get('summary_detail'))),
+            ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
+            ('published', data.get('published')),
+            ('updated', data.get('updated'))
+        ]),
+        time.mktime(data.get('updated_parsed') or data.get('published_parsed') or poll_time)
+    )
 
 
 def __as_content(data):
@@ -77,18 +78,13 @@ def __as_content(data):
     ]) if data else None
 
 
-MINUTE_MILLIS = 60000
-HOUR_MILLIS = 60 * MINUTE_MILLIS
-DAY_MILLIS = 24 * HOUR_MILLIS
-WEEK_MILLIS = 7 * DAY_MILLIS
-
-
 def update_feeds(store):
-    for feed in store.find(Feed, Feed.next_poll <= time.time() * 1000):
+    for feed in store.find(Feed, Feed.next_poll <= time.mktime(time.localtime())):
         if DEBUG:
             print('Updating feed: %s' % feed.url)
 
-        poll = int(time.time() * 1000)
+        poll_time = time.localtime()
+        poll = time.mktime(poll_time)
 
         data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
 
@@ -97,39 +93,39 @@ def update_feeds(store):
             continue
 
         for entry_data in data.entries:
-            data = __as_entry_data(entry_data)
+            guid, data, updated = __as_entry_data(entry_data, poll_time)
             values = {
                 'data': json.dumps(data)
             }
-            if entry_data.get('updated_parsed') or entry_data.get('published_parsed'):
-                values['updated'] = data['timestamp']
-            result = store.execute(Update(values, (Entry.feed_id == feed.id) & (Entry.guid == data['id']), Entry))
+            if updated != poll:
+                values['updated'] = updated
+            result = store.execute(Update(values, (Entry.feed_id == feed.id) & (Entry.guid == guid), Entry))
             if not result.rowcount:
                 # not updated since entry doesn't exist
-                store.add(Entry(feed, poll, data))
+                store.add(Entry(feed, poll, guid, data, updated))
 
-        weekly_entries_count = store.find(Entry, (Entry.feed == feed) & (Entry.updated >= poll - WEEK_MILLIS)).count()
+        weekly_entries_count = store.find(Entry, (Entry.feed == feed) & (Entry.updated >= poll - 604800)).count()
         if weekly_entries_count < 1:
             # schedule new poll in 7 days
-            feed.next_poll = poll + WEEK_MILLIS
+            feed.next_poll = poll + 604800
         elif weekly_entries_count < 5:
             # schedule new poll in 1 day
-            feed.next_poll = poll + DAY_MILLIS
+            feed.next_poll = poll + 86400
         elif weekly_entries_count < 20:
             # schedule new poll in 12 hours
-            feed.next_poll = poll + HOUR_MILLIS * 12
+            feed.next_poll = poll + 43200
         elif weekly_entries_count < 40:
             # schedule new poll in 6 hours
-            feed.next_poll = poll + HOUR_MILLIS * 6
+            feed.next_poll = poll + 21600
         elif weekly_entries_count < 80:
             # schedule new poll in 1 hour
-            feed.next_poll = poll + HOUR_MILLIS
+            feed.next_poll = poll + 3600
         elif weekly_entries_count < 160:
             # schedule new poll in 30 minutes
-            feed.next_poll = poll + MINUTE_MILLIS * 30
+            feed.next_poll = poll + 1800
         else:
             # schedule new poll in 15 minutes
-            feed.next_poll = poll + MINUTE_MILLIS * 15
+            feed.next_poll = poll + 900
 
         feed.etag = __as_unicode(data.get('etag'))
         feed.modified = __as_unicode(data.get('modified'))
@@ -172,6 +168,7 @@ def get_entries(store):
     for entry in store.find(Entry).order_by(Entry.updated):
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
+        entry_values['timestamp'] = entry.updated
         result.append(entry_values)
 
     return result

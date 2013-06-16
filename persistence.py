@@ -40,11 +40,11 @@ class Entry(object):
     updated = storm.properties.Int()
     data = storm.properties.Chars()
 
-    def __init__(self, feed, poll, data):
+    def __init__(self, feed, poll, guid, data, updated):
         self.feed = feed
         self.poll = poll
-        self.guid = data['id']
-        self.updated = data['timestamp']
+        self.guid = guid
+        self.updated = updated
         self.data = json.dumps(data)
 
     def as_dict(self):
