@@ -172,7 +172,7 @@ $(document).on("keydown", function (event) {
             showEntry($activeEntry);
             break;
         case 77: // m
-            markReadEntry($activeEntry, !$activeEntry.hasClass("new"));
+            markReadEntry($activeEntry, !$activeEntry.hasClass("unread"));
             break;
         case 78: // n
             nextEntry();
