@@ -92,9 +92,11 @@ def update_feeds(store):
         if not data:
             if DEBUG:
                 print('ERROR: Failed to parse feed')
+            feed.poll_status = -1
             continue
 
         feed_link = data.feed.get('link')
+        status = data.get('status', 0) 
 
         for entry_data in data.entries:
             guid, data, updated = __as_entry_data(entry_data, poll_time)
@@ -111,30 +113,38 @@ def update_feeds(store):
         weekly_entries_count = store.find(Entry, (Entry.feed == feed) & (Entry.updated >= poll - 604800)).count()
         if weekly_entries_count < 1:
             # schedule new poll in 7 days
+            feed.poll_type = u'every week'
             feed.next_poll = poll + 604800
         elif weekly_entries_count < 5:
             # schedule new poll in 1 day
+            feed.poll_type = u'every day'
             feed.next_poll = poll + 86400
         elif weekly_entries_count < 20:
             # schedule new poll in 12 hours
+            feed.poll_type = u'every 12 hours'
             feed.next_poll = poll + 43200
         elif weekly_entries_count < 40:
             # schedule new poll in 6 hours
+            feed.poll_type = u'every 6 hours'
             feed.next_poll = poll + 21600
         elif weekly_entries_count < 80:
             # schedule new poll in 1 hour
+            feed.poll_type = u'every hour'
             feed.next_poll = poll + 3600
         elif weekly_entries_count < 160:
             # schedule new poll in 30 minutes
+            feed.poll_type = u'every 30 minutes'
             feed.next_poll = poll + 1800
         else:
             # schedule new poll in 15 minutes
+            feed.poll_type = u'every 15 minutes'
             feed.next_poll = poll + 900
 
         feed.link = unicode(feed_link) if feed_link else None
         feed.etag = __as_unicode(data.get('etag'))
         feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
+        feed.poll_status = status
 
         store.commit()
 
