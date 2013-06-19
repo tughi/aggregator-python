@@ -8,8 +8,9 @@ Planned features:
 - [x] Support for RSS and Atom feeds
 - [ ] Entry filtering support
 - [ ] Feed aggregation / syndication
-- [ ] OPML import / export
-- [ ] JSON-based API
+- [x] OPML import
+- [x] JSON-based API
+- [x] Web client
 - [ ] Android client
 
 ### Quick Project Setup:
