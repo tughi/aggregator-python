@@ -48,7 +48,7 @@ def add_feed(store, url, title):
     if not data:
         raise AggregatorException('failed to load the feed')
 
-    feed = store.add(Feed(url, title or data.feed.title, data.get('etag'), data.get('modified'), poll))
+    feed = store.add(Feed(url, title or data.feed.title, data.feed.get('link'), data.get('etag'), data.get('modified'), poll))
 
     for entry_data in data.entries:
         store.add(Entry(feed, poll, *__as_entry_data(entry_data, poll_time)))
@@ -94,6 +94,8 @@ def update_feeds(store):
                 print('ERROR: Failed to parse feed')
             continue
 
+        feed_link = data.feed.get('link')
+
         for entry_data in data.entries:
             guid, data, updated = __as_entry_data(entry_data, poll_time)
             values = {
@@ -129,6 +131,7 @@ def update_feeds(store):
             # schedule new poll in 15 minutes
             feed.next_poll = poll + 900
 
+        feed.link = unicode(feed_link) if feed_link else None
         feed.etag = __as_unicode(data.get('etag'))
         feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
@@ -167,14 +170,12 @@ def import_opml(store, opml_source):
 def get_entries(store, entry_tags=None):
     result = []
 
-    where = Not(Like(Entry.reader_tags, '%|read|%'))
-    # where = None
-
-    for entry in store.find(Entry).order_by(Entry.updated):
+    for entry, feed_link in store.find((Entry, Feed.link), Not(Like(Entry.reader_tags, '%|read|%')), Entry.feed_id == Feed.id).order_by(Entry.updated):
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
         entry_values['timestamp'] = entry.updated
         entry_values['tags'] = entry.get_tags()
+        entry_values['feed_link'] = feed_link
 
         result.append(entry_values)
 

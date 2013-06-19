@@ -34,6 +34,13 @@ $(document).ready(function () {
                 $entry.find("#entry-title").html(entry.title);
                 $entry.find("#entry-link").attr("href", entry.link);
 
+                if (entry.feed_link) {
+                    var baseUrl = entry.feed_link.match(/^([^:]+:\/\/[^\/]+)/i);
+                    if (baseUrl) {
+                        $entry.find("#entry-link .favicon").css("background-image", "url('" + baseUrl[0] + "/favicon.ico')");
+                    }
+                }
+
                 if (entry.content.length || entry.summary) {
                     $entry.data("content", entry.content.length ? entry.content : [entry.summary]);
                 }
@@ -131,6 +138,11 @@ function toggleStarredEntry($entry) {
 }
 
 function toggleEntry($entry) {
+    if (!$entry.length) {
+        // nothing to toggle
+        return;
+    }
+
     var $entryContent = $entry.find("#entry-content:empty");
     if ($entryContent.length) {
         var content = $entry.data("content");

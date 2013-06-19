@@ -48,7 +48,7 @@
 }
 
 #entries .accordion-toggle > a:first-child {
-    padding-left: 4px;
+    margin-left: 4px;
 }
 
 #entries .accordion-toggle > a:last-child {
@@ -86,7 +86,7 @@
     bottom: 0;
     left: 0;
     overflow: hidden;
-    margin-left: 26px;
+    margin-left: 28px;
     margin-right: 26px;
 }
 
@@ -119,4 +119,15 @@
 #entries .accordion-group.active .accordion-toggle > span > span:first-child {
     background-color: transparent;
     background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+}
+
+.favicon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    margin-top: 0;
+    vertical-align: text-top;
+    background-repeat: no-repeat;
+    background-size: 16px;
 }

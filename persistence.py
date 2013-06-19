@@ -12,14 +12,16 @@ class Feed(object):
     id = storm.properties.Int(primary=True)
     url = storm.properties.Unicode()
     title = storm.properties.Unicode()
+    link = storm.properties.Unicode()
     etag = storm.properties.Unicode()
     modified = storm.properties.Unicode()
     poll = storm.properties.Int()
     next_poll = storm.properties.Int()
 
-    def __init__(self, url, title, etag, modified, poll):
+    def __init__(self, url, title, link, etag, modified, poll):
         self.url = url
         self.title = unicode(title) if title else None
+        self.link = unicode(link) if link else None
         self.etag = unicode(etag) if etag else None
         self.modified = unicode(modified) if modified else None
         self.poll = poll
@@ -82,6 +84,7 @@ def open_database():
                 id INTEGER PRIMARY KEY,
                 url TEXT UNIQUE NOT NULL,
                 title TEXT NOT NULL,
+                link TEXT,
                 etag TEXT,
                 modified TEXT,
                 poll INTEGER NOT NULL,
