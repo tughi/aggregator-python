@@ -5,13 +5,13 @@ Python based feeds reader/aggregator.
 The idea behind this project is to create a replacement for Google Reader that serves one user and runs on a Raspberry Pi.
 
 Planned features:
-- [x] Support for RSS and Atom feeds
-- [ ] Entry filtering support
-- [ ] Feed aggregation / syndication
-- [x] OPML import
-- [x] JSON-based API
-- [x] Web client
-- [ ] Android client
+- Support for RSS and Atom feeds ✔
+- Entry filtering support
+- Feed aggregation / syndication
+- OPML import ✔
+- JSON-based API ✔
+- Web client ✔
+- Android client
 
 ### Quick Project Setup:
 
