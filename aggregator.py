@@ -182,7 +182,7 @@ def get_entries(store, entry_tags=None):
 
 
 def tag_entry(store, entry_id, tag):
-    store.execute('UPDATE entry SET reader_tags = reader_tags || ? || \'|\' WHERE id = ?', (tag, entry_id))
+    store.execute('UPDATE entry SET reader_tags = reader_tags || ? || \'|\' WHERE id = ? AND reader_tags NOT LIKE \'%|\' || ? || \'|%\'', (tag, entry_id, tag))
     store.commit()
 
 

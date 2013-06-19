@@ -102,13 +102,13 @@ function showEntry($entry) {
 
 function markReadEntry($entry, unread) {
     if (unread) {
-        $entry.addClass("new");
+        $entry.addClass("unread");
     } else {
-        $entry.removeClass("new");
+        $entry.removeClass("unread");
     }
 
     $.ajax({
-        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("new") ? "-" : "+") + "read",
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("unread") ? "-" : "+") + "read",
         method: "PUT",
         dataType: "json",
         fail: function () {
