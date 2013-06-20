@@ -7,6 +7,7 @@ from bottle import Bottle, response, request, static_file
 from persistence import open_database
 from storm.store import Store
 import aggregator
+import re
 
 database = open_database()
 
@@ -86,6 +87,14 @@ def import_opml(store):
 
 @api.get('/entries')
 def entries(store):
+    tags = request.query.get('tags')
+    if tags:
+        tags = re.findall(re.compile(r'([+-])([^+-]+)'), tags)
+        return aggregator.get_entries(
+            store,
+            include=[tag for op, tag in tags if op == '+'],
+            exclude=[tag for op, tag in tags if op == '-'],
+        )
     return aggregator.get_entries(store)
 
 

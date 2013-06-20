@@ -18,11 +18,18 @@ function formatTime(date) {
     return hours + ':' + minutes;
 }
 
-$(document).ready(function () {
-    var $entries = $("#entries");
-    var $entryTemplate = $entries.children("#entry-template").remove();
+function loadEntries() {
+    var $entries = $("#entries").empty();
+
+    var data = {};
+
+    if (window.location.hash) {
+        data['tags'] = $.trim(window.location.hash.split('|')[0].replace(/[#\s]+/g, '').replace(/([\+\-])[\+\-]+/g, '$1'));
+    }
+
     $.ajax({
         url: "/api/entries",
+        data: data,
         dataType: "json",
         success: function (data) {
             var currentDate = formatDate(new Date());
@@ -66,6 +73,14 @@ $(document).ready(function () {
             });
         }
     });
+}
+
+var $entryTemplate;
+
+$(document).ready(function () {
+    $entryTemplate = $("#entries > #entry-template").remove();
+
+    loadEntries();
 });
 
 $(document).on("click", "#entries .accordion-toggle", function () {
@@ -82,6 +97,7 @@ $(document).on("click", "#entries .accordion-heading #entry-link", function (eve
 
 $(document).on("click", "#entries .accordion-heading .icon-star", function (event) {
     event.stopPropagation();
+    event.preventDefault();
     toggleStarredEntry($(this).closest(".accordion-group"));
 });
 
@@ -199,7 +215,7 @@ $(document).on("keydown", function (event) {
             showEntry($activeEntry);
             break;
         case 82: // r
-            // TODO: reload
+            loadEntries();
             break;
         case 83: // s
             toggleStarredEntry($activeEntry);

@@ -197,10 +197,20 @@ def import_opml(store, opml_source):
     return result
 
 
-def get_entries(store, entry_tags=None):
+def get_entries(store, include=None, exclude=None):
     result = []
 
-    for entry, feed_link in store.find((Entry, Feed.link), Not(Like(Entry.reader_tags, '%|read|%')), Entry.feed_id == Feed.id).order_by(Entry.updated):
+    selection = [Entry.feed_id == Feed.id]
+
+    if include:
+        for tag in include:
+            selection.append(Like(Entry.reader_tags, '%|{0}|%'.format(tag)))
+
+    if exclude:
+        for tag in exclude:
+            selection.append(Not(Like(Entry.reader_tags, '%|{0}|%'.format(tag))))
+
+    for entry, feed_link in store.find((Entry, Feed.link), *selection).order_by(Entry.updated):
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
         entry_values['timestamp'] = entry.updated
