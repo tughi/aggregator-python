@@ -3,7 +3,7 @@ import time
 import json
 from collections import OrderedDict
 
-from storm.expr import Update, Like, Not
+from storm.expr import Update, Like, Not, Select, Count, And, Alias
 from persistence import Feed, Entry
 import feedparser
 import opml
@@ -110,35 +110,55 @@ def update_feeds(store):
                 # not updated since entry doesn't exist
                 store.add(Entry(feed, poll, guid, data, updated))
 
-        weekly_entries_count = store.find(Entry, (Entry.feed == feed) & (Entry.updated >= poll - 604800)).count()
-        if weekly_entries_count < 1:
-            # schedule new poll in 7 days
-            feed.poll_type = u'every week'
-            feed.next_poll = poll + 604800
-        elif weekly_entries_count < 5:
-            # schedule new poll in 1 day
-            feed.poll_type = u'every day'
-            feed.next_poll = poll + 86400
-        elif weekly_entries_count < 20:
-            # schedule new poll in 12 hours
-            feed.poll_type = u'every 12 hours'
-            feed.next_poll = poll + 43200
-        elif weekly_entries_count < 40:
-            # schedule new poll in 6 hours
-            feed.poll_type = u'every 6 hours'
-            feed.next_poll = poll + 21600
-        elif weekly_entries_count < 80:
-            # schedule new poll in 1 hour
-            feed.poll_type = u'every hour'
-            feed.next_poll = poll + 3600
-        elif weekly_entries_count < 160:
-            # schedule new poll in 30 minutes
-            feed.poll_type = u'every 30 minutes'
-            feed.next_poll = poll + 1800
-        else:
+        day_entries, week_entries = store.execute(
+            Select((
+                Alias(Select(Count(Entry.id), And(Entry.feed == feed, Entry.updated >= poll - 86400))),
+                Alias(Select(Count(Entry.id), And(Entry.feed == feed, Entry.updated >= poll - 604800)))
+            ))
+        ).get_one()
+
+        poll_rate = 75600 / day_entries if day_entries else 259200 / week_entries if week_entries else 345600
+
+        if poll_rate < 1800:
             # schedule new poll in 15 minutes
             feed.poll_type = u'every 15 minutes'
             feed.next_poll = poll + 900
+        elif poll_rate < 3600:
+            # schedule new poll in 30 minutes
+            feed.poll_type = u'every 30 minutes'
+            feed.next_poll = poll + 1800
+        elif poll_rate < 10800:
+            # schedule new poll in 1 hour
+            feed.poll_type = u'every hour'
+            feed.next_poll = poll + 3600
+        elif poll_rate < 21600:
+            # schedule new poll in 3 hours
+            feed.poll_type = u'every 3 hours'
+            feed.next_poll = poll + 10800
+        elif poll_rate < 43200:
+            # schedule new poll in 6 hours
+            feed.poll_type = u'every 6 hours'
+            feed.next_poll = poll + 21600
+        elif poll_rate < 86400:
+            # schedule new poll in 12 hours
+            feed.poll_type = u'every 12 hours'
+            feed.next_poll = poll + 43200
+        elif poll_rate < 172800:
+            # schedule new poll in 1 day
+            feed.poll_type = u'every day'
+            feed.next_poll = poll + 86400
+        elif poll_rate < 259200:
+            # schedule new poll in 2 day
+            feed.poll_type = u'every 2 days'
+            feed.next_poll = poll + 172800
+        elif poll_rate < 345600:
+            # schedule new poll in 3 day
+            feed.poll_type = u'every 3 days'
+            feed.next_poll = poll + 259200
+        else:
+            # schedule new poll in 4 days
+            feed.poll_type = u'every 4 days'
+            feed.next_poll = poll + 345600
 
         feed.link = unicode(feed_link) if feed_link else None
         feed.etag = __as_unicode(data.get('etag'))

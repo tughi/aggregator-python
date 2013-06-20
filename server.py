@@ -118,9 +118,13 @@ class Scheduler(threading.Thread):
         while True:
             start_time = time.time()
 
-            store = Store(database)
-            aggregator.update_feeds(store)
-            store.close()
+            try:
+                store = Store(database)
+                aggregator.update_feeds(store)
+            except:
+                traceback.print_exc()
+            finally:
+                store.close()
 
             time.sleep(5 * 60 - time.time() + start_time)
 
