@@ -30,3 +30,37 @@ Planned features:
 	# install required packages
 	pip install -r requirements.txt
 
+### nginx + uWSGI Configuration:
+
+Requires:
+* nginx and uWSGI (with python support)
+* project clone in /var/www/aggregator
+
+/etc/nginx/sites-enabled/default
+
+	server {
+		listen   4280;
+		charset utf-8;
+		root /var/www/aggregator;
+		server_name 0.0.0.0;
+
+		location / {
+	#		auth_basic "Restricted Access";
+	#		auth_basic_user_file /var/www/aggregator/.htpasswd;
+
+			include uwsgi_params;
+			uwsgi_pass unix:/tmp/uwsgi.aggregator.socket;
+			uwsgi_param UWSGI_PYHOME /var/www/aggregator/environment;
+			uwsgi_param UWSGI_CHIDIR /var/www/aggregator;
+			uwsgi_param UWSGI_SCRIPT server;
+		}
+	}
+
+If you require HTTP Basic Authentication uncomment the two lines and make sure only root can edit the passwd file.
+
+/etc/uwsgi/apps-enabled/aggregator.ini
+
+	[uwsgi]
+	plugins=python
+	socket=/tmp/uwsgi.aggregator.socket
+	pythonpath=/var/www/aggregator
