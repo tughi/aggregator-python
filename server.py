@@ -158,3 +158,6 @@ if __name__ == '__main__':
         storm.tracer.install_tracer(PrintStatementTracer())
 
     run(server, host='0.0.0.0', port=4280, debug=aggregator.DEBUG)
+else:
+    # uWSGI support
+    application = server
