@@ -30,16 +30,23 @@ Planned features:
 	# install required packages
 	pip install -r requirements.txt
 
+### Polling
+
+To keep the database updated a cron job should **poll** every 5 minutes.
+
+	# crontab -e
+	*/5 * * * * curl http://localhost:8000/api/poll >/dev/null 2>&1
+
 ### nginx + uWSGI Configuration:
 
 Requires:
-* nginx and uWSGI (with python support)
+* nginx and uWSGI (with the python plugin)
 * project clone in /var/www/aggregator
 
 /etc/nginx/sites-enabled/default
 
 	server {
-		listen   4280;
+		listen   8000;
 		charset utf-8;
 		root /var/www/aggregator;
 		server_name 0.0.0.0;
@@ -56,7 +63,7 @@ Requires:
 		}
 	}
 
-If you require HTTP Basic Authentication uncomment the two lines and make sure only root can edit the passwd file.
+If you require HTTP Basic Authentication uncomment the two lines and make sure only *root* can edit the passwd file.
 
 /etc/uwsgi/apps-enabled/aggregator.ini
 
