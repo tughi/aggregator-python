@@ -1,8 +1,6 @@
 import inspect
 import json
-import threading
 import traceback
-import time
 from bottle import Bottle, response, request, static_file
 from persistence import open_database
 from storm.store import Store
@@ -108,6 +106,12 @@ def untag_entry(store, entry_id, tag):
     aggregator.untag_entry(store, entry_id, tag)
 
 
+@api.get('/poll')
+def poll(store):
+    aggregator.update_feeds(store)
+    return 'ok'
+
+
 server = Bottle()
 server.mount('/api', api)
 
@@ -122,28 +126,10 @@ def entries():
     return static_file('index.html', 'web')
 
 
-class Scheduler(threading.Thread):
-    def run(self):
-        while True:
-            start_time = time.time()
-
-            try:
-                store = Store(database)
-                aggregator.update_feeds(store)
-            except:
-                traceback.print_exc()
-            finally:
-                store.close()
-
-            time.sleep(5 * 60 - time.time() + start_time)
-
-
 if __name__ == '__main__':
     from bottle import run
 
     database = open_database()
-
-    Scheduler().start()
 
     aggregator.DEBUG = True
 
