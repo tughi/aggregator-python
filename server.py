@@ -9,7 +9,7 @@ from storm.store import Store
 import aggregator
 import re
 
-database = open_database()
+database = None
 
 api = Bottle(autojson=False)
 
@@ -141,6 +141,8 @@ class Scheduler(threading.Thread):
 if __name__ == '__main__':
     from bottle import run
 
+    database = open_database()
+
     Scheduler().start()
 
     aggregator.DEBUG = True
@@ -160,4 +162,10 @@ if __name__ == '__main__':
     run(server, host='0.0.0.0', port=4280, debug=aggregator.DEBUG)
 else:
     # uWSGI support
+    import os
+
+    os.chdir(os.path.dirname(__file__))
+
+    database = open_database()
+
     application = server
