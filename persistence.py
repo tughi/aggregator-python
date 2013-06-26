@@ -13,6 +13,7 @@ class Feed(object):
     url = storm.properties.Unicode()
     title = storm.properties.Unicode()
     link = storm.properties.Unicode()
+    favicon = storm.properties.Unicode()
     etag = storm.properties.Unicode()
     modified = storm.properties.Unicode()
     poll = storm.properties.Int()
@@ -20,10 +21,11 @@ class Feed(object):
     poll_type = storm.properties.Unicode()
     next_poll = storm.properties.Int()
 
-    def __init__(self, url, title, link, etag, modified, poll):
+    def __init__(self, url, title, link, favicon, etag, modified, poll):
         self.url = url
         self.title = unicode(title) if title else None
         self.link = unicode(link) if link else None
+        self.favicon = unicode(favicon) if favicon else None
         self.etag = unicode(etag) if etag else None
         self.modified = unicode(modified) if modified else None
         self.poll = poll
@@ -78,15 +80,17 @@ def open_database():
     database = storm.database.create_database('sqlite:aggregator.db')
 
     store = storm.store.Store(database)
+    dirty = False
 
     version = store.execute('PRAGMA user_version').get_one()[0]
-    if version == 0:
+    if version < 1:
         store.execute('''
             CREATE TABLE feed (
                 id INTEGER PRIMARY KEY,
                 url TEXT UNIQUE NOT NULL,
                 title TEXT NOT NULL,
                 link TEXT,
+                favicon TEXT,
                 etag TEXT,
                 modified TEXT,
                 poll INTEGER NOT NULL,
@@ -110,7 +114,16 @@ def open_database():
             )
         ''')
         store.execute('PRAGMA user_version = 1')
+        dirty = True
 
-    store.commit()
+    if version < 2:
+        store.execute('ALTER TABLE feed ADD COLUMN favicon TEXT')
+        store.execute('PRAGMA user_version = 2')
+        dirty = True
+
+    if dirty:
+        store.commit()
+
+    store.close()
 
     return database

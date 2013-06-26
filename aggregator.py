@@ -48,12 +48,23 @@ def add_feed(store, url, title):
     if not data:
         raise AggregatorException('failed to load the feed')
 
-    feed = store.add(Feed(url, title or data.feed.title, data.feed.get('link'), data.get('etag'), data.get('modified'), poll))
+    feed_link = data.feed.get('link')
+    feed_favicon = __get_favicon(feed_link) if feed_link else None
+
+    feed = store.add(Feed(url, title or data.feed.title, feed_link, feed_favicon, data.get('etag'), data.get('modified'), poll))
 
     for entry_data in data.entries:
         store.add(Entry(feed, poll, *__as_entry_data(entry_data, poll_time)))
 
     return feed.as_dict()
+
+
+def __get_favicon(feed_link):
+    data = feedparser.parse(feed_link)
+    for link in data.feed.get('links', []):
+        if link.rel == 'shortcut icon':
+            return link.href
+    return None
 
 
 def __as_entry_data(data, poll_time):
@@ -96,7 +107,7 @@ def update_feeds(store):
             continue
 
         feed_link = data.feed.get('link')
-        status = data.get('status', 0) 
+        status = data.get('status', 0)
 
         for entry_data in data.entries:
             guid, data, updated = __as_entry_data(entry_data, poll_time)
@@ -175,7 +186,8 @@ def __as_unicode(data):
 
 def delete_feed(store, feed_id):
     store.find(Entry, Entry.feed_id == feed_id).remove()
-    store.find(Feed, Entry.id == feed_id).remove()
+    store.find(Feed, Feed.id == feed_id).remove()
+    store.commit()
 
 
 def import_opml(store, opml_source):
@@ -185,6 +197,8 @@ def import_opml(store, opml_source):
         try:
             if outline.type == 'rss':
                 result.append(add_feed(store, outline.xmlUrl, outline.title))
+                store.commit()
+                # TODO: handle commit exceptions
         except AttributeError:
             if len(outline):
                 for o in outline:
