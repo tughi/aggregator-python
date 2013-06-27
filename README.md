@@ -35,7 +35,8 @@ Planned features:
 To keep the database updated a cron job should **poll** every 5 minutes.
 
 	# crontab -e
-	*/5 * * * * curl http://localhost:8000/api/poll >/dev/null 2>&1
+	*/5 * * * * curl http://localhost:8000/api/sync/feeds >/dev/null 2>&1
+	0   0 1 * * curl http://localhost:8000/api/sync/favicons >/dev/null 2>&1
 
 ### nginx + uWSGI Configuration:
 
