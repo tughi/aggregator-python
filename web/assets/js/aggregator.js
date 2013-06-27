@@ -40,13 +40,7 @@ function loadEntries() {
                 $entry.attr("id", entry.id);
                 $entry.find("#entry-title").html(entry.title);
                 $entry.find("#entry-link").attr("href", entry.link);
-
-                if (entry.feed_link) {
-                    var baseUrl = entry.feed_link.match(/^([^:]+:\/\/[^\/]+)/i);
-                    if (baseUrl) {
-                        $entry.find("#entry-link .favicon").css("background-image", "url('" + baseUrl[0] + "/favicon.ico')");
-                    }
-                }
+                $entry.find("#entry-link .favicon").css("background-image", "url('" + entry.feed_favicon + "')");
 
                 if (entry.content.length || entry.summary) {
                     $entry.data("content", entry.content.length ? entry.content : [entry.summary]);

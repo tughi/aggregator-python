@@ -2,6 +2,7 @@
 import time
 import json
 from collections import OrderedDict
+import urlparse
 
 from storm.expr import Update, Like, Not, Select, Count, And, Alias
 from persistence import Feed, Entry
@@ -49,7 +50,7 @@ def add_feed(store, url, title):
         raise AggregatorException('failed to load the feed')
 
     feed_link = data.feed.get('link')
-    feed_favicon = __get_favicon(feed_link) if feed_link else None
+    feed_favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(url)))
 
     feed = store.add(Feed(url, title or data.feed.title, feed_link, feed_favicon, data.get('etag'), data.get('modified'), poll))
 
@@ -64,7 +65,10 @@ def __get_favicon(feed_link):
     for link in data.feed.get('links', []):
         if link.rel == 'shortcut icon':
             return link.href
-    return None
+    for link in data.feed.get('links', []):
+        if link.rel == 'icon':
+            return link.href
+    return '{0}://{1}/favicon.ico'.format(*urlparse.urlparse(feed_link))
 
 
 def __as_entry_data(data, poll_time):
@@ -171,7 +175,7 @@ def update_feeds(store):
             feed.poll_type = u'every 4 days'
             feed.next_poll = poll + 345600
 
-        feed.link = unicode(feed_link) if feed_link else None
+        feed.link = __as_unicode(feed_link)
         feed.etag = __as_unicode(data.get('etag'))
         feed.modified = __as_unicode(data.get('modified'))
         feed.poll = poll
@@ -182,6 +186,12 @@ def update_feeds(store):
 
 def __as_unicode(data):
     return unicode(data) if data else None
+
+
+def update_favicons(store):
+    for feed in store.find(Feed):
+        feed.favicon = __as_unicode(__get_favicon(feed.link or '{0}://{1}'.format(*urlparse.urlparse(feed.url))))
+        store.commit()
 
 
 def delete_feed(store, feed_id):
@@ -224,12 +234,13 @@ def get_entries(store, include=None, exclude=None):
         for tag in exclude:
             selection.append(Not(Like(Entry.reader_tags, '%|{0}|%'.format(tag))))
 
-    for entry, feed_link in store.find((Entry, Feed.link), *selection).order_by(Entry.updated):
+    for entry, feed_link, feed_favicon in store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Entry.updated):
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
         entry_values['timestamp'] = entry.updated
         entry_values['tags'] = entry.get_tags()
         entry_values['feed_link'] = feed_link
+        entry_values['feed_favicon'] = feed_favicon
 
         result.append(entry_values)
 
@@ -242,6 +253,5 @@ def tag_entry(store, entry_id, tag):
 
 
 def untag_entry(store, entry_id, tag):
-    store.execute('UPDATE entry SET reader_tags = replace(reader_tags, \'|\' || ? || \'|\', \'|\') WHERE id = ?',
-                  (tag, entry_id))
+    store.execute('UPDATE entry SET reader_tags = replace(reader_tags, \'|\' || ? || \'|\', \'|\') WHERE id = ?', (tag, entry_id))
     store.commit()

@@ -5,7 +5,6 @@
     </head>
     <body>
         <outline text="appleinsider" title="appleinsider" type="rss" xmlUrl="http://www.appleinsider.com/appleinsider.rss" htmlUrl="http://appleinsider.com"/>
-        <outline text="Apps From The Bench" title="Apps From The Bench" type="rss" xmlUrl="http://appsfromthebench.wordpress.com/feed/" htmlUrl="http://appsfromthebench.wordpress.com"/>
         <outline text="ars technica" title="ars technica" type="rss" xmlUrl="http://arstechnica.com/index.rssx" htmlUrl="http://arstechnica.com"/>
         <outline text="coding horror" title="coding horror" type="rss" xmlUrl="http://feeds.feedburner.com/codinghorror/" htmlUrl="http://www.codinghorror.com/blog/"/>
         <outline text="gentoo" title="gentoo" type="rss" xmlUrl="http://www.gentoo.org/rdf/en/gentoo-news.rdf" htmlUrl="http://www.gentoo.org/"/>
@@ -20,7 +19,7 @@
         <outline text="ted dziuba" title="ted dziuba" type="rss" xmlUrl="http://teddziuba.com/atom.xml" htmlUrl="http://teddziuba.com/"/>
         <outline text="the verge" title="the verge" type="rss" xmlUrl="http://theverge.com/rss/index.xml" htmlUrl="http://www.theverge.com/"/>
         <outline text="Tughi" title="Tughi" type="rss" xmlUrl="http://www.tughi.com/feed" htmlUrl="http://www.tughi.com"/>
-        <outline text="What If?" title="What If?" type="rss" xmlUrl="http://what-if.xkcd.com/feed.atom" htmlUrl="http://what-if.xkcd.com"/>
+        <!--<outline text="What If?" title="What If?" type="rss" xmlUrl="http://what-if.xkcd.com/feed.atom" htmlUrl="http://what-if.xkcd.com"/>-->
         <outline title="autoblog" text="autoblog">
             <outline text="geneva motor show" title="geneva motor show" type="rss" xmlUrl="http://www.autoblog.com/category/geneva-motor-show/rss.xml" htmlUrl="http://www.autoblog.com"/>
             <outline text="paris motor show" title="paris motor show" type="rss" xmlUrl="http://www.autoblog.com/category/paris-motor-show/rss.xml" htmlUrl="http://www.autoblog.com"/>
@@ -37,10 +36,8 @@
             <outline text="code adventures" title="code adventures" type="rss" xmlUrl="http://devisnik.blogspot.com/feeds/posts/default" htmlUrl="http://devisnik.blogspot.com/"/>
             <outline text="connect-utb" title="connect-utb" type="rss" xmlUrl="http://connect-utb.com/index.php?format=feed&amp;type=rss" htmlUrl="http://connect-utb.com/index.php/component/content/?view=featured"/>
             <outline text="cyanogenmod" title="cyanogenmod" type="rss" xmlUrl="http://www.cyanogenmod.org/feed" htmlUrl="http://www.cyanogenmod.org"/>
-            <outline text="cyanogenmod" title="cyanogenmod" type="rss" xmlUrl="http://feeds.feedburner.com/cyanogenmod/web" htmlUrl="http://www.cyanogenmod.com/"/>
             <outline text="Droid Dev Stream" title="Droid Dev Stream" type="rss" xmlUrl="http://droiddevelop.tumblr.com/rss" htmlUrl="http://droiddevelop.tumblr.com/"/>
             <outline text="grokking android" title="grokking android" type="rss" xmlUrl="http://feeds.feedburner.com/GrokkingAndroid" htmlUrl="http://www.grokkingandroid.com"/>
-            <outline text="Matt Oakes" title="Matt Oakes" type="rss" xmlUrl="http://blog.matto1990.com/feed/" htmlUrl="http://blog.matto1990.com"/>
             <outline text="replica island" title="replica island" type="rss" xmlUrl="http://replicaisland.blogspot.com/feeds/posts/default" htmlUrl="http://replicaisland.blogspot.com/"/>
             <outline text="Romain Guy" title="Romain Guy" type="rss" xmlUrl="http://www.curious-creature.org/feed/" htmlUrl="http://www.curious-creature.org"/>
             <outline text="Tech Droid" title="Tech Droid" type="rss" xmlUrl="http://techdroid.kbeanie.com/feeds/posts/default" htmlUrl="http://techdroid.kbeanie.com/"/>
@@ -53,9 +50,6 @@
             <outline text="ptrthomas" title="ptrthomas" type="rss" xmlUrl="http://ptrthomas.wordpress.com/feed/" htmlUrl="http://ptrthomas.wordpress.com"/>
         </outline>
         <outline title="comics" text="comics">
-            <outline text="comedity" title="comedity" type="rss" xmlUrl="http://www.comedity.com/rss.php" htmlUrl="http://www.comedity.com"/>
-            <outline text="fortune's fools" title="fortune's fools" type="rss" xmlUrl="http://www.ffools.com/rss.php" htmlUrl="http://www.google.com/reader/view/feed%2Fhttp%3A%2F%2Fwww.ffools.com%2Frss.php"/>
-            <outline text="john &amp; john" title="john &amp; john" type="rss" xmlUrl="http://www.johnandjohn.nl/rss.php" htmlUrl="http://www.johnandjohn.nl"/>
             <outline text="questionable content" title="questionable content" type="rss" xmlUrl="http://www.questionablecontent.net/QCRSS.xml" htmlUrl="http://www.questionablecontent.net"/>
             <outline text="wulffmorgenthaler" title="wulffmorgenthaler" type="rss" xmlUrl="http://feeds.feedburner.com/wulffmorgenthaler" htmlUrl="http://wumo.com/?"/>
             <outline text="xkcd.com" title="xkcd.com" type="rss" xmlUrl="http://xkcd.com/atom.xml" htmlUrl="http://xkcd.com/"/>
