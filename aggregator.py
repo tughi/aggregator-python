@@ -62,12 +62,13 @@ def add_feed(store, url, title):
 
 def __get_favicon(feed_link):
     data = feedparser.parse(feed_link)
-    for link in data.feed.get('links', []):
-        if link.rel == 'shortcut icon':
-            return link.href
-    for link in data.feed.get('links', []):
-        if link.rel == 'icon':
-            return link.href
+    if data:
+        for link in data.feed.get('links', []):
+            if link.rel == 'shortcut icon':
+                return link.href
+        for link in data.feed.get('links', []):
+            if link.rel == 'icon':
+                return link.href
     return '{0}://{1}/favicon.ico'.format(*urlparse.urlparse(feed_link))
 
 
