@@ -40,7 +40,10 @@ function loadEntries() {
                 $entry.attr("id", entry.id);
                 $entry.find("#entry-title").html(entry.title);
                 $entry.find("#entry-link").attr("href", entry.link);
-                $entry.find("#entry-link .favicon").css("background-image", "url('" + entry.feed_favicon + "')");
+
+                if (entry.feed_favicon) {
+                    $entry.find("#entry-link .favicon").css("background-image", "url('" + entry.feed_favicon + "')");
+                }
 
                 if (entry.content.length || entry.summary) {
                     $entry.data("content", entry.content.length ? entry.content : [entry.summary]);
