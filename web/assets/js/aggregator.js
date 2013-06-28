@@ -60,11 +60,11 @@ function loadEntries() {
                     $entryDate.html(formatTime(entryTimestamp));
                 }
 
-                if (entry.tags.indexOf("read") >= 0) {
+                if ((entry.tags & 1) == 1) {
                     $entry.removeClass("unread");
                 }
 
-                if (entry.tags.indexOf("star") >= 0) {
+                if ((entry.tags & 2) == 2) {
                     $entry.find(".icon-star").removeClass("icon-white");
                 }
             });
@@ -128,7 +128,7 @@ function markReadEntry($entry, unread) {
     }
 
     $.ajax({
-        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("unread") ? "-" : "+") + "read",
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("unread") ? "-" : "+") + "1",
         method: "PUT",
         dataType: "json",
         fail: function () {
@@ -141,7 +141,7 @@ function toggleStarredEntry($entry) {
     var $icon = $entry.find(".icon-star").toggleClass("icon-white");
 
     $.ajax({
-        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($icon.hasClass("icon-white") ? "-" : "+") + "star",
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($icon.hasClass("icon-white") ? "-" : "+") + "2",
         method: "PUT",
         dataType: "json",
         fail: function () {

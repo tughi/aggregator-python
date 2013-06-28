@@ -47,8 +47,8 @@ class Entry(object):
     poll = storm.properties.Int()
     updated = storm.properties.Int()
     data = storm.properties.Chars()
-    reader_tags = storm.properties.Unicode()
-    server_tags = storm.properties.Unicode()
+    reader_tags = storm.properties.Int()
+    server_tags = storm.properties.Int()
 
     def __init__(self, feed, poll, guid, data, updated):
         self.feed = feed
@@ -61,29 +61,35 @@ class Entry(object):
         return json.loads(self.data)
 
     def get_tags(self):
-        tags = set()
+        return self.reader_tags | self.server_tags
 
-        reader_tags = self.reader_tags.strip('|')
-        if reader_tags:
-            tags.update(reader_tags.split('|'))
-
-        server_tags = self.server_tags.strip('|')
-        if server_tags:
-            tags.update(server_tags.split('|'))
-
-        return list(tags)
 
 Feed.entries = storm.references.ReferenceSet(Feed.id, Entry.feed_id)
+
+
+class Tag(object):
+    __storm_table__ = 'tag'
+    id = storm.properties.Int(primary=True)
+    name = storm.properties.Chars()
+    flag = storm.properties.Int()
+
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+        self.flag = 1 << (id - 1)
 
 
 def open_database():
     database = storm.database.create_database('sqlite:aggregator.db')
 
     store = storm.store.Store(database)
-    dirty = False
+
+    DATABASE_VERSION = 3
 
     version = store.execute('PRAGMA user_version').get_one()[0]
-    if version < 1:
+
+    if version == 0:
+        # create schema
         store.execute('''
             CREATE TABLE feed (
                 id INTEGER PRIMARY KEY,
@@ -104,24 +110,67 @@ def open_database():
                 id INTEGER PRIMARY KEY,
                 feed_id INTEGER NOT NULL,
                 guid TEXT NOT NULL,
-                poll INT NOT NULL,
+                poll INTEGER NOT NULL,
                 updated INTEGER,
                 data TEXT NOT NULL,
-                reader_tags TEXT NOT NULL DEFAULT '|',
-                server_tags TEXT NOT NULL DEFAULT '|',
-                UNIQUE (feed_id, guid)
+                reader_tags INTEGER NOT NULL DEFAULT 0,
+                server_tags INTEGER NOT NULL DEFAULT 0,
+                UNIQUE (feed_id, guid),
                 FOREIGN KEY (feed_id) REFERENCES feed (id)
             )
         ''')
-        store.execute('PRAGMA user_version = 1')
-        dirty = True
+        store.execute('''
+            CREATE TABLE tag (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                flag INTEGER UNIQUE NOT NULL
+            )
+        ''')
+        store.add(Tag(1, 'read'))
+        store.add(Tag(2, 'star'))
+    else:
+        # upgrade schema
+        if version <= 1:
+            store.execute('ALTER TABLE feed ADD COLUMN favicon TEXT')
 
-    if version < 2:
-        store.execute('ALTER TABLE feed ADD COLUMN favicon TEXT')
-        store.execute('PRAGMA user_version = 2')
-        dirty = True
+        if version <= 2:
+            store.execute('''
+                CREATE TABLE tag (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    flag INTEGER UNIQUE NOT NULL
+                )
+            ''')
+            store.add(Tag(1, 'read'))
+            store.add(Tag(2, 'star'))
 
-    if dirty:
+            # migrate the entry table
+            store.execute('ALTER TABLE entry RENAME TO old_entry')
+            store.execute('''
+                CREATE TABLE entry (
+                    id INTEGER PRIMARY KEY,
+                    feed_id INTEGER NOT NULL,
+                    guid TEXT NOT NULL,
+                    poll INTEGER NOT NULL,
+                    updated INTEGER,
+                    data TEXT NOT NULL,
+                    reader_tags INTEGER NOT NULL DEFAULT 0,
+                    server_tags INTEGER NOT NULL DEFAULT 0,
+                    UNIQUE (feed_id, guid),
+                    FOREIGN KEY (feed_id) REFERENCES feed (id)
+                )
+            ''')
+            store.execute('''
+                INSERT INTO entry
+                    SELECT
+                        id, feed_id, guid, poll, updated, data, like('%|read|%', reader_tags) | CASE like('%|star|%', reader_tags) WHEN 1 THEN 2 ELSE 0 END, 0
+                    FROM old_entry
+            ''')
+            store.execute('DROP TABLE old_entry')
+
+    if version != DATABASE_VERSION:
+        # update database version
+        store.execute('PRAGMA user_version = %d' % DATABASE_VERSION)
         store.commit()
 
     store.close()

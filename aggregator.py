@@ -227,13 +227,14 @@ def get_entries(store, include=None, exclude=None):
 
     selection = [Entry.feed_id == Feed.id]
 
-    if include:
-        for tag in include:
-            selection.append(Like(Entry.reader_tags, '%|{0}|%'.format(tag)))
-
-    if exclude:
-        for tag in exclude:
-            selection.append(Not(Like(Entry.reader_tags, '%|{0}|%'.format(tag))))
+    # TODO
+    # if include:
+    #     for tag in include:
+    #         selection.append(Like(Entry.reader_tags, '%|{0}|%'.format(tag)))
+    #
+    # if exclude:
+    #     for tag in exclude:
+    #         selection.append(Not(Like(Entry.reader_tags, '%|{0}|%'.format(tag))))
 
     for entry, feed_link, feed_favicon in store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Entry.updated):
         entry_values = entry.as_dict()
@@ -249,10 +250,10 @@ def get_entries(store, include=None, exclude=None):
 
 
 def tag_entry(store, entry_id, tag):
-    store.execute('UPDATE entry SET reader_tags = reader_tags || ? || \'|\' WHERE id = ? AND reader_tags NOT LIKE \'%|\' || ? || \'|%\'', (tag, entry_id, tag))
+    store.execute('UPDATE entry SET reader_tags = reader_tags | ? WHERE id = ?', (tag, entry_id))
     store.commit()
 
 
 def untag_entry(store, entry_id, tag):
-    store.execute('UPDATE entry SET reader_tags = replace(reader_tags, \'|\' || ? || \'|\', \'|\') WHERE id = ?', (tag, entry_id))
+    store.execute('UPDATE entry SET reader_tags = reader_tags & ~? WHERE id = ?', (tag, entry_id))
     store.commit()

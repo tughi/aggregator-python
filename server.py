@@ -96,12 +96,12 @@ def entries(store):
     return aggregator.get_entries(store)
 
 
-@api.put('/entries/<entry_id:int>/tags/+<tag:re:[\w\d]+>')
+@api.put('/entries/<entry_id:int>/tags/+<tag:int>')
 def tag_entry(store, entry_id, tag):
     aggregator.tag_entry(store, entry_id, tag)
 
 
-@api.put('/entries/<entry_id:int>/tags/-<tag:re:[\w\d]+>')
+@api.put('/entries/<entry_id:int>/tags/-<tag:int>')
 def untag_entry(store, entry_id, tag):
     aggregator.untag_entry(store, entry_id, tag)
 
