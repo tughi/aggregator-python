@@ -166,7 +166,7 @@ function toggleEntry($entry) {
     }
 
     $entry.toggleClass("open");
-    $("#entries > .open").not($entry).removeClass("open");
+    $("#entries > .open").not($entry).removeClass("open").find("#entry-content").empty();
     markReadEntry($entry);
 }
 
