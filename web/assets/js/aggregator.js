@@ -23,8 +23,12 @@ function loadEntries() {
 
     var data = {};
 
-    if (window.location.hash) {
-        data['tags'] = $.trim(window.location.hash.split('|')[0].replace(/[#\s]+/g, '').replace(/([\+\-])[\+\-]+/g, '$1'));
+    var hashMatch = /^#?(\d+)?(!(\d+))?/g.exec(window.location.hash);
+    if (hashMatch[1]) {
+        data['with_tags'] = hashMatch[1];
+        data['without_tags'] = hashMatch[3] || 0;
+    } else {
+        data['without_tags'] = hashMatch[3] || 1;
     }
 
     $.ajax({
@@ -123,16 +127,32 @@ function showEntry($entry) {
 function markReadEntry($entry, unread) {
     if (unread) {
         $entry.addClass("unread");
+        untagEntry($entry, 1);
     } else {
         $entry.removeClass("unread");
+        tagEntry($entry, 1);
     }
+}
 
+function tagEntry($entry, tag) {
     $.ajax({
-        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($entry.hasClass("unread") ? "-" : "+") + "1",
+        url: "/api/entries/" + $entry.attr("id") + "/tags",
+        data: {
+            tag: tag
+        },
         method: "PUT",
-        dataType: "json",
         fail: function () {
-            console.log("Failed to tag/untag entry as read: " + $entry.attr("id"));
+            console.log("Failed to set tag " + tag + " on entry " + $entry.attr("id"));
+        }
+    });
+}
+
+function untagEntry($entry, tag) {
+    $.ajax({
+        url: "/api/entries/" + $entry.attr("id") + "/tags/" + tag,
+        method: "DELETE",
+        fail: function () {
+            console.log("Failed to remove tag " + tag + " from entry: " + $entry.attr("id"));
         }
     });
 }
@@ -140,14 +160,11 @@ function markReadEntry($entry, unread) {
 function toggleStarredEntry($entry) {
     var $icon = $entry.find(".icon-star").toggleClass("icon-white");
 
-    $.ajax({
-        url: "/api/entries/" + $entry.attr("id") + "/tags/" + ($icon.hasClass("icon-white") ? "-" : "+") + "2",
-        method: "PUT",
-        dataType: "json",
-        fail: function () {
-            console.log("Failed to tag/untag entry as read: " + $entry.attr("id"));
-        }
-    });
+    if ($icon.hasClass("icon-white")) {
+        untagEntry($entry, 2);
+    } else {
+        tagEntry($entry, 2);
+    }
 }
 
 function toggleEntry($entry) {

@@ -5,7 +5,6 @@ from bottle import Bottle, response, request, static_file
 from persistence import open_database
 from storm.store import Store
 import aggregator
-import re
 
 database = None
 
@@ -85,23 +84,28 @@ def import_opml(store):
 
 @api.get('/entries')
 def entries(store):
-    tags = request.query.get('tags')
-    if tags:
-        tags = re.findall(re.compile(r'([+-])([^+-]+)'), tags)
-        return aggregator.get_entries(
-            store,
-            include=[tag for op, tag in tags if op == '+'],
-            exclude=[tag for op, tag in tags if op == '-'],
-        )
-    return aggregator.get_entries(store)
+    kwargs = {}
+
+    if 'with_tags' in request.query:
+        kwargs['with_tags'] = int(request.query.with_tags)
+
+    if 'without_tags' in request.query:
+        kwargs['without_tags'] = int(request.query.without_tags)
+
+    if 'limit' in request.query:
+        kwargs['limit'] = int(request.query.limit)
+
+        if 'offset' in request.query:
+            kwargs['offset'] = int(request.query.offset)
+
+    return aggregator.get_entries(store, **kwargs)
+
+@api.put('/entries/<entry_id:int>/tags')
+def tag_entry(store, entry_id):
+    aggregator.tag_entry(store, entry_id, int(request.forms.get('tag', 0)))
 
 
-@api.put('/entries/<entry_id:int>/tags/+<tag:int>')
-def tag_entry(store, entry_id, tag):
-    aggregator.tag_entry(store, entry_id, tag)
-
-
-@api.put('/entries/<entry_id:int>/tags/-<tag:int>')
+@api.delete('/entries/<entry_id:int>/tags/<tag:int>')
 def untag_entry(store, entry_id, tag):
     aggregator.untag_entry(store, entry_id, tag)
 

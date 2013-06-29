@@ -4,7 +4,7 @@ import json
 from collections import OrderedDict
 import urlparse
 
-from storm.expr import Update, Like, Not, Select, Count, And, Alias
+from storm.expr import Update, Select, Count, And, Alias, LShift
 from persistence import Feed, Entry
 import feedparser
 import opml
@@ -222,21 +222,28 @@ def import_opml(store, opml_source):
     return result
 
 
-def get_entries(store, include=None, exclude=None):
+class __BitAnd(LShift):
+    __slots__ = ()
+    oper = ' & '
+
+
+def get_entries(store, with_tags=None, without_tags=None, limit=50, offset=0):
     result = []
 
     selection = [Entry.feed_id == Feed.id]
 
-    # TODO
-    # if include:
-    #     for tag in include:
-    #         selection.append(Like(Entry.reader_tags, '%|{0}|%'.format(tag)))
-    #
-    # if exclude:
-    #     for tag in exclude:
-    #         selection.append(Not(Like(Entry.reader_tags, '%|{0}|%'.format(tag))))
+    if with_tags:
+        selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(with_tags)) == __as_signed_long(with_tags))
 
-    for entry, feed_link, feed_favicon in store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Entry.updated):
+    if without_tags:
+        selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(without_tags)) == 0)
+
+    query = store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Entry.updated)
+
+    if limit > 0:
+        query = query[offset:offset + limit]
+
+    for entry, feed_link, feed_favicon in query:
         entry_values = entry.as_dict()
         entry_values['id'] = entry.id
         entry_values['timestamp'] = entry.updated
@@ -249,11 +256,21 @@ def get_entries(store, include=None, exclude=None):
     return result
 
 
+def __as_signed_long(value):
+    # convert to signed 64bit signed
+    value &= 0xFFFFFFFFFFFFFFFF
+    if value > 0x7FFFFFFFFFFFFFFF:
+        value -= 0x10000000000000000
+    return value
+
+
 def tag_entry(store, entry_id, tag):
+    tag = __as_signed_long(tag)
     store.execute('UPDATE entry SET reader_tags = reader_tags | ? WHERE id = ?', (tag, entry_id))
     store.commit()
 
 
 def untag_entry(store, entry_id, tag):
-    store.execute('UPDATE entry SET reader_tags = reader_tags & ~? WHERE id = ?', (tag, entry_id))
+    mask = __as_signed_long(~tag)
+    store.execute('UPDATE entry SET reader_tags = reader_tags & ? WHERE id = ?', (mask, entry_id))
     store.commit()
