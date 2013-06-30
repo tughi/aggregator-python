@@ -86,11 +86,17 @@ def import_opml(store):
 def entries(store):
     kwargs = {}
 
+    if 'feed_id' in request.query:
+        kwargs['feed_id'] = int(request.query.feed_id)
+
     if 'with_tags' in request.query:
         kwargs['with_tags'] = int(request.query.with_tags)
 
     if 'without_tags' in request.query:
         kwargs['without_tags'] = int(request.query.without_tags)
+
+    if 'order' in request.query:
+        kwargs['order'] = request.query.order
 
     if 'limit' in request.query:
         kwargs['limit'] = int(request.query.limit)

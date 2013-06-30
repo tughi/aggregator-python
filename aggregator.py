@@ -4,7 +4,7 @@ import json
 from collections import OrderedDict
 import urlparse
 
-from storm.expr import Update, Select, Count, And, Alias, LShift
+from storm.expr import Update, Select, Count, And, Alias, LShift, Desc
 from persistence import Feed, Entry
 import feedparser
 import opml
@@ -227,10 +227,13 @@ class __BitAnd(LShift):
     oper = ' & '
 
 
-def get_entries(store, with_tags=None, without_tags=None, limit=50, offset=0):
+def get_entries(store, feed_id=None, with_tags=None, without_tags=None, order='<', limit=50, offset=0):
     result = []
 
     selection = [Entry.feed_id == Feed.id]
+
+    if feed_id:
+        selection.append(Feed.id == feed_id)
 
     if with_tags:
         selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(with_tags)) == __as_signed_long(with_tags))
@@ -238,7 +241,7 @@ def get_entries(store, with_tags=None, without_tags=None, limit=50, offset=0):
     if without_tags:
         selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(without_tags)) == 0)
 
-    query = store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Entry.updated)
+    query = store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Desc(Entry.updated) if order == '>' else Entry.updated)
 
     if limit > 0:
         query = query[offset:offset + limit]

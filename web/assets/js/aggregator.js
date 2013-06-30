@@ -23,12 +23,16 @@ function loadEntries() {
 
     var data = {};
 
-    var hashMatch = /^#?(\d+)?(!(\d+))?/g.exec(window.location.hash);
+    var hashMatch = /^#?(\d+)?(!(\d+))?([<>])?(\|(\d+)?)?/g.exec(window.location.hash);
     if (hashMatch[1]) {
         data['with_tags'] = hashMatch[1];
         data['without_tags'] = hashMatch[3] || 0;
     } else {
         data['without_tags'] = hashMatch[3] || 1;
+    }
+    data['order'] = hashMatch[4] || '<';
+    if (hashMatch[6]) {
+        data['feed_id'] = hashMatch[6];
     }
 
     $.ajax({
