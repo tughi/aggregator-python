@@ -110,14 +110,14 @@ def untag_entry(store, entry_id, tag):
     aggregator.untag_entry(store, entry_id, tag)
 
 
-@api.get('/sync/feeds')
-def sync_feeds(store):
+@api.get('/update/feeds')
+def update_feeds(store):
     aggregator.update_feeds(store)
     return 'ok'
 
 
-@api.get('/sync/favicons')
-def sync_favicons(store):
+@api.get('/update/favicons')
+def update_favicons(store):
     aggregator.update_favicons(store)
     return 'ok'
 
