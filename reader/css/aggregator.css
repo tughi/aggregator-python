@@ -1,0 +1,120 @@
+#entries-scroller {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+}
+
+#entries {
+    margin: 0;
+    padding: 20px;
+}
+
+@media (min-width: 840px) {
+    #entries {
+        width: 800px;
+        margin: 0 auto;
+        padding: 20px 0;
+    }
+}
+
+#entries > .entry {
+    position: relative;
+    border: 1px solid #e5e5e5;
+    margin-bottom: 1px;
+}
+
+#entries > .entry:last-child {
+    margin-bottom: 0;
+}
+
+#entries > .entry > #header {
+    background-color: #e5e5e5;
+    height: 30px;
+    line-height: 30px;
+}
+
+#entries > .entry > #header > #title-wrapper,
+#entries > .entry > #header > #toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+#entries > .entry > #header > #title-wrapper {
+    overflow: hidden;
+    padding: 0 30px;
+}
+
+#entries > .entry > #header > #title-wrapper > #title {
+    white-space: nowrap;
+}
+
+#entries > .entry.unread > #header > #title-wrapper > #title {
+    font-weight: bold;
+}
+
+#entries > .entry > #header > #date-wrapper {
+    display: table;
+    position: absolute;
+    top: 0;
+    right: 30px;
+    bottom: 0;
+    white-space: nowrap;
+}
+
+#entries > .entry > #header > #date-wrapper > #fadeout {
+    display: table-cell;
+    width: 30px;
+    background-color: transparent;
+    background-image: linear-gradient(to right, rgba(229, 229, 229, 0), #e5e5e5);
+}
+
+#entries > .entry > #header > #date-wrapper > #date {
+    display: table-cell;
+    padding: 0 4px;
+    background-color: #e5e5e5;
+}
+
+#entries > .entry.active {
+    border-color: #33b5e5;
+}
+
+#entries > .entry.active > #header > #date-wrapper > #date {
+    background-color: #33b5e5;
+}
+
+#entries > .entry.active > #header > #date-wrapper > #fadeout {
+    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+}
+
+#entries > .entry > #header > #favicon {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 30px;
+    background: transparent center no-repeat;
+    background-size: 16px;
+}
+
+#entries > .entry > #header > #star {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: #e5e5e5 url("../images/star-off.png") center no-repeat;
+    background-size: 16px;
+}
+
+#entries > .entry.starred > #header > #star {
+    background-image: url("../images/star-on.png");
+}
+
