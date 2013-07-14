@@ -30,8 +30,10 @@ $(function () {
             var entries = this.entries;
             entries.reset();
 
+            this.now = moment();
+
             var page = new Entries;
-            page.fetch({data: {ids: this.session.get("entries").slice(0, 20).join(",")}})
+            page.fetch({data: {ids: this.session.get("entries").slice(0, 50).join(",")}})
                 .done(function () {
                     page.each(function (entry) {
                         entries.add(entry);
@@ -44,7 +46,10 @@ $(function () {
 
             $entry.find("#title").text(entry.get("title"));
             $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + "/favicon.ico" + "')");
-            $entry.find("#date").text(moment(entry.get("updated")).format());
+
+            var date = moment(entry.get("updated"));
+            var dateFormat = this.now.year() != date.year() ? "MMM DD YYYY" : this.now.date() != date.date() ? "MMM DD" : "hh:mm a";
+            $entry.find("#date").text(date.format(dateFormat));
 
             this.$el.append($entry);
         }
