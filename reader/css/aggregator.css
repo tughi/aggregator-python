@@ -34,11 +34,23 @@ body {
     margin-bottom: 1px;
 }
 
+#entries > #loader {
+    line-height: 50px;
+    text-align: center;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+#entries > #loader:hover {
+    background-color: #f5f5f5;
+}
+
 #entries > .entry:last-child {
     margin-bottom: 0;
 }
 
 #entries > .entry > #header {
+    position: relative;
     background-color: #e5e5e5;
     height: 30px;
     line-height: 30px;
@@ -88,10 +100,22 @@ body {
     background-color: #e5e5e5;
 }
 
+#entries > .entry:hover > #header,
+#entries > .entry:hover > #header > #date-wrapper > #date,
+#entries > .entry:hover > #header > #star {
+    background-color: #f5f5f5;
+}
+
+#entries > .entry:hover > #header > #date-wrapper > #fadeout {
+    background-image: linear-gradient(to right, rgba(245, 245, 245, 0), #f5f5f5);
+}
+
 #entries > .entry.active {
     border-color: #33b5e5;
 }
 
+#entries > .entry.active > #header,
+#entries > .entry.active > #header > #star,
 #entries > .entry.active > #header > #date-wrapper > #date {
     background-color: #33b5e5;
 }
@@ -124,5 +148,19 @@ body {
 
 #entries > .entry.starred > #header > #star {
     background-image: url("../images/star-on.png");
+}
+
+#entries > .entry > #body {
+    position: relative;
+    display: none;
+    padding: 8px;
+}
+
+#entries > .entry.open > #body {
+    display: block;
+}
+
+#entries > .entry > #body > #content {
+    overflow: auto;
 }
 

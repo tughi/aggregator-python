@@ -16,4 +16,4 @@ def entries():
 
 
 if __name__ == '__main__':
-    run(server, port=8000)
+    run(server, host='0.0.0.0', port=8000)

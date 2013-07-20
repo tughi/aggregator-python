@@ -70,23 +70,58 @@ $(function () {
                     if ((page + 1) * PAGE_ENTRIES > entryIds.length) {
                         // no more entries to load
                         view.$loader.hide();
+                    } else {
+                        view.$loader.text((entryIds.length - (page + 1) * PAGE_ENTRIES) + " more");
                     }
                 });
         },
 
         render: function (entry) {
-            var $entry = this.$entryTemplate.clone();
+            var view = this;
+            var $entry = view.$entryTemplate.clone();
 
+            if (entry.get("content").length || entry.get("summary")) {
+                $entry.data("content", entry.get("content").length ? entry.get("content") : [entry.get("summary")]);
+            }
+
+            $entry.attr("id", entry.get("id"));
             $entry.find("#title").text(entry.get("title"));
-            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + "/favicon.ico" + "')");
+            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + view.session.get("favicons")[entry.get("feed_id")] + "')");
 
             var date = moment(entry.get("updated"));
-            var dateFormat = this.now.year() != date.year() ? "MMM DD YYYY" : this.now.date() == date.date() && this.now.month() == date.month() ? "hh:mm a" : "MMM DD";
+            var now = view.now;
+            var dateFormat = now.year() != date.year() ? "MMM DD YYYY" : now.date() == date.date() && now.month() == date.month() ? "hh:mm a" : "MMM DD";
             $entry.find("#date").text(date.format(dateFormat));
 
+            var tags = entry.get("tags");
+            if ((tags & 1) == 0) {
+                $entry.addClass("unread");
+            }
+            if ((tags & 2) == 2) {
+                $entry.addClass("starred");
+            }
+
+            $entry.find("> #header > #toggle").click(function () {
+                view.toggleOpen($entry);
+            });
+
             this.$loader.before($entry);
+        },
+
+        toggleOpen: function ($entry) {
+            this.$el.children(".active").removeClass("active");
+            this.$el.children(".open").not($entry).removeClass("open").find("#content").empty();
+            $entry.addClass("active").toggleClass("open");
+
+            var content = $entry.data("content");
+            var $content = $entry.find("#content:empty");
+            if (content && $content.length) {
+                for (var index in content) {
+                    $content.append(content[index].value);
+                }
+            }
         }
     });
 
-    new EntriesView();
+    var view = new EntriesView();
 });

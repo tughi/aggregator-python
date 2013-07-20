@@ -37,16 +37,23 @@ def session():
     select = ' ORDER BY '.join((select, 'updated' if request.query.get('order', '<') == '<' else 'updated DESC'))
 
     entries = []
+    favicons = {}
 
     with content.open_connection() as connection:
         for row in connection.execute(select, whereArgs):
             entries.append(row[0])
 
-    return {'entries': entries}
+        for row in connection.execute("SELECT id, favicon FROM feed"):
+            favicons[row[0]] = row[1]
+
+    return {
+        'favicons': favicons,
+        'entries': entries
+    }
 
 
 @reader.get('/entries')
-def session():
+def entries():
     # validate query
     entries = OrderedDict()
     for entry_id in request.query.get('ids').split(','):
@@ -55,7 +62,7 @@ def session():
 
     if entries:
         with content.open_connection() as connection:
-            select = 'SELECT data, id, feed_id, updated, reader_tags & server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
+            select = 'SELECT data, id, feed_id, updated, reader_tags | server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
             for row in connection.execute(select):
                 entry = json.loads(unicode(row[0]))
                 entry_id = entry['id'] = row[1]
