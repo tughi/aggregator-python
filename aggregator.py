@@ -4,10 +4,9 @@ import json
 from collections import OrderedDict
 import urlparse
 
-from storm.expr import Update, Select, Count, And, Alias, LShift, Desc
-from persistence import Feed, Entry
 import feedparser
 import opml
+import json
 
 
 DEBUG = False
@@ -222,35 +221,42 @@ def import_opml(store, opml_source):
     return result
 
 
-class __BitAnd(LShift):
-    __slots__ = ()
-    oper = ' & '
-
-
 def get_entries(store, feed_id=None, with_tags=None, without_tags=None, order='<', limit=50, offset=0):
     result = []
 
-    selection = [Entry.feed_id == Feed.id]
+    selection = []
+    selectionArgs = []
 
     if feed_id:
-        selection.append(Feed.id == feed_id)
+        selection.append('f.id = ?')
+        selectionArgs.append(feed_id)
 
     if with_tags:
-        selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(with_tags)) == __as_signed_long(with_tags))
+        selection.append('e.reader_tags & ? = ?')
+        selectionArgs.append(__as_signed_long(with_tags))
+        selectionArgs.append(__as_signed_long(with_tags))
 
     if without_tags:
-        selection.append(__BitAnd(Entry.reader_tags, __as_signed_long(without_tags)) == 0)
+        selection.append('e.reader_tags & ? = 0')
+        selectionArgs.append(__as_signed_long(without_tags))
 
-    query = store.find((Entry, Feed.link, Feed.favicon), *selection).order_by(Desc(Entry.updated) if order == '>' else Entry.updated)
+    query = 'SELECT e.id, e.updated, e.data, e.reader_tags | e.server_tags, f.id, f.link, f.favicon FROM entry e LEFT JOIN feed f ON e.feed_id = f.id'
+
+    if selection:
+        query = ' WHERE '.join((query, ' AND '.join(selection)))
+
+    query = ' ORDER BY '.join((query, 'e.updated DESC' if order == '>' else 'e.updated'))
 
     if limit > 0:
-        query = query[offset:offset + limit]
+        query = ' '.join((query, 'LIMIT %d OFFSET %d' % (limit, offset)))
 
-    for entry, feed_link, feed_favicon in query:
-        entry_values = entry.as_dict()
-        entry_values['id'] = entry.id
-        entry_values['timestamp'] = entry.updated
-        entry_values['tags'] = entry.get_tags()
+    print query
+
+    for entry_id, entry_timestamp, entry_data, entry_tags, feed_id, feed_link, feed_favicon in store.execute(query, selectionArgs):
+        entry_values = json.loads(unicode(entry_data))
+        entry_values['id'] = entry_id
+        entry_values['timestamp'] = entry_timestamp
+        entry_values['tags'] = entry_tags
         entry_values['feed_link'] = feed_link
         entry_values['feed_favicon'] = feed_favicon
 

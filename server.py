@@ -2,8 +2,7 @@ import inspect
 import json
 import traceback
 from bottle import Bottle, response, request, static_file
-from persistence import open_database
-from storm.store import Store
+from persistence import open_connection
 import aggregator
 
 database = None
@@ -24,7 +23,9 @@ class ServicePlugin(object):
             response.headers['Content-Type'] = 'application/json'
 
             if requires_store:
-                store = Store(database)
+                store = open_connection()
+
+                store.execute('BEGIN')
 
                 try:
                     result = callback(store, *args, **kwargs)
@@ -42,8 +43,8 @@ class ServicePlugin(object):
                         'message': e.message
                     }
                 else:
-                    if store._dirty:
-                        store.commit()
+                    # TODO: detect if commit is needed
+                    store.execute('COMMIT')
                 finally:
                     store.close()
             else:
@@ -145,21 +146,9 @@ def entries():
 if __name__ == '__main__':
     from bottle import run
 
-    database = open_database()
+    database = open_connection()
 
     aggregator.DEBUG = True
-
-    if aggregator.DEBUG:
-        import storm.tracer
-
-        class PrintStatementTracer(object):
-            def connection_raw_execute(self, connection, raw_cursor, statement, params):
-                if params:
-                    for param in params:
-                        statement = statement.replace('?', repr(param.get() if hasattr(param, 'get') else param), 1)
-                print('STORM: %s' % statement)
-
-        storm.tracer.install_tracer(PrintStatementTracer())
 
     run(server, host='0.0.0.0', port=4280, debug=aggregator.DEBUG)
 else:
@@ -168,6 +157,6 @@ else:
 
     os.chdir(os.path.dirname(__file__))
 
-    database = open_database()
+    database = open_connection()
 
     application = server
