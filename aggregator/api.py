@@ -3,13 +3,16 @@ import time
 import json
 from collections import OrderedDict
 import urlparse
+from aggregator import content
+from bottle import Bottle
 
 import feedparser
 import opml
-import json
 
 
-DEBUG = False
+api = Bottle()
+
+DEBUG = True
 
 
 class AggregatorException(BaseException):
@@ -94,94 +97,104 @@ def __as_content(data):
     ]) if data else None
 
 
-def update_feeds(store):
-    for feed in store.find(Feed, Feed.next_poll <= time.mktime(time.localtime())):
+@api.get('/update/feeds')
+def update_feeds():
+    connection = content.open_connection()
+
+    poll_time = time.localtime()
+    poll = time.mktime(poll_time)
+
+    for feed_id, feed_url, feed_etag, feed_modified in connection.execute('SELECT id, url, etag, modified FROM feed WHERE next_poll <= ?', [poll]):
         if DEBUG:
-            print('Updating feed: %s' % feed.url)
+            print('Updating feed: %s' % feed_url)
 
         poll_time = time.localtime()
         poll = time.mktime(poll_time)
 
-        data = feedparser.parse(feed.url, etag=feed.etag, modified=feed.modified)
+        data = feedparser.parse(feed_url, etag=feed_etag, modified=feed_modified)
 
         if not data:
             if DEBUG:
                 print('ERROR: Failed to parse feed')
-            feed.poll_status = -1
-            continue
+
+            connection.execute('UPDATE feed SET poll_status = ? WHERE id = ?', [feed_id, -1])
+
+            continue # with next feed
 
         feed_link = data.feed.get('link')
         status = data.get('status', 0)
 
         for entry_data in data.entries:
             guid, data, updated = __as_entry_data(entry_data, poll_time)
-            values = {
-                'data': json.dumps(data)
-            }
-            if updated != poll:
-                values['updated'] = updated
-            result = store.execute(Update(values, (Entry.feed_id == feed.id) & (Entry.guid == guid), Entry))
-            if not result.rowcount:
-                # not updated since entry doesn't exist
-                store.add(Entry(feed, poll, guid, data, updated))
 
-        day_entries, week_entries = store.execute(
-            Select((
-                Alias(Select(Count(Entry.id), And(Entry.feed == feed, Entry.updated >= poll - 86400))),
-                Alias(Select(Count(Entry.id), And(Entry.feed == feed, Entry.updated >= poll - 604800)))
-            ))
-        ).get_one()
+            update_setters = ['data = ?']
+            update_args = [json.dumps(data)]
+
+            if updated != poll:
+                update_setters.append('updated = ?')
+                update_args.append(updated)
+
+            update_args.append(feed_id)
+            update_args.append(guid)
+            update_query = ' '.join(['UPDATE entry SET', ', '.join(update_setters), 'WHERE feed_id = ? AND guid = ?'])
+            if connection.execute(update_query, update_args).rowcount == 0:
+                # entry doesn't exist
+                connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [
+                    feed_id,
+                    guid,
+                    poll,
+                    updated,
+                    update_args[0]
+                ])
+
+        day_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 86400]).fetchone()[0]
+        week_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 604800]).fetchone()[0]
 
         poll_rate = 75600 / day_entries if day_entries else 259200 / week_entries if week_entries else 345600
 
         if poll_rate < 1800:
             # schedule new poll in 15 minutes
-            feed.poll_type = u'every 15 minutes'
-            feed.next_poll = poll + 900
+            feed_poll_type = u'every 15 minutes'
+            feed_next_poll = poll + 900
         elif poll_rate < 3600:
             # schedule new poll in 30 minutes
-            feed.poll_type = u'every 30 minutes'
-            feed.next_poll = poll + 1800
+            feed_poll_type = u'every 30 minutes'
+            feed_next_poll = poll + 1800
         elif poll_rate < 10800:
             # schedule new poll in 1 hour
-            feed.poll_type = u'every hour'
-            feed.next_poll = poll + 3600
+            feed_poll_type = u'every hour'
+            feed_next_poll = poll + 3600
         elif poll_rate < 21600:
             # schedule new poll in 3 hours
-            feed.poll_type = u'every 3 hours'
-            feed.next_poll = poll + 10800
+            feed_poll_type = u'every 3 hours'
+            feed_next_poll = poll + 10800
         elif poll_rate < 43200:
             # schedule new poll in 6 hours
-            feed.poll_type = u'every 6 hours'
-            feed.next_poll = poll + 21600
+            feed_poll_type = u'every 6 hours'
+            feed_next_poll = poll + 21600
         elif poll_rate < 86400:
             # schedule new poll in 12 hours
-            feed.poll_type = u'every 12 hours'
-            feed.next_poll = poll + 43200
+            feed_poll_type = u'every 12 hours'
+            feed_next_poll = poll + 43200
         elif poll_rate < 172800:
             # schedule new poll in 1 day
-            feed.poll_type = u'every day'
-            feed.next_poll = poll + 86400
+            feed_poll_type = u'every day'
+            feed_next_poll = poll + 86400
         elif poll_rate < 259200:
             # schedule new poll in 2 day
-            feed.poll_type = u'every 2 days'
-            feed.next_poll = poll + 172800
+            feed_poll_type = u'every 2 days'
+            feed_next_poll = poll + 172800
         elif poll_rate < 345600:
             # schedule new poll in 3 day
-            feed.poll_type = u'every 3 days'
-            feed.next_poll = poll + 259200
+            feed_poll_type = u'every 3 days'
+            feed_next_poll = poll + 259200
         else:
             # schedule new poll in 4 days
-            feed.poll_type = u'every 4 days'
-            feed.next_poll = poll + 345600
+            feed_poll_type = u'every 4 days'
+            feed_next_poll = poll + 345600
 
-        feed.link = __as_unicode(feed_link)
-        feed.etag = __as_unicode(data.get('etag'))
-        feed.modified = __as_unicode(data.get('modified'))
-        feed.poll = poll
-        feed.poll_status = status
-
-        store.commit()
+        update_query = 'UPDATE feed SET poll_type = ?, next_poll = ?, link = ?, etag = ?, modified = ?, poll = ?, poll_status = ? WHERE id = ?'
+        connection.execute(update_query, [feed_poll_type, feed_next_poll, feed_link, data.get('etag'), data.get('modified'), poll, status, feed_id])
 
 
 def __as_unicode(data):

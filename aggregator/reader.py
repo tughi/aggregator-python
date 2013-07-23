@@ -39,11 +39,12 @@ def session():
     entries = []
     favicons = {}
 
-    with content.open_connection() as connection:
-        for row in connection.execute(select, whereArgs):
+    connection = content.open_connection()
+    with content.transaction(connection) as cursor:
+        for row in cursor.execute(select, whereArgs):
             entries.append(row[0])
 
-        for row in connection.execute("SELECT id, favicon FROM feed"):
+        for row in cursor.execute("SELECT id, favicon FROM feed"):
             favicons[row[0]] = row[1]
 
     return {
@@ -61,15 +62,16 @@ def entries():
             entries[str(entry_id)] = None
 
     if entries:
-        with content.open_connection() as connection:
-            select = 'SELECT data, id, feed_id, updated, reader_tags | server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
-            for row in connection.execute(select):
-                entry = json.loads(unicode(row[0]))
-                entry_id = entry['id'] = row[1]
-                entry['feed_id'] = row[2]
-                entry['updated'] = row[3] * 1000
-                entry['tags'] = row[4]
+        connection = content.open_connection()
 
-                entries[str(entry_id)] = entry
+        select = 'SELECT data, id, feed_id, updated, reader_tags | server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
+        for entry_data, entry_id, feed_id, updated, tags in connection.execute(select):
+            entry = json.loads(unicode(entry_data))
+            entry['id'] = entry_id
+            entry['feed_id'] = feed_id
+            entry['updated'] = updated * 1000
+            entry['tags'] = tags
+
+            entries[str(entry_id)] = entry
 
     return json.dumps(entries.values())

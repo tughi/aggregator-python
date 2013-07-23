@@ -1,7 +1,9 @@
 from bottle import Bottle, run, static_file
+from aggregator.api import api
 from aggregator.reader import reader
 
 server = Bottle()
+server.mount('/api', api)
 server.mount('/reader', reader)
 
 

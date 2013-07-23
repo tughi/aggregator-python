@@ -2,7 +2,7 @@ import inspect
 import json
 import traceback
 from bottle import Bottle, response, request, static_file
-from persistence import open_connection
+from aggregator.content import open_connection
 import aggregator
 
 database = None
@@ -106,6 +106,7 @@ def entries(store):
             kwargs['offset'] = int(request.query.offset)
 
     return aggregator.get_entries(store, **kwargs)
+
 
 @api.put('/entries/<entry_id:int>/tags')
 def tag_entry(store, entry_id):
