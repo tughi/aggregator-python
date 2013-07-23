@@ -6,9 +6,6 @@
 # database
 *.db
 
-# jdbc driver
-/jdbc
-
 # pycharm files
 /.idea
 
