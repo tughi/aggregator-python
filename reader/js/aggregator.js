@@ -38,6 +38,7 @@ $(function () {
         },
 
         refresh: function () {
+            this.$el.children(".entry").remove();
             this.currentPage = -1;
             this.entries.reset();
 
@@ -120,8 +121,99 @@ $(function () {
                     $content.append(content[index].value);
                 }
             }
+        },
+
+        activateNext: function () {
+            var $activeEntry = this.$el.children(".active");
+            var $nextEntry;
+
+            if ($activeEntry.length) {
+                $nextEntry = $activeEntry.next(".entry");
+                if (!$nextEntry.length) {
+                    // already the last entry
+                    return $activeEntry;
+                }
+                $activeEntry.removeClass("active");
+            } else {
+                $nextEntry = this.$el.children(".entry:first");
+            }
+
+            $nextEntry.addClass("active");
+            return $nextEntry;
+        },
+
+        activatePrev: function () {
+            var $activeEntry = this.$el.children(".active");
+
+            if ($activeEntry.length) {
+                var $prevEntry = $activeEntry.prev(".entry");
+                if ($prevEntry.length) {
+                    $activeEntry.removeClass("active");
+                    $prevEntry.addClass("active");
+
+                    return $prevEntry;
+                }
+            }
+
+            return $activeEntry;
+        },
+
+        openNext: function () {
+            var $activeEntry = this.activateNext();
+
+            this.$el.children(".open").not($activeEntry).removeClass("open");
+
+            if (!$activeEntry.hasClass("open")) {
+                this.toggleOpen($activeEntry);
+            }
+        },
+
+        openPrev: function () {
+            var $activeEntry = this.activatePrev();
+
+            this.$el.children(".open").not($activeEntry).removeClass("open");
+
+            if (!$activeEntry.hasClass("open")) {
+                this.toggleOpen($activeEntry);
+            }
         }
     });
 
     var view = new EntriesView();
+
+    $(document).on("keydown", function (event) {
+        switch (event.which) {
+            case 74: // j
+                view.openNext();
+                break;
+            case 75: // k
+                view.openPrev();
+                break;
+            case 77: // m
+                view.toggleRead();
+                break;
+            case 78: // n
+                view.activateNext();
+                break;
+            case 79: // o
+                view.toggleOpen();
+                break;
+            case 80: // p
+                view.activatePrev();
+                break;
+            case 82: // r
+                view.session.clear();
+                view.session.fetch();
+                break;
+            case 83: // s
+                view.toggleStar();
+                break;
+            case 86: // v
+                // TODO: window.open($activeEntry.find(".accordion-heading #entry-link").attr("href"));
+                // break;
+            default:
+                console.log("unhandled keydown: " + event.which);
+        }
+    });
+
 });
