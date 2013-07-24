@@ -201,10 +201,20 @@ def __as_unicode(data):
     return unicode(data) if data else None
 
 
-def update_favicons(store):
-    for feed in store.find(Feed):
-        feed.favicon = __as_unicode(__get_favicon(feed.link or '{0}://{1}'.format(*urlparse.urlparse(feed.url))))
-        store.commit()
+@api.get('/update/favicons')
+def update_favicons():
+    connection = content.open_connection()
+    with content.transaction(connection) as cursor:
+        for feed_id, feed_url, feed_link in cursor.execute('SELECT id, url, link FROM feed'):
+            if DEBUG:
+                print('Updating favicon for: %s' % feed_url)
+
+            favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(feed_url)))
+
+            if DEBUG:
+                print('Detected favicon: %s' % favicon)
+
+            connection.execute('UPDATE feed SET favicon = ? WHERE id = ?', [favicon, feed_id])
 
 
 def delete_feed(store, feed_id):
