@@ -4,15 +4,6 @@ body {
     color: #333333;
 }
 
-#entries-scroller {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    overflow: auto;
-}
-
 #entries {
     margin: 0;
     padding: 20px;

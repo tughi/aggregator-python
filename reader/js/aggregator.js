@@ -58,23 +58,25 @@ $(function () {
 
             var entryIds = view.session.get("entries");
 
-            var pageEntries = new Entries;
-            var pageEntryIds = entryIds.slice(page * PAGE_ENTRIES, Math.min((page + 1) * PAGE_ENTRIES, entryIds.length));
-            pageEntries.fetch({data: {ids: pageEntryIds.join(",")}})
-                .done(function () {
-                    pageEntries.each(function (entry) {
-                        view.entries.add(entry);
+            if (page <= entryIds.length / PAGE_ENTRIES) {
+                var pageEntries = new Entries;
+                var pageEntryIds = entryIds.slice(page * PAGE_ENTRIES, Math.min((page + 1) * PAGE_ENTRIES, entryIds.length));
+                pageEntries.fetch({data: {ids: pageEntryIds.join(",")}})
+                    .done(function () {
+                        pageEntries.each(function (entry) {
+                            view.entries.add(entry);
+                        });
+
+                        view.currentPage = page;
+
+                        if ((page + 1) * PAGE_ENTRIES > entryIds.length) {
+                            // no more entries to load
+                            view.$loader.hide();
+                        } else {
+                            view.$loader.show().text((entryIds.length - (page + 1) * PAGE_ENTRIES) + " more");
+                        }
                     });
-
-                    view.currentPage = page;
-
-                    if ((page + 1) * PAGE_ENTRIES > entryIds.length) {
-                        // no more entries to load
-                        view.$loader.hide();
-                    } else {
-                        view.$loader.text((entryIds.length - (page + 1) * PAGE_ENTRIES) + " more");
-                    }
-                });
+            }
         },
 
         render: function (entry) {
@@ -104,6 +106,7 @@ $(function () {
 
             $entry.find("> #header > #toggle").click(function () {
                 view.toggleOpen($entry);
+                view.scrollToActive();
             });
 
             this.$loader.before($entry);
@@ -131,6 +134,9 @@ $(function () {
                 $nextEntry = $activeEntry.next(".entry");
                 if (!$nextEntry.length) {
                     // already the last entry
+
+                    this.fetchNextPage();
+
                     return $activeEntry;
                 }
                 $activeEntry.removeClass("active");
@@ -176,6 +182,28 @@ $(function () {
             if (!$activeEntry.hasClass("open")) {
                 this.toggleOpen($activeEntry);
             }
+        },
+
+        scrollToActive: function () {
+            var $entry = this.$el.children(".active");
+
+            if ($entry.length) {
+                var $body = this.$el.closest("body");
+                var bodyScrollTop = $body.scrollTop();
+
+                var entryTop = $entry.position().top;
+
+                if (entryTop < bodyScrollTop) {
+                    $body.scrollTop(entryTop);
+                } else {
+                    var windowHeight = $(window).height();
+                    var entryHeight = $entry.height();
+
+                    if (entryTop + entryHeight - bodyScrollTop > windowHeight) {
+                        $body.scrollTop(entryTop - 4 - Math.max(windowHeight - entryHeight - 8, 0));
+                    }
+                }
+            }
         }
     });
 
@@ -185,21 +213,29 @@ $(function () {
         switch (event.which) {
             case 74: // j
                 view.openNext();
+                view.scrollToActive();
                 break;
             case 75: // k
                 view.openPrev();
+                view.scrollToActive();
                 break;
             case 77: // m
                 view.toggleRead();
                 break;
             case 78: // n
                 view.activateNext();
+                view.scrollToActive();
                 break;
             case 79: // o
-                view.toggleOpen();
+                var $entry = view.$el.children(".active");
+                if ($entry.length) {
+                    view.toggleOpen($entry);
+                    view.scrollToActive();
+                }
                 break;
             case 80: // p
                 view.activatePrev();
+                view.scrollToActive();
                 break;
             case 82: // r
                 view.session.clear();
