@@ -37,18 +37,22 @@ def session():
     select = ' ORDER BY '.join((select, 'updated' if request.query.get('order', '<') == '<' else 'updated DESC'))
 
     entries = []
-    favicons = {}
+    feeds = {}
 
     connection = content.open_connection()
     with content.transaction(connection) as cursor:
-        for row in cursor.execute(select, whereArgs):
-            entries.append(row[0])
+        for id, in cursor.execute(select, whereArgs):
+            entries.append(id)
 
-        for row in cursor.execute("SELECT id, favicon FROM feed"):
-            favicons[row[0]] = row[1]
+        for id, title, favicon, count in cursor.execute("SELECT feed.id, title, favicon, count(1) FROM feed LEFT JOIN entry on feed.id = feed_id WHERE (reader_tags & 1) = 1 GROUP BY feed_id"):
+            feeds[id] = {
+                'title': title,
+                'favicon': favicon,
+                'count': count,
+            }
 
     return {
-        'favicons': favicons,
+        'feeds': feeds,
         'entries': entries
     }
 

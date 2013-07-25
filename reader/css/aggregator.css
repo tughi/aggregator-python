@@ -4,6 +4,73 @@ body {
     color: #333333;
 }
 
+@media (max-width: 1200px) {
+    #feeds-container {
+        display: none;
+    }
+}
+
+@media (min-width: 1200px) {
+    #feeds-container {
+        position: fixed;
+        top: 0;
+        right: 50%;
+        bottom: 0;
+    }
+
+    #feeds {
+        position: relative;
+        width: 200px;
+        height: 100%;
+        margin-right: 420px;
+        overflow: auto;
+    }
+}
+
+#feeds > .feed {
+    position: relative;
+    margin-bottom: 1px;
+    height: 30px;
+    line-height: 30px;
+    white-space: nowrap;
+}
+
+#feeds > .feed:first-child {
+    margin-top: 20px;
+}
+
+#feeds > .feed:last-child {
+    margin-bottom: 20px;
+}
+
+#feeds > .feed > #title-wrapper {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    margin-bottom: 1px;
+    background-color: #e5e5e5;
+}
+
+#feeds > .feed > #count-wrapper {
+    display: table;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#feeds > .feed > #count-wrapper > #fadeout {
+    display: table-cell;
+    width: 30px;
+    background-color: transparent;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), white);
+}
+
+#feeds > .feed > #count-wrapper > #count {
+    display: table-cell;
+    background-color: white;
+    padding: 0 4px;
+}
+
 #entries {
     margin: 0;
     padding: 20px;
@@ -30,10 +97,6 @@ body {
     text-align: center;
     margin-bottom: 0;
     cursor: pointer;
-}
-
-#entries > #loader:hover {
-    background-color: #f5f5f5;
 }
 
 #entries > .entry:last-child {
@@ -91,6 +154,7 @@ body {
     background-color: #e5e5e5;
 }
 
+#entries > #loader:hover,
 #entries > .entry:hover > #header,
 #entries > .entry:hover > #header > #date-wrapper > #date,
 #entries > .entry:hover > #header > #star {

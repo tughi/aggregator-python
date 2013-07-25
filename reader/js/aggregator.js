@@ -11,6 +11,16 @@ $(function () {
     var Session = Backbone.Model.extend({
         url: "/reader/session",
 
+        hasFeeds: function () {
+            var feeds = this.get("feeds");
+            if (feeds) {
+                for (var key in feeds) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
         hasEntries: function () {
             var entries = this.get("entries");
             return entries && entries.length;
@@ -19,34 +29,57 @@ $(function () {
 
     var EntriesView = Backbone.View.extend({
         el: $("#entries"),
+        $feeds: $("#feeds"),
         session: new Session,
         entries: new Entries,
 
         initialize: function () {
             var view = this;
 
-            view.$entryTemplate = this.$("> #entry-template").removeAttr("id").remove();
+            view.$feedTemplate = view.$feeds.children("#feed-template").removeAttr("id").remove();
+            view.$entryTemplate = view.$("> #entry-template").removeAttr("id").remove();
 
             view.$loader = view.$("> #loader").click(function () {
                 view.fetchNextPage();
             });
 
-            view.listenTo(this.session, "change", view.refresh);
-            view.listenTo(this.entries, "add", view.render);
+            view.listenTo(view.session, "change", view.refresh);
+            view.listenTo(view.entries, "add", view.render);
 
             view.session.fetch();
         },
 
         refresh: function () {
-            this.$el.children(".entry").remove();
-            this.currentPage = -1;
-            this.entries.reset();
+            var view = this;
 
-            this.now = moment();
+            view.$el.children(".entry").remove();
+            view.currentPage = -1;
+            view.entries.reset();
 
-            if (this.session.hasEntries()) {
+            view.now = moment();
+
+            if (view.session.hasFeeds()) {
+                view.$feeds.children(".feed").remove();
+
+                _.each(view.session.get("feeds"), function (feed) {
+                    var $feed = view.$feedTemplate.clone();
+
+                    $feed.find("#title").text(feed["title"]);
+
+                    var count = feed["count"];
+                    if (count > 0) {
+                        $feed.find("#count").show().text('(' + count + ')');
+                    } else {
+                        $feed.find("#count").hide().text(null);
+                    }
+
+                    view.$feeds.append($feed);
+                });
+            }
+
+            if (view.session.hasEntries()) {
                 // fetch first page
-                this.fetchNextPage();
+                view.fetchNextPage();
             }
         },
 
@@ -61,7 +94,10 @@ $(function () {
             if (page <= entryIds.length / PAGE_ENTRIES) {
                 var pageEntries = new Entries;
                 var pageEntryIds = entryIds.slice(page * PAGE_ENTRIES, Math.min((page + 1) * PAGE_ENTRIES, entryIds.length));
-                pageEntries.fetch({data: {ids: pageEntryIds.join(",")}})
+                var data = {
+                    ids: pageEntryIds.join(",")
+                };
+                pageEntries.fetch({data: data})
                     .done(function () {
                         pageEntries.each(function (entry) {
                             view.entries.add(entry);
@@ -75,6 +111,9 @@ $(function () {
                         } else {
                             view.$loader.show().text((entryIds.length - (page + 1) * PAGE_ENTRIES) + " more");
                         }
+                    })
+                    .fail(function (xhdr, message, error) {
+                        throw error;
                     });
             }
         },
@@ -89,7 +128,7 @@ $(function () {
 
             $entry.attr("id", entry.get("id"));
             $entry.find("#title").text(entry.get("title"));
-            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + view.session.get("favicons")[entry.get("feed_id")] + "')");
+            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + view.session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
 
             var date = moment(entry.get("updated"));
             var now = view.now;
@@ -188,13 +227,13 @@ $(function () {
             var $entry = this.$el.children(".active");
 
             if ($entry.length) {
-                var $body = this.$el.closest("body");
+                var $body = $("body,html");
                 var bodyScrollTop = $body.scrollTop();
 
                 var entryTop = $entry.position().top;
 
                 if (entryTop < bodyScrollTop) {
-                    $body.scrollTop(entryTop);
+                    $body.scrollTop(entryTop - 4);
                 } else {
                     var windowHeight = $(window).height();
                     var entryHeight = $entry.height();
