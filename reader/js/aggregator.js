@@ -22,51 +22,49 @@ $(function () {
         },
 
         loadData: function () {
-            var data = {};
+            var values = {};
 
-            var hashMatch = /^#(\d+)?(!(\d+))?([<>])?(\|(\d+)?)?/g.exec(window.location.hash);
+            var hashMatch = /^#(\d+)?(!(\d+))?([<>])(\|(\d+)?)?/g.exec(window.location.hash);
 
             if (hashMatch[1]) {
-                data["with_tags"] = hashMatch[1];
-                data["without_tags"] = hashMatch[3] || 0;
+                values["with_tags"] = hashMatch[1];
+                values["without_tags"] = hashMatch[3] || null;
             } else {
-                data["without_tags"] = hashMatch[3] || 1;
+                values["with_tags"] = null;
+                values["without_tags"] = hashMatch[3] || 1;
             }
 
-            data["order"] = hashMatch[4] || '<';
+            values["order"] = hashMatch[4];
 
-            if (hashMatch[6]) {
-                data["feed_id"] = hashMatch[6];
-            }
+            values["feed_id"] = hashMatch[6] || null;
             
-            this.set("data", data);
+            this.set(values);
         },
 
         storeData: function () {
-            var data = this.get("data");
             var hash = "#";
 
-            if ("with_tags" in data) {
-                hash += data["with_tags"];
+            var with_tags = this.get("with_tags");
+            if (with_tags) {
+                hash += with_tags;
             }
 
-            if ("without_tags" in data) {
-                hash += "!" + data["without_tags"];
+            var without_tags = this.get("without_tags");
+            if (without_tags) {
+                hash += "!" + without_tags;
             }
 
-            if ("order" in data) {
-                hash += data["order"];
+            var order = this.get("order");
+            if (order) {
+                hash += order;
             }
 
-            if ("feed_id" in data) {
-                hash += "|" + data["feed_id"];
+            var feed_id = this.get("feed_id");
+            if (feed_id) {
+                hash += "|" + feed_id;
             }
 
             window.location.hash = hash;
-        },
-        
-        setFeedId: function (feedId) {
-            this.set("data", $.extend($.extend({}, this.get("data")), {feed_id: feedId}));
         }
     });
 
@@ -94,8 +92,15 @@ $(function () {
         },
 
         reload: function () {
+            var options = this.options.toJSON();
+            for (var key in options) {
+                if (options[key] == null) {
+                    delete options[key];
+                }
+            }
+
             this.clear();
-            this.fetch({data: this.options.get("data")});
+            this.fetch({data: options});
         }
     });
 
@@ -109,6 +114,14 @@ $(function () {
 
             view.$feedTemplate = view.$("> #feed-template").removeAttr("id").remove();
 
+            view.$el.children("#all").on("click", function () {
+                session.options.set({"with_tags": null, "without_tags": 1, "feed_id": null});
+            });
+
+            view.$el.children("#starred").on("click", function () {
+                session.options.set({"with_tags": 2, "without_tags": null, "feed_id": null});
+            });
+
             view.listenTo(session, "change", view.render);
         },
 
@@ -116,7 +129,7 @@ $(function () {
             var view = this;
 
             if (session.hasFeeds()) {
-                view.$el.children(".feed").remove();
+                view.$el.children(".feed").not("#all,#starred").remove();
 
                 _.each(session.get("feeds"), function (feed) {
                     var $feed = view.$feedTemplate.clone();
@@ -131,7 +144,7 @@ $(function () {
                     }
 
                     $feed.on("click", function () {
-                        session.options.setFeedId(feed["id"]);
+                        session.options.set({"with_tags": null, "without_tags": 1, "feed_id": feed["id"]});
                     });
 
                     view.$el.append($feed);
