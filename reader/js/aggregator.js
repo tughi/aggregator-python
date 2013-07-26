@@ -131,24 +131,29 @@ $(function () {
             if (session.hasFeeds()) {
                 view.$el.children(".feed").not("#all,#starred").remove();
 
+                var totalCount = 0;
+
                 _.each(session.get("feeds"), function (feed) {
+                    var count = feed["count"];
+                    if (count == 0) {
+                        return;
+                    }
+
                     var $feed = view.$feedTemplate.clone();
 
                     $feed.find("#title").text(feed["title"]);
 
-                    var count = feed["count"];
-                    if (count > 0) {
-                        $feed.find("#count").show().text("(" + count + ")");
-                    } else {
-                        $feed.find("#count").hide().text(null);
-                    }
+                    $feed.find("#count").text(count > 0 ? count : "");
 
                     $feed.on("click", function () {
                         session.options.set({"with_tags": null, "without_tags": 1, "feed_id": feed["id"]});
                     });
 
                     view.$el.append($feed);
+                    totalCount += count;
                 });
+
+                view.$el.find("> #all #count").text(totalCount > 0 ? totalCount : "");
             }
         }
     });

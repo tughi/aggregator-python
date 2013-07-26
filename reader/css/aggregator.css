@@ -28,6 +28,12 @@ body {
         height: 100%;
         margin-right: 420px;
         overflow: auto;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    #feeds:hover {
+        opacity: 1;
     }
 }
 
@@ -37,21 +43,27 @@ body {
     height: 30px;
     line-height: 30px;
     white-space: nowrap;
+    cursor: pointer;
 }
 
 #feeds > .feed:first-child {
     margin-top: 20px;
 }
 
+#feeds > #starred.feed,
 #feeds > .feed:last-child {
     margin-bottom: 20px;
 }
 
 #feeds > .feed > #title-wrapper {
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
-    margin-bottom: 1px;
+}
+
+#feeds > .feed > #title-wrapper > #title {
+    display: inline-block;
+    height: 30px;
     background-color: #e5e5e5;
+    border-radius: 15px;
+    padding: 0 15px;
 }
 
 #feeds > .feed > #count-wrapper {
@@ -223,3 +235,7 @@ body {
     overflow: auto;
 }
 
+#entries > .entry img {
+    max-width: 100%;
+    height: auto;
+}
