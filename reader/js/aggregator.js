@@ -131,27 +131,37 @@ $(function () {
             if (session.hasFeeds()) {
                 view.$el.children(".feed").not("#all,#starred").remove();
 
+                var feeds = session.get("feeds");
+                var sortedFeeds = [];
+                for (var id in feeds) {
+                    var feed = feeds[id];
+                    sortedFeeds.push([feed["title"].toLowerCase(), feed]);
+                }
+                sortedFeeds.sort();
+
                 var totalCount = 0;
 
-                _.each(session.get("feeds"), function (feed) {
-                    var count = feed["count"];
-                    if (count == 0) {
-                        return;
-                    }
-
+                for (var index in sortedFeeds) {
+                    var feed = sortedFeeds[index][1];
                     var $feed = view.$feedTemplate.clone();
 
+                    $feed.attr("id", feed["id"]);
                     $feed.find("#title").text(feed["title"]);
 
+                    var count = feed["count"];
                     $feed.find("#count").text(count > 0 ? count : "");
 
+                    if (count == 0) {
+                        $feed.addClass("read");
+                    }
+
                     $feed.on("click", function () {
-                        session.options.set({"with_tags": null, "without_tags": 1, "feed_id": feed["id"]});
+                        session.options.set({"with_tags": null, "without_tags": 1, "feed_id": $(this).attr("id")});
                     });
 
                     view.$el.append($feed);
                     totalCount += count;
-                });
+                }
 
                 view.$el.find("> #all #count").text(totalCount > 0 ? totalCount : "");
             }

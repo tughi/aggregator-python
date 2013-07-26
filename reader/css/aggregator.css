@@ -17,16 +17,19 @@ body {
 @media (min-width: 1200px) {
     #feeds-container {
         position: fixed;
+        left: 0;
         top: 0;
         right: 50%;
         bottom: 0;
     }
 
     #feeds {
-        position: relative;
-        width: 200px;
-        height: 100%;
-        margin-right: 420px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 404px;
+        bottom: 0;
+        padding: 20px;
         overflow: auto;
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
@@ -35,56 +38,41 @@ body {
     #feeds:hover {
         opacity: 1;
     }
-}
 
-#feeds > .feed {
-    position: relative;
-    margin-bottom: 1px;
-    height: 30px;
-    line-height: 30px;
-    white-space: nowrap;
-    cursor: pointer;
-}
+    #feeds > .feed {
+        display: inline-block;
+        position: relative;
+        margin-bottom: 2px;
+        margin-right: 4px;
+        height: 30px;
+        line-height: 30px;
+        white-space: nowrap;
+        cursor: pointer;
+        background-color: #e5e5e5;
+        border-radius: 15px;
+        padding: 0 15px;
+    }
 
-#feeds > .feed:first-child {
-    margin-top: 20px;
-}
+    #feeds > .feed div {
+        display: inline-block;
+    }
 
-#feeds > #starred.feed,
-#feeds > .feed:last-child {
-    margin-bottom: 20px;
-}
+    #feeds > .feed > #count-wrapper > #fadeout {
+        display: none;
+    }
 
-#feeds > .feed > #title-wrapper {
-}
+    #feeds > .feed > #count-wrapper > #count {
+        color: white;
+        margin-left: 4px;
+    }
 
-#feeds > .feed > #title-wrapper > #title {
-    display: inline-block;
-    height: 30px;
-    background-color: #e5e5e5;
-    border-radius: 15px;
-    padding: 0 15px;
-}
+    #feeds > .feed.read > #count-wrapper {
+        display: none;
+    }
 
-#feeds > .feed > #count-wrapper {
-    display: table;
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-}
-
-#feeds > .feed > #count-wrapper > #fadeout {
-    display: table-cell;
-    width: 30px;
-    background-color: transparent;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), white);
-}
-
-#feeds > .feed > #count-wrapper > #count {
-    display: table-cell;
-    background-color: white;
-    padding: 0 4px;
+    #feeds > #starred.feed {
+        margin-bottom: 20px;
+    }
 }
 
 #entries {
