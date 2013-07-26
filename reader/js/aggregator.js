@@ -27,41 +27,26 @@ $(function () {
         }
     });
 
-    var EntriesView = Backbone.View.extend({
-        el: $("#entries"),
-        $feeds: $("#feeds"),
-        session: new Session,
-        entries: new Entries,
+    var session = new Session;
+
+    var FeedsView = Backbone.View.extend({
+        el: $("#feeds"),
 
         initialize: function () {
             var view = this;
 
-            view.$feedTemplate = view.$feeds.children("#feed-template").removeAttr("id").remove();
-            view.$entryTemplate = view.$("> #entry-template").removeAttr("id").remove();
+            view.$feedTemplate = view.$("> #feed-template").removeAttr("id").remove();
 
-            view.$loader = view.$("> #loader").click(function () {
-                view.fetchNextPage();
-            });
-
-            view.listenTo(view.session, "change", view.refresh);
-            view.listenTo(view.entries, "add", view.render);
-
-            view.session.fetch();
+            view.listenTo(session, "change", view.render);
         },
 
-        refresh: function () {
+        render: function () {
             var view = this;
 
-            view.$el.children(".entry").remove();
-            view.currentPage = -1;
-            view.entries.reset();
+            if (session.hasFeeds()) {
+                view.$el.children(".feed").remove();
 
-            view.now = moment();
-
-            if (view.session.hasFeeds()) {
-                view.$feeds.children(".feed").remove();
-
-                _.each(view.session.get("feeds"), function (feed) {
+                _.each(session.get("feeds"), function (feed) {
                     var $feed = view.$feedTemplate.clone();
 
                     $feed.find("#title").text(feed["title"]);
@@ -73,11 +58,40 @@ $(function () {
                         $feed.find("#count").hide().text(null);
                     }
 
-                    view.$feeds.append($feed);
+                    view.$el.append($feed);
                 });
             }
+        }
+    });
 
-            if (view.session.hasEntries()) {
+    var EntriesView = Backbone.View.extend({
+        el: $("#entries"),
+        $feeds: $("#feeds"),
+        entries: new Entries,
+
+        initialize: function () {
+            var view = this;
+
+            view.$entryTemplate = view.$("> #entry-template").removeAttr("id").remove();
+
+            view.$loader = view.$("> #loader").click(function () {
+                view.fetchNextPage();
+            });
+
+            view.listenTo(session, "change", view.refresh);
+            view.listenTo(view.entries, "add", view.render);
+        },
+
+        refresh: function () {
+            var view = this;
+
+            view.$el.children(".entry").remove();
+            view.currentPage = -1;
+            view.entries.reset();
+
+            view.now = moment();
+
+            if (session.hasEntries()) {
                 // fetch first page
                 view.fetchNextPage();
             }
@@ -89,7 +103,7 @@ $(function () {
             var view = this;
             var page = view.currentPage + 1;
 
-            var entryIds = view.session.get("entries");
+            var entryIds = session.get("entries");
 
             if (page <= entryIds.length / PAGE_ENTRIES) {
                 var pageEntries = new Entries;
@@ -128,7 +142,7 @@ $(function () {
 
             $entry.attr("id", entry.get("id"));
             $entry.find("#title").text(entry.get("title"));
-            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + view.session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
+            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
 
             var date = moment(entry.get("updated"));
             var now = view.now;
@@ -227,7 +241,7 @@ $(function () {
             var $entry = this.$el.children(".active");
 
             if ($entry.length) {
-                var $body = $("body,html");
+                var $body = $("body");
                 var bodyScrollTop = $body.scrollTop();
 
                 var entryTop = $entry.position().top;
@@ -246,42 +260,46 @@ $(function () {
         }
     });
 
-    var view = new EntriesView();
+    var feedsView = new FeedsView();
+    var entriesView = new EntriesView();
+
+    // load session
+    session.fetch();
 
     $(document).on("keydown", function (event) {
         switch (event.which) {
             case 74: // j
-                view.openNext();
-                view.scrollToActive();
+                entriesView.openNext();
+                entriesView.scrollToActive();
                 break;
             case 75: // k
-                view.openPrev();
-                view.scrollToActive();
+                entriesView.openPrev();
+                entriesView.scrollToActive();
                 break;
             case 77: // m
-                view.toggleRead();
+                entriesView.toggleRead();
                 break;
             case 78: // n
-                view.activateNext();
-                view.scrollToActive();
+                entriesView.activateNext();
+                entriesView.scrollToActive();
                 break;
             case 79: // o
-                var $entry = view.$el.children(".active");
+                var $entry = entriesView.$el.children(".active");
                 if ($entry.length) {
-                    view.toggleOpen($entry);
-                    view.scrollToActive();
+                    entriesView.toggleOpen($entry);
+                    entriesView.scrollToActive();
                 }
                 break;
             case 80: // p
-                view.activatePrev();
-                view.scrollToActive();
+                entriesView.activatePrev();
+                entriesView.scrollToActive();
                 break;
             case 82: // r
-                view.session.clear();
-                view.session.fetch();
+                session.clear();
+                session.fetch();
                 break;
             case 83: // s
-                view.toggleStar();
+                entriesView.toggleStar();
                 break;
             case 86: // v
                 // TODO: window.open($activeEntry.find(".accordion-heading #entry-link").attr("href"));
