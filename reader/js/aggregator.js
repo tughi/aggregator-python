@@ -8,8 +8,75 @@ $(function () {
         url: "/reader/entries"
     });
 
+    var SessionOptions = Backbone.Model.extend({
+        initialize: function () {
+            var model = this;
+        
+            model.loadData();
+
+            model.listenTo(this, "change", this.storeData);
+
+            $(window).on("hashchange", function () {
+                model.loadData();
+            });
+        },
+
+        loadData: function () {
+            var data = {};
+
+            var hashMatch = /^#(\d+)?(!(\d+))?([<>])?(\|(\d+)?)?/g.exec(window.location.hash);
+
+            if (hashMatch[1]) {
+                data["with_tags"] = hashMatch[1];
+                data["without_tags"] = hashMatch[3] || 0;
+            } else {
+                data["without_tags"] = hashMatch[3] || 1;
+            }
+
+            data["order"] = hashMatch[4] || '<';
+
+            if (hashMatch[6]) {
+                data["feed_id"] = hashMatch[6];
+            }
+            
+            this.set("data", data);
+        },
+
+        storeData: function () {
+            var data = this.get("data");
+            var hash = "#";
+
+            if ("with_tags" in data) {
+                hash += data["with_tags"];
+            }
+
+            if ("without_tags" in data) {
+                hash += "!" + data["without_tags"];
+            }
+
+            if ("order" in data) {
+                hash += data["order"];
+            }
+
+            if ("feed_id" in data) {
+                hash += "|" + data["feed_id"];
+            }
+
+            window.location.hash = hash;
+        },
+        
+        setFeedId: function (feedId) {
+            this.set("data", $.extend($.extend({}, this.get("data")), {feed_id: feedId}));
+        }
+    });
+
     var Session = Backbone.Model.extend({
         url: "/reader/session",
+        options: new SessionOptions,
+
+        initialize: function () {
+            this.listenTo(this.options, "change", this.reload);
+        },
 
         hasFeeds: function () {
             var feeds = this.get("feeds");
@@ -24,6 +91,11 @@ $(function () {
         hasEntries: function () {
             var entries = this.get("entries");
             return entries && entries.length;
+        },
+
+        reload: function () {
+            this.clear();
+            this.fetch({data: this.options.get("data")});
         }
     });
 
@@ -53,10 +125,14 @@ $(function () {
 
                     var count = feed["count"];
                     if (count > 0) {
-                        $feed.find("#count").show().text('(' + count + ')');
+                        $feed.find("#count").show().text("(" + count + ")");
                     } else {
                         $feed.find("#count").hide().text(null);
                     }
+
+                    $feed.on("click", function () {
+                        session.options.setFeedId(feed["id"]);
+                    });
 
                     view.$el.append($feed);
                 });
@@ -108,10 +184,7 @@ $(function () {
             if (page <= entryIds.length / PAGE_ENTRIES) {
                 var pageEntries = new Entries;
                 var pageEntryIds = entryIds.slice(page * PAGE_ENTRIES, Math.min((page + 1) * PAGE_ENTRIES, entryIds.length));
-                var data = {
-                    ids: pageEntryIds.join(",")
-                };
-                pageEntries.fetch({data: data})
+                pageEntries.fetch({data: {ids: pageEntryIds.join(",")}})
                     .done(function () {
                         pageEntries.each(function (entry) {
                             view.entries.add(entry);
@@ -264,7 +337,7 @@ $(function () {
     var entriesView = new EntriesView();
 
     // load session
-    session.fetch();
+    session.reload();
 
     $(document).on("keydown", function (event) {
         switch (event.which) {
@@ -295,8 +368,7 @@ $(function () {
                 entriesView.scrollToActive();
                 break;
             case 82: // r
-                session.clear();
-                session.fetch();
+                session.reload();
                 break;
             case 83: // s
                 entriesView.toggleStar();

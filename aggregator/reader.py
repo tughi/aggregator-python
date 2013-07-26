@@ -22,13 +22,13 @@ def session():
 
     if 'with_tags' in request.query:
         tags = utils.signed_long(request.query.with_tags)
-        where.append('reader_tags & ? = ?')
+        where.append('(reader_tags | server_tags) & ? = ?')
         whereArgs.append(tags)
         whereArgs.append(tags)
 
     if 'without_tags' in request.query:
         tags = utils.signed_long(request.query.without_tags)
-        where.append('reader_tags & ? = 0')
+        where.append('(reader_tags | server_tags) & ? = 0')
         whereArgs.append(tags)
 
     if where:
@@ -44,8 +44,9 @@ def session():
         for id, in cursor.execute(select, whereArgs):
             entries.append(id)
 
-        for id, title, favicon, count in cursor.execute("SELECT feed.id, title, favicon, count(1) FROM feed LEFT JOIN entry on feed.id = feed_id WHERE (reader_tags & 1) = 1 GROUP BY feed_id"):
+        for id, title, favicon, count in cursor.execute("SELECT feed.id, title, favicon, count(1) FROM feed LEFT JOIN entry on feed.id = feed_id WHERE reader_tags & 1 = 0 GROUP BY feed_id"):
             feeds[id] = {
+                'id': id,
                 'title': title,
                 'favicon': favicon,
                 'count': count,
