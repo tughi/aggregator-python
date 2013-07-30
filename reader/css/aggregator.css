@@ -70,6 +70,14 @@ body {
         display: none;
     }
 
+    #feeds > .feed:hover {
+        background-color: #f5f5f5;
+    }
+
+    #feeds > .feed.active {
+        background-color: #33b5e5;
+    }
+
     #feeds > #starred.feed {
         margin-bottom: 20px;
     }

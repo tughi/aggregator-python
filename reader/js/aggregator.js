@@ -11,10 +11,8 @@ $(function () {
     var SessionOptions = Backbone.Model.extend({
         initialize: function () {
             var model = this;
-        
-            model.loadData();
 
-            model.listenTo(this, "change", this.storeData);
+            model.listenTo(model, "change", model.storeData);
 
             $(window).on("hashchange", function () {
                 model.loadData();
@@ -22,22 +20,27 @@ $(function () {
         },
 
         loadData: function () {
-            var values = {};
+            var values = {
+                without_tags: 1,
+                order: "<"
+            };
 
-            var hashMatch = /^#(\d+)?(!(\d+))?([<>])(\|(\d+)?)?/g.exec(window.location.hash);
+            var hashMatch = /^#(\d+)?(!(\d+))?([<>])(\|(\d+))?/g.exec(window.location.hash);
 
-            if (hashMatch[1]) {
-                values["with_tags"] = hashMatch[1];
-                values["without_tags"] = hashMatch[3] || null;
-            } else {
-                values["with_tags"] = null;
-                values["without_tags"] = hashMatch[3] || 1;
+            if (hashMatch) {
+                if (hashMatch[1]) {
+                    values["with_tags"] = hashMatch[1];
+                    values["without_tags"] = hashMatch[3] || null;
+                } else {
+                    values["with_tags"] = null;
+                    values["without_tags"] = hashMatch[3];
+                }
+
+                values["order"] = hashMatch[4];
+
+                values["feed_id"] = hashMatch[6] || null;
             }
 
-            values["order"] = hashMatch[4];
-
-            values["feed_id"] = hashMatch[6] || null;
-            
             this.set(values);
         },
 
@@ -74,6 +77,8 @@ $(function () {
 
         initialize: function () {
             this.listenTo(this.options, "change", this.reload);
+
+            this.options.loadData();
         },
 
         hasFeeds: function () {
@@ -129,7 +134,7 @@ $(function () {
             var view = this;
 
             if (session.hasFeeds()) {
-                view.$el.children(".feed").not("#all,#starred").remove();
+                view.$("> .feed").not("#all,#starred").remove();
 
                 var feeds = session.get("feeds");
                 var sortedFeeds = [];
@@ -163,7 +168,12 @@ $(function () {
                     totalCount += count;
                 }
 
-                view.$el.find("> #all #count").text(totalCount > 0 ? totalCount : "");
+                view.$("> #all #count").text(totalCount > 0 ? totalCount : "");
+
+                var sessionFeedId = session.options.get("feed_id");
+                if (sessionFeedId) {
+                    view.$("> #" + sessionFeedId).addClass("active");
+                }
             }
         }
     });
@@ -363,9 +373,6 @@ $(function () {
 
     var feedsView = new FeedsView();
     var entriesView = new EntriesView();
-
-    // load session
-    session.reload();
 
     $(document).on("keydown", function (event) {
         switch (event.which) {
