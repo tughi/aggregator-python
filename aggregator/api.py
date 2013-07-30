@@ -4,6 +4,7 @@ import json
 from collections import OrderedDict
 import urlparse
 from aggregator import content
+from aggregator.utils import signed_long
 from bottle import Bottle, response, request
 
 import feedparser
@@ -237,10 +238,6 @@ def update_feeds():
         connection.execute(update_query, [feed_poll_type, feed_next_poll, feed_link, data.get('etag'), data.get('modified'), poll, status, feed_id])
 
 
-def __as_unicode(data):
-    return unicode(data) if data else None
-
-
 @api.get('/update/favicons')
 def update_favicons():
     connection = content.open_connection()
@@ -298,12 +295,12 @@ def get_entries(store, feed_id=None, with_tags=None, without_tags=None, order='<
 
     if with_tags:
         selection.append('e.reader_tags & ? = ?')
-        selectionArgs.append(__as_signed_long(with_tags))
-        selectionArgs.append(__as_signed_long(with_tags))
+        selectionArgs.append(signed_long(with_tags))
+        selectionArgs.append(signed_long(with_tags))
 
     if without_tags:
         selection.append('e.reader_tags & ? = 0')
-        selectionArgs.append(__as_signed_long(without_tags))
+        selectionArgs.append(signed_long(without_tags))
 
     query = 'SELECT e.id, e.updated, e.data, e.reader_tags | e.server_tags, f.id, f.link, f.favicon FROM entry e LEFT JOIN feed f ON e.feed_id = f.id'
 
@@ -330,21 +327,13 @@ def get_entries(store, feed_id=None, with_tags=None, without_tags=None, order='<
     return result
 
 
-def __as_signed_long(value):
-    # convert to signed 64bit signed
-    value &= 0xFFFFFFFFFFFFFFFF
-    if value > 0x7FFFFFFFFFFFFFFF:
-        value -= 0x10000000000000000
-    return value
-
-
 def tag_entry(store, entry_id, tag):
-    tag = __as_signed_long(tag)
+    tag = signed_long(tag)
     store.execute('UPDATE entry SET reader_tags = reader_tags | ? WHERE id = ?', (tag, entry_id))
     store.commit()
 
 
 def untag_entry(store, entry_id, tag):
-    mask = __as_signed_long(~tag)
+    mask = signed_long(~tag)
     store.execute('UPDATE entry SET reader_tags = reader_tags & ? WHERE id = ?', (mask, entry_id))
     store.commit()
