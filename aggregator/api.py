@@ -4,62 +4,108 @@ import json
 from collections import OrderedDict
 import urlparse
 from aggregator import content
-from bottle import Bottle
+from bottle import Bottle, response, request
 
 import feedparser
 import opml
 
 
-api = Bottle()
+api = Bottle(autojson=False)
+
+
+class ApiException:
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
+
+
+class ApiPlugin(object):
+    def apply(self, callback, route):
+        def decorator(*args, **kwargs):
+            response.headers['Content-Type'] = 'application/json'
+
+            try:
+                result = callback(*args, **kwargs)
+            except ApiException, e:
+                response.status = e.code
+                result = {
+                    'error': e.message
+                }
+
+            return json.dumps(result, indent=True)
+
+        return decorator
+
+
+api.install(ApiPlugin())
 
 DEBUG = True
 
 
-class AggregatorException(BaseException):
-    pass
-
-
-def get_feeds(store):
+@api.get('/feeds')
+def get_feeds():
     result = []
 
-    feeds = store.find(Feed)
-    for feed in feeds:
-        result.append(feed.as_dict())
+    connection = content.open_connection()
+    for feed_id, feed_title, feed_url in connection.execute('SELECT id, title, url FROM feed'):
+        result.append({
+            'id': feed_id,
+            'title': feed_title,
+            'url': feed_url,
+        })
 
     return result
 
 
-def add_feed(store, url, title):
-    if not url:
-        raise AggregatorException('The url parameter is required')
+@api.post('/feeds')
+def add_feed():
+    feed_url = request.forms.get("url")
+    if not feed_url:
+        raise ApiException(400, 'the url parameter is required')
 
-    url = unicode(url)
+    feed_title = request.forms.get("title")
+
     poll_time = time.localtime()
     poll = time.mktime(poll_time)
 
     if DEBUG:
-        print('Adding feed: %s' % url)
+        print('Adding feed: %s' % feed_url)
+
+    connection = content.open_connection()
 
     # find existing database feed for the provided url
-    feed = store.find(Feed, url=url).one()
+    feed_exists, = connection.execute('SELECT count(1) FROM feed WHERE url = ?', [feed_url]).fetchone()
 
-    if feed:
-        raise AggregatorException('feed %d already exists for this url' % feed.id)
+    if feed_exists:
+        raise ApiException(409, 'feed already exists for this url')
 
-    data = feedparser.parse(url)
+    data = feedparser.parse(feed_url)
 
     if not data:
-        raise AggregatorException('failed to load the feed')
+        raise ApiException(400, 'failed to load the feed')
 
+    feed_title = feed_title or data.feed.get('title')
     feed_link = data.feed.get('link')
-    feed_favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(url)))
+    feed_favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(feed_url)))
 
-    feed = store.add(Feed(url, title or data.feed.title, feed_link, feed_favicon, data.get('etag'), data.get('modified'), poll))
+    with content.transaction(connection) as cursor:
+        cursor.execute(
+            'INSERT INTO feed (url, title, link, favicon, etag, modified, poll) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (feed_url, feed_title, feed_link, feed_favicon, data.get('etag'), data.get('modified'), poll)
+        )
 
-    for entry_data in data.entries:
-        store.add(Entry(feed, poll, *__as_entry_data(entry_data, poll_time)))
+        feed_id = cursor.lastrowid
 
-    return feed.as_dict()
+        for entry_data in data.entries:
+            guid, data, updated = __as_entry_data(entry_data, poll_time)
+
+            connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, data])
+
+    return {
+        'id': feed_id,
+        'title': feed_title,
+        'url': feed_url,
+    }
 
 
 def __get_favicon(feed_link):
@@ -77,14 +123,14 @@ def __get_favicon(feed_link):
 def __as_entry_data(data, poll_time):
     return (
         data.get('id') or data.link,
-        OrderedDict([
+        json.dumps(OrderedDict([
             ('title', data.title),
             ('link', data.get('link')),
             ('summary', __as_content(data.get('summary_detail'))),
             ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
             ('published', data.get('published')),
             ('updated', data.get('updated'))
-        ]),
+        ])),
         time.mktime(data.get('updated_parsed') or data.get('published_parsed') or poll_time)
     )
 
@@ -128,7 +174,7 @@ def update_feeds():
             guid, data, updated = __as_entry_data(entry_data, poll_time)
 
             update_setters = ['data = ?']
-            update_args = [json.dumps(data)]
+            update_args = [data]
 
             if updated != poll:
                 update_setters.append('updated = ?')
@@ -139,13 +185,7 @@ def update_feeds():
             update_query = ' '.join(['UPDATE entry SET', ', '.join(update_setters), 'WHERE feed_id = ? AND guid = ?'])
             if connection.execute(update_query, update_args).rowcount == 0:
                 # entry doesn't exist
-                connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [
-                    feed_id,
-                    guid,
-                    poll,
-                    updated,
-                    update_args[0]
-                ])
+                connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, data])
 
         day_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 86400]).fetchone()[0]
         week_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 604800]).fetchone()[0]
@@ -217,10 +257,12 @@ def update_favicons():
             connection.execute('UPDATE feed SET favicon = ? WHERE id = ?', [favicon, feed_id])
 
 
-def delete_feed(store, feed_id):
-    store.find(Entry, Entry.feed_id == feed_id).remove()
-    store.find(Feed, Feed.id == feed_id).remove()
-    store.commit()
+@api.delete('/feeds/<feed_id:int>')
+def delete_feed(feed_id):
+    connection = content.open_connection()
+    with content.transaction(connection):
+        connection.execute('DELETE FROM entry WHERE feed_id = ?', [feed_id])
+        connection.execute('DELETE FROM feed WHERE id = ?', [feed_id])
 
 
 def import_opml(store, opml_source):
