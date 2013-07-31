@@ -1,5 +1,7 @@
 $(function () {
 
+    $("body").addClass(navigator.userAgent.match(/Android|iPhone|iPad|iPod/i) ? "mobile" : "desktop");
+
     var TAG_READ = 1;
     var TAG_STAR = 2;
 
