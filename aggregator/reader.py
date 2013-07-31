@@ -57,26 +57,3 @@ def session():
         'entries': entries
     }
 
-
-@reader.get('/entries')
-def entries():
-    # validate query
-    entries = OrderedDict()
-    for entry_id in request.query.get('ids').split(','):
-        if int(entry_id):
-            entries[str(entry_id)] = None
-
-    if entries:
-        connection = content.open_connection()
-
-        select = 'SELECT data, id, feed_id, updated, reader_tags | server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
-        for entry_data, entry_id, feed_id, updated, tags in connection.execute(select):
-            entry = json.loads(unicode(entry_data))
-            entry['id'] = entry_id
-            entry['feed_id'] = feed_id
-            entry['updated'] = updated * 1000
-            entry['tags'] = tags
-
-            entries[str(entry_id)] = entry
-
-    return json.dumps(entries.values())

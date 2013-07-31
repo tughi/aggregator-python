@@ -283,57 +283,37 @@ def import_opml(store, opml_source):
     return result
 
 
-def get_entries(store, feed_id=None, with_tags=None, without_tags=None, order='<', limit=50, offset=0):
-    result = []
+@api.get('/entries')
+def get_entries():
+    # validate query
+    entries = OrderedDict()
+    for entry_id in request.query.get('ids').split(','):
+        if int(entry_id):
+            entries[str(entry_id)] = None
 
-    selection = []
-    selectionArgs = []
+    if entries:
+        connection = content.open_connection()
 
-    if feed_id:
-        selection.append('f.id = ?')
-        selectionArgs.append(feed_id)
+        select = 'SELECT data, id, feed_id, updated, reader_tags, server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
+        for entry_data, entry_id, feed_id, updated, reader_tags, server_tags in connection.execute(select):
+            entry = json.loads(unicode(entry_data))
+            entry['id'] = entry_id
+            entry['feed_id'] = feed_id
+            entry['updated'] = updated * 1000
+            entry['reader_tags'] = reader_tags
+            entry['server_tags'] = server_tags
 
-    if with_tags:
-        selection.append('e.reader_tags & ? = ?')
-        selectionArgs.append(signed_long(with_tags))
-        selectionArgs.append(signed_long(with_tags))
+            entries[str(entry_id)] = entry
 
-    if without_tags:
-        selection.append('e.reader_tags & ? = 0')
-        selectionArgs.append(signed_long(without_tags))
-
-    query = 'SELECT e.id, e.updated, e.data, e.reader_tags | e.server_tags, f.id, f.link, f.favicon FROM entry e LEFT JOIN feed f ON e.feed_id = f.id'
-
-    if selection:
-        query = ' WHERE '.join((query, ' AND '.join(selection)))
-
-    query = ' ORDER BY '.join((query, 'e.updated DESC' if order == '>' else 'e.updated'))
-
-    if limit > 0:
-        query = ' '.join((query, 'LIMIT %d OFFSET %d' % (limit, offset)))
-
-    print query
-
-    for entry_id, entry_timestamp, entry_data, entry_tags, feed_id, feed_link, feed_favicon in store.execute(query, selectionArgs):
-        entry_values = json.loads(unicode(entry_data))
-        entry_values['id'] = entry_id
-        entry_values['timestamp'] = entry_timestamp
-        entry_values['tags'] = entry_tags
-        entry_values['feed_link'] = feed_link
-        entry_values['feed_favicon'] = feed_favicon
-
-        result.append(entry_values)
-
-    return result
+    return entries.values()
 
 
-def tag_entry(store, entry_id, tag):
-    tag = signed_long(tag)
-    store.execute('UPDATE entry SET reader_tags = reader_tags | ? WHERE id = ?', (tag, entry_id))
-    store.commit()
+@api.route('/entries/<entry_id:int>', method='PATCH')
+def update_entry(entry_id):
+    reader_tags = request.forms.get('reader_tags')
+    if reader_tags:
+        reader_tags = signed_long(reader_tags)
 
+        connection = content.open_connection()
+        connection.execute('UPDATE entry SET reader_tags = ? WHERE id = ?', [reader_tags, entry_id])
 
-def untag_entry(store, entry_id, tag):
-    mask = signed_long(~tag)
-    store.execute('UPDATE entry SET reader_tags = reader_tags & ? WHERE id = ?', (mask, entry_id))
-    store.commit()

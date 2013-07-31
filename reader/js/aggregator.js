@@ -1,11 +1,14 @@
 $(function () {
 
+    var TAG_READ = 1;
+    var TAG_STAR = 2;
+
     var Entry = Backbone.Model.extend({
     });
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: "/reader/entries"
+        url: "/api/entries"
     });
 
     var SessionOptions = Backbone.Model.extend({
@@ -21,7 +24,7 @@ $(function () {
 
         loadData: function () {
             var values = {
-                without_tags: 1,
+                without_tags: TAG_READ,
                 order: "<"
             };
 
@@ -120,11 +123,11 @@ $(function () {
             view.$feedTemplate = view.$("> #feed-template").removeAttr("id").remove();
 
             view.$el.children("#all").on("click", function () {
-                session.options.set({"with_tags": null, "without_tags": 1, "feed_id": null});
+                session.options.set({"with_tags": null, "without_tags": TAG_READ, "feed_id": null});
             });
 
             view.$el.children("#starred").on("click", function () {
-                session.options.set({"with_tags": 2, "without_tags": null, "feed_id": null});
+                session.options.set({"with_tags": TAG_STAR, "without_tags": null, "feed_id": null});
             });
 
             view.listenTo(session, "change", view.render);
@@ -161,7 +164,7 @@ $(function () {
                     }
 
                     $feed.on("click", function () {
-                        session.options.set({"with_tags": null, "without_tags": 1, "feed_id": $(this).attr("id")});
+                        session.options.set({"with_tags": null, "without_tags": TAG_READ, "feed_id": $(this).attr("id")});
                     });
 
                     view.$el.append($feed);
@@ -260,11 +263,11 @@ $(function () {
             var dateFormat = now.year() != date.year() ? "MMM DD YYYY" : now.date() == date.date() && now.month() == date.month() ? "hh:mm a" : "MMM DD";
             $entry.find("#date").text(date.format(dateFormat));
 
-            var tags = entry.get("tags");
-            if ((tags & 1) == 0) {
+            var tags = entry.get("reader_tags") | entry.get("server_tags");
+            if ((tags & TAG_READ) == 0) {
                 $entry.addClass("unread");
             }
-            if ((tags & 2) == 2) {
+            if ((tags & TAG_STAR) == TAG_STAR) {
                 $entry.addClass("starred");
             }
 
@@ -287,6 +290,23 @@ $(function () {
                 for (var index in content) {
                     $content.append(content[index].value);
                 }
+            }
+
+            var entry = this.entries.get($entry.attr("id"));
+            var reader_tags = entry.get("reader_tags");
+            var patched_reader_tags = reader_tags | TAG_READ;
+            if (reader_tags != patched_reader_tags) {
+                $.ajax({
+                    url: "/api/entries/" + entry.id,
+                    method: "PATCH",
+                    data: {
+                        reader_tags: patched_reader_tags
+                    },
+                    success: function () {
+                        entry.set("reader_tags", patched_reader_tags);
+                        $entry.removeClass("unread");
+                    }
+                });
             }
         },
 
@@ -368,11 +388,53 @@ $(function () {
                     }
                 }
             }
+        },
+
+        toggleTag: function (tag, $entry) {
+            $entry = $entry || this.$el.children(".active");
+
+            if ($entry.length) {
+                var entry = this.entries.get($entry.attr("id"));
+                var reader_tags = entry.get("reader_tags");
+                var patched_reader_tags = reader_tags ^ tag;
+                var server_tags = entry.get("server_tags");
+                if ((patched_reader_tags | server_tags) != (reader_tags | server_tags)) {
+                    $.ajax({
+                        url: "/api/entries/" + entry.id,
+                        method: "PATCH",
+                        data: {
+                            reader_tags: patched_reader_tags
+                        },
+                        success: function () {
+                            entry.set("reader_tags", patched_reader_tags);
+
+                            if ((patched_reader_tags & TAG_READ) == TAG_READ) {
+                                $entry.removeClass("unread");
+                            } else {
+                                $entry.addClass("unread");
+                            }
+
+                            if ((patched_reader_tags & TAG_STAR) == TAG_STAR) {
+                                $entry.addClass("starred");
+                            } else {
+                                $entry.removeClass("starred");
+                            }
+                        }
+                    });
+                }
+            }
         }
     });
 
     var feedsView = new FeedsView();
     var entriesView = new EntriesView();
+
+    $(document).on("click", "#entries > .entry > #header > #star", function (event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        entriesView.toggleTag(TAG_STAR, $(this).closest(".entry"));
+    });
 
     $(document).on("keydown", function (event) {
         switch (event.which) {
@@ -385,7 +447,7 @@ $(function () {
                 entriesView.scrollToActive();
                 break;
             case 77: // m
-                entriesView.toggleRead();
+                entriesView.toggleTag(TAG_READ);
                 break;
             case 78: // n
                 entriesView.activateNext();
@@ -406,11 +468,14 @@ $(function () {
                 session.reload();
                 break;
             case 83: // s
-                entriesView.toggleStar();
+                entriesView.toggleTag(TAG_STAR);
                 break;
             case 86: // v
-                // TODO: window.open($activeEntry.find(".accordion-heading #entry-link").attr("href"));
-                // break;
+                var href = entriesView.$("> .active.entry > #header > #favicon").attr("href");
+                if (href) {
+                    window.open(href);
+                }
+                break;
             default:
                 console.log("unhandled keydown: " + event.which);
         }
