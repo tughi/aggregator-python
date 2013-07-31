@@ -1,13 +1,10 @@
 *.py[cod]
 
 # virtualenv
-/environment
+/.env
 
 # database
 *.db
-
-# jdbc driver
-/jdbc
 
 # pycharm files
 /.idea
