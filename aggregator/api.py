@@ -98,9 +98,9 @@ def add_feed():
         feed_id = cursor.lastrowid
 
         for entry_data in data.entries:
-            guid, data, updated = __as_entry_data(entry_data, poll_time)
+            guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
-            connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, data])
+            connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, json_data])
 
     return {
         'id': feed_id,
@@ -172,10 +172,10 @@ def update_feeds():
         status = data.get('status', 0)
 
         for entry_data in data.entries:
-            guid, data, updated = __as_entry_data(entry_data, poll_time)
+            guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
             update_setters = ['data = ?']
-            update_args = [data]
+            update_args = [json_data]
 
             if updated != poll:
                 update_setters.append('updated = ?')
@@ -186,7 +186,7 @@ def update_feeds():
             update_query = ' '.join(['UPDATE entry SET', ', '.join(update_setters), 'WHERE feed_id = ? AND guid = ?'])
             if connection.execute(update_query, update_args).rowcount == 0:
                 # entry doesn't exist
-                connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, data])
+                connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, json_data])
 
         day_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 86400]).fetchone()[0]
         week_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 604800]).fetchone()[0]
