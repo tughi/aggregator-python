@@ -13,6 +13,13 @@ Planned features:
 - Web client ✔
 - Android client
 
+### License
+
+Aggregator is free software: you can redistribute it and/or modify
+it under the terms of the [GNU General Public License](http://www.gnu.org/licenses/gpl.txt) as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
 ### Quick Project Setup:
 
 	# make sure virtualenv is installed
