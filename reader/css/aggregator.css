@@ -8,35 +8,31 @@ body {
     color: #333333;
 }
 
-@media (max-width: 1200px) {
-    #feeds-container {
-        display: none;
-    }
-}
-
-@media (min-width: 1200px) {
+@media (min-width: 840px) {
     #feeds-container {
         position: fixed;
         left: 0;
         top: 0;
-        right: 50%;
+        width: 20px;
         bottom: 0;
+        z-index: 1;
     }
 
     #feeds {
+        background: white;
+        box-shadow: 1px 0 4px #999;
         position: absolute;
-        left: 0;
+        left: -400px;
         top: 0;
-        right: 404px;
+        width: 320px;
         bottom: 0;
         padding: 20px;
         overflow: auto;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
+        transition: left 0.2s ease-in-out;
     }
 
-    #feeds:hover {
-        opacity: 1;
+    #feeds-container:hover > #feeds {
+        left: 0;
     }
 
     #feeds > .feed {
@@ -80,6 +76,36 @@ body {
 
     #feeds > #starred.feed {
         margin-bottom: 20px;
+    }
+}
+
+@media (min-width: 1200px) {
+    #feeds-container {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: auto;
+        right: 50%;
+        bottom: 0;
+        z-index: 0;
+    }
+
+    #feeds {
+        width: auto;
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 404px;
+        bottom: 0;
+        padding: 20px;
+        overflow: auto;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        box-shadow: none;
+    }
+
+    #feeds:hover {
+        opacity: 1;
     }
 }
 
