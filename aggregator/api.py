@@ -287,7 +287,7 @@ def import_opml(store, opml_source):
 def get_entries():
     # validate query
     entries = OrderedDict()
-    for entry_id in request.query.get('ids').split(','):
+    for entry_id in request.query.get('ids', '').split(','):
         if int(entry_id):
             entries[str(entry_id)] = None
 

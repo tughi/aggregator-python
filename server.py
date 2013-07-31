@@ -14,6 +14,7 @@ server.mount('/reader', reader)
 # uWSGI support
 application = server
 
+
 @server.route('/<path:path>')
 def web(path):
     return static_file(path, 'reader')
@@ -23,3 +24,6 @@ def web(path):
 def entries():
     return static_file('index.html', 'reader')
 
+
+if __name__ == '__main__':
+    run(application, host='0.0.0.0', port=8000)
