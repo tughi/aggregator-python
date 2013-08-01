@@ -271,11 +271,6 @@ $(function () {
                 $entry.addClass("starred");
             }
 
-            $entry.find("> #header > #toggle").click(function () {
-                view.toggleOpen($entry);
-                view.scrollToActive();
-            });
-
             this.$loader.before($entry);
         },
 
@@ -445,10 +440,16 @@ $(function () {
     var feedsView = new FeedsView();
     var entriesView = new EntriesView();
 
-    $(document).on("click", "#entries > .entry > #header > #star, #entries > .entry > #body > #content > #content-header #star", function (event) {
-        event.stopPropagation();
-        event.preventDefault();
+    $(document).on("click", "#entries > .entry > #header > #toggle, #entries > .entry > #body > #content > #content-header > #tags > #toggle", function () {
+        entriesView.toggleOpen($(this).closest(".entry"));
+        entriesView.scrollToActive();
+    });
 
+    $(document).on("click", "#entries > .entry > #body > #content > #content-header > #tags > #toggle-read", function () {
+        entriesView.toggleTag(TAG_READ, $(this).closest(".entry"));
+    });
+
+    $(document).on("click", "#entries > .entry > #header > #star, #entries > .entry > #body > #content > #content-header #star", function (event) {
         entriesView.toggleTag(TAG_STAR, $(this).closest(".entry"));
     });
 

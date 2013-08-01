@@ -173,6 +173,7 @@ body {
     left: 0;
     bottom: 0;
     right: 0;
+    cursor: pointer;
 }
 
 #entries > .entry > #header > #title-wrapper {
@@ -305,8 +306,47 @@ body {
     margin-bottom: 0.67em;
 }
 
-#entries > .entry > #body > #content > #content-header h1 {
+#entries > .entry > #body > #content > #content-header > #tags {
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+}
+
+#entries > .entry > #body > #content > #content-header > #tags > div {
+    background-color: #33b5e5;
+    color: white;
+    line-height: 24px;
+    padding: 0 20px;
+    margin-right: 1px;
+    float: left;
+}
+
+#entries > .entry > #body > #content > #content-header > #tags > div:last-child {
+    margin-right: 0;
+}
+
+#entries > .entry > #body > #content > #content-header > #tags > #arrow {
+    width: 0;
+    height: 0;
+    background-color: transparent;
+    padding: 0;
     margin: 0;
+    border-width: 0 16px 24px 0;
+    border-style: solid;
+    border-color: transparent #33b5e5 transparent transparent;
+}
+
+#entries > .entry > #body > #content > #content-header > #tags > #toggle-read:after {
+    content: "unread";
+}
+
+#entries > .entry.unread > #body > #content > #content-header > #tags > #toggle-read:after {
+    content: "read";
+}
+
+#entries > .entry > #body > #content > #content-header h1 {
+    margin: 0.67em 0 0 0;
 }
 
 #entries > .entry > #body > #content > #content-header div {
