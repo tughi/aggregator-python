@@ -116,24 +116,7 @@ body {
 }
 
 .mobile #feeds-container {
-    position: fixed;
-    left: 0;
-    top: 0;
-    right: 0;
-    height: 48px;
-    background-color: #333;
-    z-index: 1;
-}
-
-.mobile #feeds {
     display: none;
-    position: fixed;
-    left: 0;
-    top: 48px;
-    right: 0;
-    bottom: 0;
-    background-color: #666;
-    z-index: 1;
 }
 
 .desktop #entries {
@@ -149,27 +132,10 @@ body {
     }
 }
 
-.mobile #entries {
-    padding-top: 49px;
-}
-
-@media (min-width: 800px) {
-    .mobile #feeds {
-        display: block;
-        width: 240px;
-        right: auto;
-    }
-
-    .mobile #entries {
-        padding-left: 240px;
-    }
-}
-
 #entries > #loader,
 #entries > .entry {
     position: relative;
-    border: 1px solid #e5e5e5;
-    border-radius: 4px;
+    border-bottom: 1px solid #e5e5e5;
     margin-bottom: 1px;
 }
 
@@ -191,7 +157,6 @@ body {
 
 #entries > .entry > #header {
     position: relative;
-    background-color: #e5e5e5;
     height: 30px;
     line-height: 30px;
 }
@@ -215,6 +180,10 @@ body {
     padding: 0 30px;
 }
 
+.mobile #entries > .entry > #header > #title-wrapper {
+    padding: 0 40px;
+}
+
 #entries > .entry > #header > #title-wrapper > #title {
     white-space: nowrap;
 }
@@ -232,42 +201,21 @@ body {
     white-space: nowrap;
 }
 
+.mobile #entries > .entry > #header > #date-wrapper {
+    right: 40px;
+}
+
 #entries > .entry > #header > #date-wrapper > #fadeout {
     display: table-cell;
     width: 30px;
     background-color: transparent;
-    background-image: linear-gradient(to right, rgba(229, 229, 229, 0), #e5e5e5);
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), white);
 }
 
 #entries > .entry > #header > #date-wrapper > #date {
     display: table-cell;
     padding: 0 4px;
-    background-color: #e5e5e5;
-}
-
-#entries > #loader:hover,
-#entries > .entry:hover > #header,
-#entries > .entry:hover > #header > #date-wrapper > #date,
-#entries > .entry:hover > #header > #star {
-    background-color: #f5f5f5;
-}
-
-#entries > .entry:hover > #header > #date-wrapper > #fadeout {
-    background-image: linear-gradient(to right, rgba(245, 245, 245, 0), #f5f5f5);
-}
-
-#entries > .entry.active {
-    border-color: #33b5e5;
-}
-
-#entries > .entry.active > #header,
-#entries > .entry.active > #header > #star,
-#entries > .entry.active > #header > #date-wrapper > #date {
-    background-color: #33b5e5;
-}
-
-#entries > .entry.active > #header > #date-wrapper > #fadeout {
-    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+    background-color: white;
 }
 
 #entries > .entry > #header > #favicon {
@@ -281,6 +229,10 @@ body {
     background-size: 16px;
 }
 
+.mobile #entries > .entry > #header > #favicon {
+    width: 40px;
+}
+
 #entries > .entry > #header > #star {
     display: block;
     position: absolute;
@@ -288,8 +240,43 @@ body {
     right: 0;
     bottom: 0;
     width: 30px;
-    background: #e5e5e5 url("../images/star-off.png") center no-repeat;
+    background: white url("../images/star-off.png") center no-repeat;
     background-size: 16px;
+    cursor: pointer;
+}
+
+.mobile #entries > .entry > #header > #star {
+    width: 40px;
+}
+
+#entries > .entry.open {
+    border: 1px solid #e5e5e5;
+}
+
+#entries > .entry.open.active {
+    border-color: #33b5e5;
+}
+
+
+#entries > .entry.active > #header,
+#entries > .entry.active > #header > #star,
+#entries > .entry.active > #header > #date-wrapper > #date {
+    background-color: #33b5e5;
+}
+
+#entries > .entry.active > #header > #date-wrapper > #fadeout {
+    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+}
+
+.desktop #entries > #loader:hover,
+.desktop #entries > .entry:hover > #header,
+.desktop #entries > .entry:hover > #header > #date-wrapper > #date,
+.desktop #entries > .entry:hover > #header > #star {
+    background-color: #f5f5f5;
+}
+
+.desktop #entries > .entry:hover > #header > #date-wrapper > #fadeout {
+    background-image: linear-gradient(to right, rgba(245, 245, 245, 0), #f5f5f5);
 }
 
 #entries > .entry.starred > #header > #star {
@@ -299,7 +286,11 @@ body {
 #entries > .entry > #body {
     position: relative;
     display: none;
-    padding: 8px;
+    padding: 20px;
+}
+
+#entries > .entry.open > #header {
+    display: none;
 }
 
 #entries > .entry.open > #body {
@@ -310,7 +301,43 @@ body {
     overflow: auto;
 }
 
-#entries > .entry img {
+#entries > .entry > #body > #content > #content-header {
+    margin-bottom: 0.67em;
+}
+
+#entries > .entry > #body > #content > #content-header h1 {
+    margin: 0;
+}
+
+#entries > .entry > #body > #content > #content-header div {
+    line-height: 16px;
+}
+
+#entries > .entry > #body > #content > #content-header div * {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+#entries > .entry > #body > #content > #content-header #star {
+    width: 16px;
+    height: 16px;
+    background: white url("../images/star-off.png") center no-repeat;
+    background-size: 16px;
+    vertical-align: bottom;
+    cursor: pointer;
+}
+
+#entries > .entry.starred > #body > #content > #content-header #star {
+    background-image: url("../images/star-on.png");
+}
+
+#entries > .entry > #body img {
     max-width: 100%;
     height: auto;
+}
+
+#entries > .entry > #body a {
+    color: #0099cc;
+    text-decoration: inherit;
 }

@@ -192,6 +192,8 @@ $(function () {
             var view = this;
 
             view.$entryTemplate = view.$("> #entry-template").removeAttr("id").remove();
+            view.$contentHeaderTemplate = view.$entryTemplate.find("#content-header");
+            view.$contentHeaderTemplate.parent().empty();
 
             view.$loader = view.$("> #loader").click(function () {
                 view.fetchNextPage();
@@ -252,10 +254,6 @@ $(function () {
             var view = this;
             var $entry = view.$entryTemplate.clone();
 
-            if (entry.get("content").length || entry.get("summary")) {
-                $entry.data("content", entry.get("content").length ? entry.get("content") : [entry.get("summary")]);
-            }
-
             $entry.attr("id", entry.get("id"));
             $entry.find("#title").text(entry.get("title"));
             $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
@@ -286,11 +284,27 @@ $(function () {
             this.$el.children(".open").not($entry).removeClass("open").find("#content").empty();
             $entry.addClass("active").toggleClass("open");
 
-            var content = $entry.data("content");
             var $content = $entry.find("#content:empty");
-            if (content && $content.length) {
-                for (var index in content) {
-                    $content.append(content[index].value);
+            if ($content.length) {
+                var entry = this.entries.get($entry.attr("id"));
+
+                var $contentHeader = this.$contentHeaderTemplate.clone().appendTo($content);
+                $contentHeader.find("#title").text(entry.get("title")).attr("href", entry.get("link"));
+                var feed = session.get("feeds")[entry.get("feed_id")];
+                $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
+                $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
+                var author = entry.get("author");
+                if (!author) {
+                    $contentHeader.find("#author-container").remove();
+                } else {
+                    $contentHeader.find("#author").text(author);
+                }
+
+                if (entry.get("content").length || entry.get("summary")) {
+                    var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
+                    for (var index in content) {
+                        $content.append(content[index].value);
+                    }
                 }
             }
 
@@ -431,11 +445,21 @@ $(function () {
     var feedsView = new FeedsView();
     var entriesView = new EntriesView();
 
-    $(document).on("click", "#entries > .entry > #header > #star", function (event) {
+    $(document).on("click", "#entries > .entry > #header > #star, #entries > .entry > #body > #content > #content-header #star", function (event) {
         event.stopPropagation();
         event.preventDefault();
 
         entriesView.toggleTag(TAG_STAR, $(this).closest(".entry"));
+    });
+
+    $(document).on("click", "#entries > .entry > #body a", function (event) {
+        event.stopPropagation();
+        event.preventDefault();
+
+        var href = $(this).attr("href");
+        if (href) {
+            window.open(href);
+        }
     });
 
     $(document).on("keydown", function (event) {

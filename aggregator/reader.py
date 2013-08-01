@@ -44,10 +44,11 @@ def session():
         for id, in cursor.execute(select, whereArgs):
             entries.append(id)
 
-        for id, title, favicon, count in cursor.execute("SELECT id, title, favicon, (SELECT count(1) FROM entry WHERE feed_id = feed.id AND reader_tags & 1 = 0) FROM feed"):
+        for id, title, link, favicon, count in cursor.execute("SELECT id, title, link, favicon, (SELECT count(1) FROM entry WHERE feed_id = feed.id AND reader_tags & 1 = 0) FROM feed"):
             feeds[id] = {
                 'id': id,
                 'title': title,
+                'link': link,
                 'favicon': favicon,
                 'count': count,
             }

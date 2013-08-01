@@ -28,7 +28,7 @@
         <div class="divider"></div>
         <div id="feed-template" class="feed">
             <div id="title-wrapper">
-                <div id="title">Title</div>
+                <div id="title">Feed</div>
             </div>
             <div id="count-wrapper">
                 <div id="fadeout"></div><div id="count">30</div>
@@ -48,10 +48,20 @@
             </div>
             <div id="toggle"></div>
             <a id="favicon" target="_blank"></a>
-            <a id="star" href="toggle:star"></a>
+            <span id="star"></span>
         </div>
         <div id="body">
-            <div id="content" class="accordion-inner"></div>
+            <div id="content">
+                <div id="content-header">
+                    <h1><a id="title"></a></h1>
+                    <div>
+                        <span id="author-container">by <span id="author"></span>,</span>
+                        <a id="feed"></a>
+                        <span id="date-container">on <span id="date"></span></span>
+                        <span id="star" onclick="javascript: return false"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div id="loader">
