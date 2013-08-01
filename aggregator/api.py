@@ -1,6 +1,7 @@
 # coding=utf-8
 import time
 import json
+import calendar
 from collections import OrderedDict
 import urlparse
 from aggregator import content
@@ -132,7 +133,7 @@ def __as_entry_data(data, poll_time):
             ('published', data.get('published')),
             ('updated', data.get('updated'))
         ])),
-        time.mktime(data.get('updated_parsed') or data.get('published_parsed') or poll_time)
+        calendar.timegm(data.get('updated_parsed') or data.get('published_parsed') or poll_time)
     )
 
 
