@@ -275,49 +275,53 @@ $(function () {
         },
 
         toggleOpen: function ($entry) {
-            this.$el.children(".active").removeClass("active");
+            this.$el.children(".active").not($entry).removeClass("active");
             this.$el.children(".open").not($entry).removeClass("open").find("#content").empty();
             $entry.addClass("active").toggleClass("open");
 
-            var $content = $entry.find("#content:empty");
-            if ($content.length) {
+            if ($entry.hasClass("open")) {
+                var $content = $entry.find("#content:empty");
+                if ($content.length) {
+                    // add content
+                    var entry = this.entries.get($entry.attr("id"));
+
+                    var $contentHeader = this.$contentHeaderTemplate.clone().appendTo($content);
+                    $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
+                    var feed = session.get("feeds")[entry.get("feed_id")];
+                    $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
+                    $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
+                    var author = entry.get("author");
+                    if (!author) {
+                        $contentHeader.find("#author-container").remove();
+                    } else {
+                        $contentHeader.find("#author").text(author);
+                    }
+
+                    if (entry.get("content").length || entry.get("summary")) {
+                        var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
+                        for (var index in content) {
+                            $content.append(content[index].value);
+                        }
+                    }
+                }
+
+                // mark as read
                 var entry = this.entries.get($entry.attr("id"));
-
-                var $contentHeader = this.$contentHeaderTemplate.clone().appendTo($content);
-                $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
-                var feed = session.get("feeds")[entry.get("feed_id")];
-                $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
-                $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
-                var author = entry.get("author");
-                if (!author) {
-                    $contentHeader.find("#author-container").remove();
-                } else {
-                    $contentHeader.find("#author").text(author);
+                var reader_tags = entry.get("reader_tags");
+                var patched_reader_tags = reader_tags | TAG_READ;
+                if (reader_tags != patched_reader_tags) {
+                    $.ajax({
+                        url: "/api/entries/" + entry.id,
+                        method: "PATCH",
+                        data: {
+                            reader_tags: patched_reader_tags
+                        },
+                        success: function () {
+                            entry.set("reader_tags", patched_reader_tags);
+                            $entry.removeClass("unread");
+                        }
+                    });
                 }
-
-                if (entry.get("content").length || entry.get("summary")) {
-                    var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
-                    for (var index in content) {
-                        $content.append(content[index].value);
-                    }
-                }
-            }
-
-            var entry = this.entries.get($entry.attr("id"));
-            var reader_tags = entry.get("reader_tags");
-            var patched_reader_tags = reader_tags | TAG_READ;
-            if (reader_tags != patched_reader_tags) {
-                $.ajax({
-                    url: "/api/entries/" + entry.id,
-                    method: "PATCH",
-                    data: {
-                        reader_tags: patched_reader_tags
-                    },
-                    success: function () {
-                        entry.set("reader_tags", patched_reader_tags);
-                        $entry.removeClass("unread");
-                    }
-                });
             }
         },
 
