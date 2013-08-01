@@ -255,7 +255,7 @@ $(function () {
             var $entry = view.$entryTemplate.clone();
 
             $entry.attr("id", entry.get("id"));
-            $entry.find("#title").text(entry.get("title"));
+            $entry.find("#title").html(entry.get("title"));
             $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
 
             var date = moment(entry.get("updated"));
@@ -289,7 +289,7 @@ $(function () {
                 var entry = this.entries.get($entry.attr("id"));
 
                 var $contentHeader = this.$contentHeaderTemplate.clone().appendTo($content);
-                $contentHeader.find("#title").text(entry.get("title")).attr("href", entry.get("link"));
+                $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
                 var feed = session.get("feeds")[entry.get("feed_id")];
                 $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
                 $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
@@ -394,13 +394,13 @@ $(function () {
                 var entryTop = $entry.position().top;
 
                 if (entryTop < bodyScrollTop) {
-                    $body.scrollTop(entryTop - 4);
+                    $body.scrollTop(entryTop);
                 } else {
                     var windowHeight = $(window).height();
                     var entryHeight = $entry.height();
 
                     if (entryTop + entryHeight - bodyScrollTop > windowHeight) {
-                        $body.scrollTop(entryTop - 4 - Math.max(windowHeight - entryHeight - 8, 0));
+                        $body.scrollTop(entryTop - Math.max(windowHeight - entryHeight, 0));
                     }
                 }
             }
