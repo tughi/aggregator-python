@@ -11,6 +11,7 @@ Planned features:
 - OPML import ✔
 - JSON-based API ✔
 - Web client ✔
+- Mobile web client ✔
 - Android client
 
 ### License
