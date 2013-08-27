@@ -294,7 +294,7 @@ $(function () {
                     if (!author) {
                         $contentHeader.find("#author-container").remove();
                     } else {
-                        $contentHeader.find("#author").text(author);
+                        $contentHeader.find("#author").text(author.name);
                     }
 
                     if (entry.get("content").length || entry.get("summary")) {

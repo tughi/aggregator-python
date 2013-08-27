@@ -128,6 +128,7 @@ def __as_entry_data(data, poll_time):
         json.dumps(OrderedDict([
             ('title', data.title),
             ('link', data.get('link')),
+            ('author', data.get('author_detail')),
             ('summary', __as_content(data.get('summary_detail'))),
             ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
             ('published', data.get('published')),
