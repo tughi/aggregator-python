@@ -275,38 +275,43 @@ $(function () {
         },
 
         toggleOpen: function ($entry) {
-            this.$el.children(".active").not($entry).removeClass("active");
-            this.$el.children(".open").not($entry).removeClass("open").find("#content").empty();
+            var view = this;
+            
+            view.$el.children(".active").not($entry).removeClass("active");
+            view.$el.children(".open").not($entry).removeClass("open");
             $entry.addClass("active").toggleClass("open");
 
-            if ($entry.hasClass("open")) {
-                var $content = $entry.find("#content:empty");
-                if ($content.length) {
-                    // add content
-                    var entry = this.entries.get($entry.attr("id"));
+            // load content for current and next 2 entries
+            var $entries = $entry.nextAll(".entry:lt(2)").andSelf();
+            view.$el.children(".entry").not($entries).find("#content:not(:empty)").empty();
+            $entries.find("#content:empty").each(function () {
+                var $content = $(this);
+                var $entry = $content.closest(".entry");
+                var entry = view.entries.get($entry.attr("id"));
 
-                    var $contentHeader = this.$contentHeaderTemplate.clone().appendTo($content);
-                    $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
-                    var feed = session.get("feeds")[entry.get("feed_id")];
-                    $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
-                    $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
-                    var author = entry.get("author");
-                    if (!author) {
-                        $contentHeader.find("#author-container").remove();
-                    } else {
-                        $contentHeader.find("#author").text(author.name);
-                    }
-
-                    if (entry.get("content").length || entry.get("summary")) {
-                        var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
-                        for (var index in content) {
-                            $content.append(content[index].value);
-                        }
-                    }
+                var $contentHeader = view.$contentHeaderTemplate.clone().appendTo($content);
+                $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
+                var feed = session.get("feeds")[entry.get("feed_id")];
+                $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
+                $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
+                var author = entry.get("author");
+                if (!author) {
+                    $contentHeader.find("#author-container").remove();
+                } else {
+                    $contentHeader.find("#author").text(author.name);
                 }
 
+                if (entry.get("content").length || entry.get("summary")) {
+                    var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
+                    for (var index in content) {
+                        $content.append(content[index].value);
+                    }
+                }
+            });
+
+            if ($entry.hasClass("open")) {
                 // mark as read
-                var entry = this.entries.get($entry.attr("id"));
+                var entry = view.entries.get($entry.attr("id"));
                 var reader_tags = entry.get("reader_tags");
                 var patched_reader_tags = reader_tags | TAG_READ;
                 if (reader_tags != patched_reader_tags) {
