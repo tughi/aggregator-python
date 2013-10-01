@@ -80,3 +80,11 @@ If you require HTTP Basic Authentication uncomment the two lines and make sure o
 	plugins=python
 	socket=/tmp/uwsgi.aggregator.socket
 	pythonpath=/var/www/aggregator
+
+### Web Client Screenshots
+
+![Feeds](screenshots/web-feeds.png)
+
+![Reader](screenshots/web-reader.png)
+
+
