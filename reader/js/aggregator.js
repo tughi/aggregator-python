@@ -10,7 +10,7 @@ $(function () {
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: "/api/entries"
+        url: "api/entries"
     });
 
     var SessionOptions = Backbone.Model.extend({
@@ -77,7 +77,7 @@ $(function () {
     });
 
     var Session = Backbone.Model.extend({
-        url: "/reader/session",
+        url: "reader/session",
         options: new SessionOptions,
 
         initialize: function () {
@@ -316,7 +316,7 @@ $(function () {
                 var patched_reader_tags = reader_tags | TAG_READ;
                 if (reader_tags != patched_reader_tags) {
                     $.ajax({
-                        url: "/api/entries/" + entry.id,
+                        url: "api/entries/" + entry.id,
                         method: "PATCH",
                         data: {
                             reader_tags: patched_reader_tags
@@ -420,7 +420,7 @@ $(function () {
                 var server_tags = entry.get("server_tags");
                 if ((patched_reader_tags | server_tags) != (reader_tags | server_tags)) {
                     $.ajax({
-                        url: "/api/entries/" + entry.id,
+                        url: "api/entries/" + entry.id,
                         method: "PATCH",
                         data: {
                             reader_tags: patched_reader_tags
