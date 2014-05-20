@@ -8,81 +8,95 @@
     <meta name="viewport" content="width=device-width, user-scalable=no" />
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/aggregator.css">
-</head>
-<body>
 
-<div id="feeds-container">
-    <div id="feeds">
-        <div id="all" class="feed">
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
+    <script src="js/cached/jquery.min.js"></script>
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script> -->
+    <script src="js/cached/underscore-min.js"></script>
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script> -->
+    <script src="js/cached/backbone-min.js"></script>
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/json2/20130526/json2.min.js"></script> -->
+    <script src="js/cached/json2.min.js"></script>
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script> -->
+    <script src="js/cached/moment.min.js"></script>
+
+    <script type="text/template" id="feeds-template">
+        <a id="all" class="feed<% if (sessionHash.match(/#!1[<>]$/)) { %> active<% } %>" href="#!1<">
             <div id="title-wrapper">
                 <div id="title">All feeds</div>
             </div>
-            <div id="count-wrapper">
-                <div id="fadeout"></div><div id="count">30</div>
-            </div>
-        </div>
+            <% if (totalUnread) { %>
+                <div id="count-wrapper">
+                    <div id="fadeout"></div><div id="count"><%= totalUnread %></div>
+                </div>
+            <% } %>
+        </a>
         <div class="divider"></div>
-        <div id="starred" class="feed read">
+        <a id="starred" class="feed<% if (sessionHash.match(/#2[<>]$/)) { %> active<% } %>" href="#2<">
             <div id="title-wrapper">
                 <div id="title">Starred entries</div>
             </div>
-        </div>
+        </a>
         <div class="divider"></div>
-        <div id="feed-template" class="feed">
-            <div id="title-wrapper">
-                <div id="title">Feed</div>
-            </div>
-            <div id="count-wrapper">
-                <div id="fadeout"></div><div id="count">30</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="entries">
-    <div id="entry-template" class="entry">
-        <div id="header">
-            <div id="title-wrapper">
-                <span id="title">Title</span>
-            </div>
-            <div id="date-wrapper">
-                <span id="fadeout"></span><span id="date">09:56 PM</span>
-            </div>
-            <div id="toggle"></div>
-            <a id="favicon" target="_blank"></a>
-            <span id="star"></span>
-        </div>
-        <div id="body">
-            <div id="content">
-                <div id="content-header">
-                    <h1><a id="title"></a></h1>
-                    <div>
-                        <span id="author-container">by <span id="author"></span>,</span>
-                        <a id="feed"></a>
-                        <span id="date-container">on <span id="date"></span></span>
-                        <span id="star" onclick="javascript: return false"></span>
+        <% _.each(feeds, function (feed) { %>
+            <a class="feed<% if (sessionFeedId == feed.id) { %> active<% } %>" href="#!1<|<%= feed.id %>">
+                <div id="title-wrapper">
+                    <div id="title"><%= feed.title %></div>
+                </div>
+                <% if (feed.count) { %>
+                    <div id="count-wrapper">
+                        <div id="fadeout"></div><div id="count"><%= feed.count %></div>
                     </div>
-                    <div id="tags">
-                        <div id="arrow"></div><div id="toggle-read">keep </div><div id="toggle">close</div>
+                <% } %>
+            </a>
+        <% }) %>
+    </script>
+
+    <script src="js/aggregator.js"></script>
+</head>
+<body>
+
+    <div id="feeds-container">
+        <div id="feeds"></div>
+    </div>
+
+    <div id="entries">
+        <div id="entry-template" class="entry">
+            <div id="header">
+                <div id="title-wrapper">
+                    <span id="title">Title</span>
+                </div>
+                <div id="date-wrapper">
+                    <span id="fadeout"></span><span id="date">09:56 PM</span>
+                </div>
+                <div id="toggle"></div>
+                <a id="favicon" target="_blank"></a>
+                <span id="star"></span>
+            </div>
+            <div id="body">
+                <div id="content">
+                    <div id="content-header">
+                        <h1><a id="title"></a></h1>
+                        <div>
+                            <span id="author-container">by <span id="author"></span>,</span>
+                            <a id="feed"></a>
+                            <span id="date-container">on <span id="date"></span></span>
+                            <span id="star" onclick="javascript: return false"></span>
+                        </div>
+                        <div id="tags">
+                            <div id="arrow"></div><div id="toggle-read">keep </div><div id="toggle">close</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="footer">
-                
+                <div id="footer">
+                    
+                </div>
             </div>
         </div>
+        <div id="loader">
+            Nothing more to read. Back to work ...
+        </div>
     </div>
-    <div id="loader">
-        Nothing more to read. Back to work ...
-    </div>
-</div>
-
-<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.0.0/backbone-min.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/json2/20121008/json2.js"></script>
-<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.0.0/moment.min.js"></script>
-<script src="js/aggregator.js"></script>
 
 </body>
 </html>

@@ -117,74 +117,47 @@ $(function () {
     var session = new Session;
 
     var FeedsView = Backbone.View.extend({
-        el: $("#feeds"),
+        el: $('#feeds').get(0),
+        template: _.template($('#feeds-template').text()),
 
         initialize: function () {
-            var view = this;
-
-            view.$feedTemplate = view.$("> #feed-template").removeAttr("id").remove();
-
-            view.$el.children("#all").on("click", function () {
-                session.options.set({"with_tags": null, "without_tags": TAG_READ, "feed_id": null});
-            });
-
-            view.$el.children("#starred").on("click", function () {
-                session.options.set({"with_tags": TAG_STAR, "without_tags": null, "feed_id": null});
-            });
-
-            view.listenTo(session, "change", view.render);
+            this.listenTo(session, "change", this.render);
         },
 
         render: function () {
-            var view = this;
+            // prepare template data
+            var sortedFeeds = [];
+            var totalUnread = 0;
 
-            if (session.hasFeeds()) {
-                view.$("> .feed").not("#all,#starred").remove();
-
-                var feeds = session.get("feeds");
-                var sortedFeeds = [];
-                for (var id in feeds) {
-                    var feed = feeds[id];
-                    sortedFeeds.push([feed["title"].toLowerCase(), feed]);
-                }
-                sortedFeeds.sort();
-
-                var totalCount = 0;
-
-                for (var index in sortedFeeds) {
-                    var feed = sortedFeeds[index][1];
-                    var $feed = view.$feedTemplate.clone();
-
-                    $feed.attr("id", feed["id"]);
-                    $feed.find("#title").text(feed["title"]);
-
-                    var count = feed["count"];
-                    $feed.find("#count").text(count > 0 ? count : "");
-
-                    if (count == 0) {
-                        $feed.addClass("read");
-                    }
-
-                    $feed.on("click", function () {
-                        session.options.set({"with_tags": null, "without_tags": TAG_READ, "feed_id": $(this).attr("id")});
-                    });
-
-                    view.$el.append($feed);
-                    totalCount += count;
-                }
-
-                view.$("> #all #count").text(totalCount > 0 ? totalCount : "");
-
-                var sessionFeedId = session.options.get("feed_id");
-                if (sessionFeedId) {
-                    view.$("> #" + sessionFeedId).addClass("active");
-                }
+            var feeds = session.get('feeds');
+            for (var id in feeds) {
+                var feed = feeds[id];
+                sortedFeeds.push(feed)
+                totalUnread += feed.count;
             }
+
+            sortedFeeds.sort(function (feed1, feed2) {
+                var title1 = feed1.title.toLowerCase();
+                var title2 = feed2.title.toLowerCase();
+                return title1 < title2 ? -1 : title1 > title2 ? 1 : 0;
+            });
+
+            // render
+            this.$el
+                    .empty()
+                    .html(this.template({
+                        feeds: sortedFeeds,
+                        totalUnread: totalUnread,
+                        sessionHash: window.location.hash,
+                        sessionFeedId: session.options.get('feed_id')
+                    }));
+
+            return this;
         }
     });
 
     var EntriesView = Backbone.View.extend({
-        el: $("#entries"),
+        el: $("#entries").get(0),
         $feeds: $("#feeds"),
         entries: new Entries,
 

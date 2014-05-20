@@ -51,6 +51,11 @@ body {
     padding: 0 15px;
 }
 
+#feeds > a.feed {
+    color: #333333;
+    text-decoration: none;
+}
+
 #feeds > .feed div {
     display: inline-block;
 }
@@ -66,10 +71,6 @@ body {
 
 #feeds > .feed.active > #count-wrapper > #count {
     color: white;
-}
-
-#feeds > .feed.read > #count-wrapper {
-    display: none;
 }
 
 #feeds > .feed:hover {
