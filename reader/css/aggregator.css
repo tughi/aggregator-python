@@ -1,40 +1,69 @@
-html {
-    overflow-y: scroll;
-}
-
 body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 14px;
     color: #333333;
+
+    overflow-y: scroll;
 }
 
-.desktop #feeds-container {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 20px;
-    bottom: 0;
-    z-index: 1;
+@media (max-width: 1199px) {
+
+    .desktop #feeds-container {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 20px;
+        bottom: 0;
+        z-index: 1;
+    }
+
+    .desktop #feeds {
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: 1px 0 4px #999;
+        position: absolute;
+        left: -400px;
+        top: 0;
+        width: 320px;
+        bottom: 0;
+        padding: 20px;
+        transition: left 0.2s ease-in-out;
+        overflow: auto;
+    }
+
+    .desktop #feeds-container:hover > #feeds {
+        left: 0;
+    }
+
 }
 
-.desktop #feeds {
-    background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 1px 0 4px #999;
-    position: absolute;
-    left: -400px;
-    top: 0;
-    width: 320px;
-    bottom: 0;
-    padding: 20px;
-    transition: left 0.2s ease-in-out;
-}
+@media (min-width: 1200px) {
 
-.desktop #feeds-container:hover > #feeds {
-    left: 0;
-}
+    .desktop #feeds-container {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: auto;
+        right: 50%;
+        bottom: 0;
+        z-index: 0;
+    }
 
-#feeds {
-    overflow: auto;
+    .desktop #feeds {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 404px;
+        bottom: 0;
+        padding: 20px;
+        overflow: auto;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    .desktop #feeds:hover {
+        opacity: 1;
+    }
+
 }
 
 #feeds > .feed {
@@ -83,37 +112,6 @@ body {
 
 #feeds > #starred.feed {
     margin-bottom: 20px;
-}
-
-@media (min-width: 1200px) {
-    .desktop #feeds-container {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: auto;
-        right: 50%;
-        bottom: 0;
-        z-index: 0;
-    }
-
-    .desktop #feeds {
-        width: auto;
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 404px;
-        bottom: 0;
-        padding: 20px;
-        overflow: auto;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-        background-color: transparent;
-        box-shadow: none;
-    }
-
-    .desktop #feeds:hover {
-        opacity: 1;
-    }
 }
 
 .mobile #feeds-container {
