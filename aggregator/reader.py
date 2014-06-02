@@ -50,7 +50,7 @@ def session():
                 'title': title,
                 'link': link,
                 'favicon': favicon,
-                'count': count,
+                'unread': count,
             }
 
     return {

@@ -55,7 +55,8 @@ body {
         right: 404px;
         bottom: 0;
         padding: 20px;
-        overflow: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
     }
@@ -66,52 +67,57 @@ body {
 
 }
 
-#feeds > .feed {
+#feeds > .feed,
+#feeds > .feed > a,
+#feeds > .feed div {
     display: inline-block;
+}
+
+#feeds > .feed {
     position: relative;
     margin-bottom: 2px;
     margin-right: 4px;
     height: 30px;
     line-height: 30px;
     white-space: nowrap;
-    cursor: pointer;
+}
+
+#feeds > .feed > a {
+    color: #333333;
+    text-decoration: none;
     background-color: #e5e5e5;
     border-radius: 15px;
     padding: 0 15px;
 }
 
-#feeds > a.feed {
-    color: #333333;
-    text-decoration: none;
-}
-
-#feeds > .feed div {
-    display: inline-block;
-}
-
-#feeds > .feed > #count-wrapper > #fadeout {
+#feeds > .feed > a > #count-wrapper > #fadeout {
     display: none;
 }
 
-#feeds > .feed > #count-wrapper > #count {
+#feeds > .feed > a > #count-wrapper > #count {
     color: #33b5e5;
     margin-left: 4px;
 }
 
-#feeds > .feed.active > #count-wrapper > #count {
-    color: white;
-}
-
-#feeds > .feed:hover {
+#feeds > .feed:hover > a {
     background-color: #f5f5f5;
 }
 
-#feeds > .feed.active {
+#feeds > .feed > a.active {
     background-color: #33b5e5;
+}
+
+#feeds > .feed > a.active > #count-wrapper > #count {
+    color: white;
 }
 
 #feeds > #starred.feed {
     margin-bottom: 20px;
+}
+
+.desktop #feeds > .feed#all,
+.desktop #feeds > .feed#starred {
+    display: block;
 }
 
 .mobile #feeds-container {
@@ -305,6 +311,10 @@ body {
     margin-bottom: 0.67em;
 }
 
+#entries > .entry > #body > #content > #content-header > h1 {
+    font-weight: normal;
+}
+
 #entries > .entry > #body > #content > #content-header > #tags {
     position: absolute;
     top: 0;
@@ -336,12 +346,8 @@ body {
     border-color: transparent #33b5e5 transparent transparent;
 }
 
-#entries > .entry > #body > #content > #content-header > #tags > #toggle-read:after {
-    content: "unread";
-}
-
-#entries > .entry.unread > #body > #content > #content-header > #tags > #toggle-read:after {
-    content: "read";
+#entries > .entry.unread > #body > #content > #content-header > h1 {
+    font-weight: bold;
 }
 
 #entries > .entry > #body > #content > #content-header h1 {

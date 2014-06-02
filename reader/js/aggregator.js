@@ -1,363 +1,365 @@
 $(function () {
 
-    $("body").addClass(navigator.userAgent.match(/Android|iPhone|iPad|iPod/i) ? "mobile" : "desktop");
-
     var TAG_READ = 1;
     var TAG_STAR = 2;
 
+    var Feed = Backbone.Model.extend({
+        countAttr: 'unread',
+
+        initialize: function () {
+            this.set({route: '#read/feed/' + this.id});
+        }
+    });
+
+    var AllFeed = Feed.extend({
+        countAttr: 'count',
+
+        initialize: function () {
+            this.set({route: '#read'});
+        },
+
+        updateCount: function (feeds) {
+            var count = 0;
+            feeds.each(function (feed) {
+                var unread = feed.get('unread');
+                if (unread) {
+                    count += unread;
+                }
+            });
+
+            this.set({count: count});
+        }
+    });
+
+    var StarredFeed = Feed.extend({
+        initialize: function () {
+            this.set({route: '#read/starred'});
+        }
+    });
+
+    var Feeds = Backbone.Collection.extend({
+        comparator: 'sortIndex',
+
+        initialize: function () {
+            this.listenTo(this, 'reset', this.onReset);
+            this.listenTo(this, 'change:unread', this.onUnreadChanged);
+        },
+
+        onReset: function () {
+            this.onUnreadChanged();
+        },
+
+        onUnreadChanged: function () {
+            this.get('all').updateCount(this);
+        }
+    });
+
+    var FeedView = Backbone.View.extend({
+        tagName: 'div',
+        className: 'feed',
+        template: _.template($('#feed-template').text()),
+
+        initialize: function () {
+            this.listenTo(this.model, 'change', this.render);
+        },
+
+        render: function () {
+            this.$el.html(this.template({feed: this.model}));
+            this.$el.attr('id', this.model.id);
+
+            return this;
+        }
+    });
+
+    var FeedsView = Backbone.View.extend({
+        el: '#feeds',
+
+        initialize: function () {
+            this.listenTo(this.collection, 'reset', this.render);
+        },
+
+        render: function () {
+            this.$el.empty();
+
+            this.collection.each(function (feed) {
+                new FeedView({model: feed}).render().$el.appendTo(this.$el);
+            }.bind(this));
+        }
+    });
+
     var Entry = Backbone.Model.extend({
+        initialize: function () {
+            this.set({updated_text: this.formatDate(this.get('updated'))});
+        },
+
+        getFeed: function () {
+            return window.reader.feeds.get(this.get('feed_id'));
+        },
+
+        isUnread: function () {
+            return  (this.get('reader_tags') & TAG_READ) == 0;
+        },
+
+        isStarred: function () {
+            return  (this.get('reader_tags') & TAG_STAR) == TAG_STAR;
+        },
+
+        formatDate: function (date) {
+            var date = moment(date);
+            var sessionDate = window.reader.session.date;
+
+            if (sessionDate.year() != date.year()) {
+                return date.format('MMM DD YYYY');
+            }
+
+            if (sessionDate.date() == date.date() && sessionDate.month() == date.month()) {
+                return date.format('hh:mm a');
+            }
+
+            return date.format('MMM DD');
+        },
+
+        toggleTag: function (tag) {
+            var reader_tags = this.get('reader_tags');
+            var patched_reader_tags = reader_tags ^ tag;
+            $.ajax({
+                url: 'api/entries/' + this.id,
+                method: 'PATCH',
+                data: {
+                    reader_tags: patched_reader_tags
+                },
+                success: function () {
+                    // update entry
+                    this.set('reader_tags', patched_reader_tags);
+
+                    if (tag == TAG_READ) {
+                        // update feed unread count
+                        var feed = this.getFeed();
+                        feed.set('unread', feed.get('unread') + ((patched_reader_tags & TAG_READ) == 0 ? 1 : -1));
+                    }
+                }.bind(this)
+            });
+        }
     });
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: "api/entries"
-    });
+        url: 'api/entries'    });
 
-    var SessionOptions = Backbone.Model.extend({
-        initialize: function () {
-            var model = this;
-
-            model.listenTo(model, "change", model.storeData);
-
-            $(window).on("hashchange", function () {
-                model.loadData();
-            });
-        },
-
-        loadData: function () {
-            var values = {
-                without_tags: TAG_READ,
-                order: "<"
-            };
-
-            var hashMatch = /^#(\d+)?(!(\d+))?([<>])(\|(\d+))?/g.exec(window.location.hash);
-
-            if (hashMatch) {
-                if (hashMatch[1]) {
-                    values["with_tags"] = hashMatch[1];
-                    values["without_tags"] = hashMatch[3] || null;
-                } else {
-                    values["with_tags"] = null;
-                    values["without_tags"] = hashMatch[3];
-                }
-
-                values["order"] = hashMatch[4];
-
-                values["feed_id"] = hashMatch[6] || null;
-            }
-
-            this.set(values);
-        },
-
-        storeData: function () {
-            var hash = "#";
-
-            var with_tags = this.get("with_tags");
-            if (with_tags) {
-                hash += with_tags;
-            }
-
-            var without_tags = this.get("without_tags");
-            if (without_tags) {
-                hash += "!" + without_tags;
-            }
-
-            var order = this.get("order");
-            if (order) {
-                hash += order;
-            }
-
-            var feed_id = this.get("feed_id");
-            if (feed_id) {
-                hash += "|" + feed_id;
-            }
-
-            window.location.hash = hash;
-        }
-    });
-
-    var Session = Backbone.Model.extend({
-        url: "reader/session",
-        options: new SessionOptions,
+    var EntryView = Backbone.View.extend({
+        tagName: 'div',
+        className: 'entry',
+        template: _.template($('#entry-template').text()),
 
         initialize: function () {
-            this.listenTo(this.options, "change", this.reload);
-
-            this.options.loadData();
-        },
-
-        hasFeeds: function () {
-            var feeds = this.get("feeds");
-            if (feeds) {
-                for (var key in feeds) {
-                    return true;
-                }
-            }
-            return false;
-        },
-
-        hasEntries: function () {
-            var entries = this.get("entries");
-            return entries && entries.length;
-        },
-
-        reload: function () {
-            var options = this.options.toJSON();
-            for (var key in options) {
-                if (options[key] == null) {
-                    delete options[key];
-                }
-            }
-
-            this.clear();
-            this.fetch({data: options});
-        }
-    });
-
-    var session = new Session;
-
-    var FeedsView = Backbone.View.extend({
-        el: $('#feeds').get(0),
-        template: _.template($('#feeds-template').text()),
-
-        initialize: function () {
-            this.listenTo(session, "change", this.render);
+            this.listenTo(this.model, 'change', this.render);
         },
 
         render: function () {
-            // prepare template data
-            var sortedFeeds = [];
-            var totalUnread = 0;
+            this.$el.html(this.template({entry: this.model, feed: this.model.getFeed()}));
+            this.$el.attr('id', this.model.id);
 
-            var feeds = session.get('feeds');
-            for (var id in feeds) {
-                var feed = feeds[id];
-                sortedFeeds.push(feed)
-                totalUnread += feed.count;
-            }
+            this.$el.toggleClass('unread', this.model.isUnread());
+            this.$el.toggleClass('starred', this.model.isStarred());
 
-            sortedFeeds.sort(function (feed1, feed2) {
-                var title1 = feed1.title.toLowerCase();
-                var title2 = feed2.title.toLowerCase();
-                return title1 < title2 ? -1 : title1 > title2 ? 1 : 0;
-            });
-
-            // render
-            this.$el
-                    .empty()
-                    .html(this.template({
-                        feeds: sortedFeeds,
-                        totalUnread: totalUnread,
-                        sessionHash: window.location.hash,
-                        sessionFeedId: session.options.get('feed_id')
-                    }));
+            this.$el.toggleClass('active', this.model.get('_active') == true);
+            this.$el.toggleClass('open', this.model.get('_open') == true);
 
             return this;
         }
     });
 
     var EntriesView = Backbone.View.extend({
-        el: $("#entries").get(0),
-        $feeds: $("#feeds"),
-        entries: new Entries,
+        el: '#entries',
 
         initialize: function () {
-            var view = this;
+            this.listenTo(this.collection, 'reset', this.onCollectionReset);
+            this.listenTo(this.collection, 'add', this.onCollectionAdd);
+        },
 
-            view.$entryTemplate = view.$("> #entry-template").removeAttr("id").remove();
-            view.$contentHeaderTemplate = view.$entryTemplate.find("#content-header");
-            view.$contentHeaderTemplate.parent().empty();
+        onCollectionReset: function () {
+            this.$el.empty();
+        },
 
-            view.$loader = view.$("> #loader").click(function () {
-                view.fetchNextPage();
+        onCollectionAdd: function (entry) {
+            new EntryView({model: entry}).render().$el.appendTo(this.$el);
+        }
+    });
+
+    var SessionOptions = Backbone.Model.extend({
+        defaults: {
+            with_tags: undefined,
+            without_tags: TAG_READ,
+            order: '<',
+            feed_id: undefined
+        }
+    });
+
+    var Session = Backbone.Model.extend({
+        url: 'reader/session'
+    });
+
+    var ENTRIES_PER_PAGE = 50;
+    var ENTRY_HEIGHT = 30;
+
+    var Reader = Backbone.View.extend({
+        el: document,
+        $window: $(window),
+
+        events: {
+            'keydown': 'onKeyDown',
+            'scroll': 'onScroll',
+            'click #entries > .entry': 'onEntryClick',
+            'click #entries > .entry > #body > #content > #content-header > #tags > #toggle': 'onEntryCloseToggleClick',
+            'click #entries > .entry > #body > #content > #content-header > #tags > #toggle-read': 'onEntryReadToggleClick'
+        },
+
+        initialize: function () {
+            this.sessionOptions = new SessionOptions();
+            this.session = new Session();
+            this.feeds = new Feeds();
+            this.entries = new Entries();
+
+            new FeedsView({collection: this.feeds});
+            new EntriesView({collection: this.entries});
+
+            // toggle reader mode
+            this.$('body').addClass(navigator.userAgent.match(/Android|iPhone|iPad|iPod/i) ? 'mobile' : 'desktop');
+
+            this.listenTo(this.sessionOptions, 'change', this.reload);
+            this.listenTo(this.session, 'change', this.onSessionChanged);
+        },
+
+        onSessionChanged: function () {
+            this.session.date = moment();
+            this.activeEntry = -1;
+            this.openedEntry = -1;
+
+            // update feeds model
+            var feeds = [
+                new AllFeed({id: 'all', title: 'All items', sortIndex: 'all'}),
+                new StarredFeed({id: 'starred', title: 'Starred items', sortIndex: 'starred'})
+            ];
+            _.each(this.session.get('feeds'), function (feed) {
+                feeds.push(new Feed(feed).set({sortIndex: 'x_' + feed.title.toLowerCase()}));
             });
+            this.feeds.reset(feeds);
 
-            view.listenTo(session, "change", view.refresh);
-            view.listenTo(view.entries, "add", view.render);
-        },
+            // clear entries model
+            this.entries.reset();
 
-        refresh: function () {
-            var view = this;
-
-            view.$el.children(".entry").remove();
-            view.currentPage = -1;
-            view.entries.reset();
-
-            view.now = moment();
-
-            if (session.hasEntries()) {
-                // fetch first page
-                view.fetchNextPage();
+            if (this.session.get('entries').length) {
+                // fetch first entries
+                this.entries.fetch({
+                    data: {
+                        ids: this.session.get('entries').slice(0, ENTRIES_PER_PAGE).join(',')
+                    },
+                    remove: false
+                });
             }
         },
 
-        fetchNextPage: function () {
-            var PAGE_ENTRIES = 50;
-
-            var view = this;
-            var page = view.currentPage + 1;
-
-            var entryIds = session.get("entries");
-
-            if (page <= entryIds.length / PAGE_ENTRIES) {
-                var pageEntries = new Entries;
-                var pageEntryIds = entryIds.slice(page * PAGE_ENTRIES, Math.min((page + 1) * PAGE_ENTRIES, entryIds.length));
-                pageEntries.fetch({data: {ids: pageEntryIds.join(",")}})
-                    .done(function () {
-                        pageEntries.each(function (entry) {
-                            view.entries.add(entry);
-                        });
-
-                        view.currentPage = page;
-
-                        if ((page + 1) * PAGE_ENTRIES > entryIds.length) {
-                            // no more entries to load
-                            view.$loader.hide();
-                        } else {
-                            view.$loader.show().text((entryIds.length - (page + 1) * PAGE_ENTRIES) + " more");
-                        }
-                    })
-                    .fail(function (xhdr, message, error) {
-                        throw error;
-                    });
-            }
+        reload: function () {
+            this.session.set({feeds: {}, entries: []});
+            this.session.fetch({data: this.sessionOptions.toJSON()});
         },
 
-        render: function (entry) {
-            var view = this;
-            var $entry = view.$entryTemplate.clone();
-
-            $entry.attr("id", entry.get("id"));
-            $entry.find("#title").html(entry.get("title"));
-            $entry.find("#favicon").attr("href", entry.get("link")).css("background-image", "url('" + session.get("feeds")[entry.get("feed_id")]["favicon"] + "')");
-
-            var date = moment(entry.get("updated"));
-            var now = view.now;
-            var dateFormat = now.year() != date.year() ? "MMM DD YYYY" : now.date() == date.date() && now.month() == date.month() ? "hh:mm a" : "MMM DD";
-            $entry.find("#date").text(date.format(dateFormat));
-
-            var tags = entry.get("reader_tags") | entry.get("server_tags");
-            if ((tags & TAG_READ) == 0) {
-                $entry.addClass("unread");
-            }
-            if ((tags & TAG_STAR) == TAG_STAR) {
-                $entry.addClass("starred");
-            }
-
-            this.$loader.before($entry);
-        },
-
-        toggleOpen: function ($entry) {
-            var view = this;
-            
-            view.$el.children(".active").not($entry).removeClass("active");
-            view.$el.children(".open").not($entry).removeClass("open");
-            $entry.addClass("active").toggleClass("open");
-
-            // load content for current and next 2 entries
-            var $entries = $entry.nextAll(".entry:lt(2)").andSelf();
-            view.$el.children(".entry").not($entries).find("#content:not(:empty)").empty();
-            $entries.find("#content:empty").each(function () {
-                var $content = $(this);
-                var $entry = $content.closest(".entry");
-                var entry = view.entries.get($entry.attr("id"));
-
-                var $contentHeader = view.$contentHeaderTemplate.clone().appendTo($content);
-                $contentHeader.find("#title").html(entry.get("title")).attr("href", entry.get("link"));
-                var feed = session.get("feeds")[entry.get("feed_id")];
-                $contentHeader.find("#feed").text(feed["title"]).attr("href", feed["link"]);
-                $contentHeader.find("#date").text(moment(entry.get("updated")).format("lll")).attr("title", entry.get("published"));
-                var author = entry.get("author");
-                if (!author) {
-                    $contentHeader.find("#author-container").remove();
-                } else {
-                    $contentHeader.find("#author").text(author.name);
-                }
-
-                if (entry.get("content").length || entry.get("summary")) {
-                    var content = entry.get("content").length ? entry.get("content") : [entry.get("summary")];
-                    for (var index in content) {
-                        $content.append(content[index].value);
+        onKeyDown: function (event) {
+            switch (event.which) {
+                case 74: // j
+                    this.activateEntry(Math.min(this.entries.length - 1, this.activeEntry + 1));
+                    this.openEntry(this.activeEntry);
+                    break;
+                case 75: // k
+                    this.activateEntry(Math.max(this.activeEntry - 1, 0));
+                    this.openEntry(this.activeEntry);
+                    break;
+                case 77: // m
+                    if (this.activeEntry > -1) {
+                        this.entries.at(this.activeEntry).toggleTag(TAG_READ);
                     }
-                }
-            });
+                    break;
+                case 78: // n
+                    this.activateEntry(Math.min(this.entries.length - 1, this.activeEntry + 1));
+                    break;
+                case 79: // o
+                    if (this.openedEntry == this.activeEntry) {
+                        this.openedEntry = -1;
 
-            if ($entry.hasClass("open")) {
-                // mark as read
-                var entry = view.entries.get($entry.attr("id"));
-                var reader_tags = entry.get("reader_tags");
-                var patched_reader_tags = reader_tags | TAG_READ;
-                if (reader_tags != patched_reader_tags) {
-                    $.ajax({
-                        url: "api/entries/" + entry.id,
-                        method: "PATCH",
-                        data: {
-                            reader_tags: patched_reader_tags
-                        },
-                        success: function () {
-                            entry.set("reader_tags", patched_reader_tags);
-                            $entry.removeClass("unread");
-                        }
-                    });
-                }
+                        // open the requested entry
+                        this.entries.at(this.activeEntry).set({_open: false});
+                    } else {
+                        this.openEntry(this.activeEntry);
+                    }
+                    break;
+                case 80: // p
+                    this.activateEntry(Math.max(this.activeEntry - 1, 0));
+                    break;
+                case 82: // r
+                    this.reload();
+                    break;
+                case 83: // s
+                    if (this.activeEntry > -1) {
+                        this.entries.at(this.activeEntry).toggleTag(TAG_STAR);
+                    }
+                    break;
+                case 86: // v
+                    var href = this.entries.at(this.activeEntry).get('link');
+                    if (href) {
+                        window.open(href);
+                    }
+                    break;
+                default:
+                    console.log('unexpected keydown: ' + event.which);
             }
         },
 
-        activateNext: function () {
-            var $activeEntry = this.$el.children(".active");
-            var $nextEntry;
-
-            if ($activeEntry.length) {
-                $nextEntry = $activeEntry.next(".entry");
-                if (!$nextEntry.length) {
-                    // already the last entry
-
-                    this.fetchNextPage();
-
-                    return $activeEntry;
-                }
-                $activeEntry.removeClass("active");
-            } else {
-                $nextEntry = this.$el.children(".entry:first");
-            }
-
-            $nextEntry.addClass("active");
-            return $nextEntry;
+        onEntryClick: function (event) {
+            var index = $(event.target).closest('.entry').index();
+            this.activateEntry(index);
+            this.openEntry(index);
         },
 
-        activatePrev: function () {
-            var $activeEntry = this.$el.children(".active");
+        onEntryCloseToggleClick: function (event) {
+            event.stopPropagation();
 
-            if ($activeEntry.length) {
-                var $prevEntry = $activeEntry.prev(".entry");
-                if ($prevEntry.length) {
-                    $activeEntry.removeClass("active");
-                    $prevEntry.addClass("active");
-
-                    return $prevEntry;
-                }
-            }
-
-            return $activeEntry;
+            var index = $(event.target).closest('.entry').index();
+            this.openedEntry = -1;
+            this.entries.at(index).set('_open', false);
         },
 
-        openNext: function () {
-            var $activeEntry = this.activateNext();
-
-            this.$el.children(".open").not($activeEntry).removeClass("open");
-
-            if (!$activeEntry.hasClass("open")) {
-                this.toggleOpen($activeEntry);
-            }
+        onEntryReadToggleClick: function (event) {
+            var index = $(event.target).closest('.entry').index();
+            this.entries.at(index).toggleTag(TAG_READ);
         },
 
-        openPrev: function () {
-            var $activeEntry = this.activatePrev();
+        activateEntry: function (index) {
+            if (this.activeEntry > -1) {
+                // deactivate current entry
+                this.entries.at(this.activeEntry).set({_active: false});
+            }
 
-            this.$el.children(".open").not($activeEntry).removeClass("open");
+            this.activeEntry = index;
 
-            if (!$activeEntry.hasClass("open")) {
-                this.toggleOpen($activeEntry);
+            // activate the requested entry
+            this.entries.at(index).set({_active: true});
+        },
+
+        openEntry: function (index) {
+            if (this.openedEntry > -1) {
+                // close current entry
+                this.entries.at(this.openedEntry).set({_open: false});
+            }
+
+            this.openedEntry = index;
+
+            // open the requested entry
+            var entry = this.entries.at(index);
+            entry.set({_open: true});
+
+            if (entry.isUnread()) {
+                // mark as unread
+                entry.toggleTag(TAG_READ);
             }
         },
 
@@ -383,111 +385,56 @@ $(function () {
             }
         },
 
-        toggleTag: function (tag, $entry) {
-            $entry = $entry || this.$el.children(".active");
-
-            if ($entry.length) {
-                var entry = this.entries.get($entry.attr("id"));
-                var reader_tags = entry.get("reader_tags");
-                var patched_reader_tags = reader_tags ^ tag;
-                var server_tags = entry.get("server_tags");
-                if ((patched_reader_tags | server_tags) != (reader_tags | server_tags)) {
-                    $.ajax({
-                        url: "api/entries/" + entry.id,
-                        method: "PATCH",
-                        data: {
-                            reader_tags: patched_reader_tags
-                        },
-                        success: function () {
-                            entry.set("reader_tags", patched_reader_tags);
-
-                            if ((patched_reader_tags & TAG_READ) == TAG_READ) {
-                                $entry.removeClass("unread");
-                            } else {
-                                $entry.addClass("unread");
-                            }
-
-                            if ((patched_reader_tags & TAG_STAR) == TAG_STAR) {
-                                $entry.addClass("starred");
-                            } else {
-                                $entry.removeClass("starred");
-                            }
-                        }
-                    });
-                }
+        onScroll: function () {
+            if (this.entries.length < this.session.get('entries').length && this.$el.height() - this.$el.scrollTop() < ENTRIES_PER_PAGE * ENTRY_HEIGHT) {
+                // fetch next page
+                this.entries.fetch({
+                    data: {
+                        ids: this.session.get('entries').slice(this.entries.length, this.entries.length + ENTRIES_PER_PAGE).join(',')
+                    },
+                    remove: false
+                });
             }
         }
     });
 
-    var feedsView = new FeedsView();
-    var entriesView = new EntriesView();
+    window.reader = new Reader();
+    window.reader.reload();
 
-    $(document).on("click", "#entries > .entry > #header > #toggle, #entries > .entry > #body > #content > #content-header > #tags > #toggle", function () {
-        entriesView.toggleOpen($(this).closest(".entry"));
-        entriesView.scrollToActive();
-    });
+    var Router = Backbone.Router.extend({
+        routes: {
+            'read': 'read',
+            'read/starred': 'readStarred',
+            'read/feed/:feed_id': 'readFeed'
+        },
 
-    $(document).on("click", "#entries > .entry > #body > #content > #content-header > #tags > #toggle-read", function () {
-        entriesView.toggleTag(TAG_READ, $(this).closest(".entry"));
-    });
+        read: function () {
+            window.reader.sessionOptions.set({
+                with_tags: undefined,
+                without_tags: TAG_READ,
+                feed_id: undefined
+            });
+        },
 
-    $(document).on("click", "#entries > .entry > #header > #star, #entries > .entry > #body > #content > #content-header #star", function (event) {
-        entriesView.toggleTag(TAG_STAR, $(this).closest(".entry"));
-    });
+        readStarred: function () {
+            window.reader.sessionOptions.set({
+                with_tags: TAG_STAR,
+                without_tags: undefined,
+                feed_id: undefined
+            });
+        },
 
-    $(document).on("click", "#entries > .entry > #body a", function (event) {
-        event.stopPropagation();
-        event.preventDefault();
-
-        var href = $(this).attr("href");
-        if (href) {
-            window.open(href);
+        readFeed: function (feed_id) {
+            window.reader.sessionOptions.set({
+                with_tags: undefined,
+                without_tags: TAG_READ,
+                feed_id: feed_id
+            });
         }
     });
 
-    $(document).on("keydown", function (event) {
-        switch (event.which) {
-            case 74: // j
-                entriesView.openNext();
-                entriesView.scrollToActive();
-                break;
-            case 75: // k
-                entriesView.openPrev();
-                entriesView.scrollToActive();
-                break;
-            case 77: // m
-                entriesView.toggleTag(TAG_READ);
-                break;
-            case 78: // n
-                entriesView.activateNext();
-                entriesView.scrollToActive();
-                break;
-            case 79: // o
-                var $entry = entriesView.$el.children(".active");
-                if ($entry.length) {
-                    entriesView.toggleOpen($entry);
-                    entriesView.scrollToActive();
-                }
-                break;
-            case 80: // p
-                entriesView.activatePrev();
-                entriesView.scrollToActive();
-                break;
-            case 82: // r
-                session.reload();
-                break;
-            case 83: // s
-                entriesView.toggleTag(TAG_STAR);
-                break;
-            case 86: // v
-                var href = entriesView.$("> .active.entry > #header > #favicon").attr("href");
-                if (href) {
-                    window.open(href);
-                }
-                break;
-            default:
-                console.log("unhandled keydown: " + event.which);
-        }
-    });
+    new Router();
+
+    Backbone.history.start();
 
 });
