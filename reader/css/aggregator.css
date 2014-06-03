@@ -274,11 +274,20 @@ body {
     background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
 }
 
-.desktop #entries > #loader:hover,
 .desktop #entries > .entry:hover > #header,
 .desktop #entries > .entry:hover > #header > #date-wrapper > #date,
 .desktop #entries > .entry:hover > #header > #star {
     background-color: #f5f5f5;
+}
+
+.desktop #entries > .entry.active:hover > #header,
+.desktop #entries > .entry.active:hover > #header > #star,
+.desktop #entries > .entry.active:hover > #header > #date-wrapper > #date {
+    background-color: #339dcb;
+}
+
+.desktop #entries > .entry.active:hover > #header > #date-wrapper > #fadeout {
+    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #339dcb);
 }
 
 .desktop #entries > .entry:hover > #header > #date-wrapper > #fadeout {
