@@ -211,7 +211,8 @@ $(function () {
             'scroll': 'onScroll',
             'click #entries > .entry #toggle': 'onEntryToggleClicked',
             'click #entries > .entry #toggle-read': 'onEntryToggleReadClick',
-            'click #entries > .entry #star': 'onEntryToggleStarClick'
+            'click #entries > .entry #star': 'onEntryToggleStarClick',
+            'click #entries > .entry > #body a': 'onEntryAnchorClick'
         },
 
         initialize: function () {
@@ -281,6 +282,7 @@ $(function () {
                     break;
                 case 78: // n
                     this.activateEntry(Math.min(this.entries.length - 1, this.activeEntry + 1));
+                    this.scrollToActive();
                     break;
                 case 79: // o
                     if (this.openedEntry == this.activeEntry) {
@@ -294,6 +296,7 @@ $(function () {
                     break;
                 case 80: // p
                     this.activateEntry(Math.max(this.activeEntry - 1, 0));
+                    this.scrollToActive();
                     break;
                 case 82: // r
                     if (!event.metaKey) {
@@ -344,6 +347,16 @@ $(function () {
             this.entries.at(index).toggleTag(TAG_STAR);
         },
 
+        onEntryAnchorClick: function (event) {
+            event.stopPropagation();
+            event.preventDefault();
+
+            var href = $(event.target).attr("href");
+            if (href) {
+                window.open(href);
+            }
+        },
+
         activateEntry: function (index) {
             if (this.activeEntry > -1) {
                 // deactivate current entry
@@ -372,25 +385,26 @@ $(function () {
                 // mark as unread
                 entry.toggleTag(TAG_READ);
             }
+
+            this.scrollToActive();
         },
 
         scrollToActive: function () {
-            var $entry = this.$el.children(".active");
+            var $entry = this.$('#entries > .entry.active');
 
             if ($entry.length) {
-                var $body = $("body");
-                var bodyScrollTop = $body.scrollTop();
+                var bodyScrollTop = this.$window.scrollTop();
 
                 var entryTop = $entry.position().top;
 
                 if (entryTop < bodyScrollTop) {
-                    $body.scrollTop(entryTop);
+                    this.$window.scrollTop(entryTop);
                 } else {
                     var windowHeight = $(window).height();
                     var entryHeight = $entry.height();
 
                     if (entryTop + entryHeight - bodyScrollTop > windowHeight) {
-                        $body.scrollTop(entryTop - Math.max(windowHeight - entryHeight, 0));
+                        this.$window.scrollTop(entryTop - Math.max(windowHeight - entryHeight, 0));
                     }
                 }
             }
