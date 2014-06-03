@@ -209,9 +209,9 @@ $(function () {
         events: {
             'keydown': 'onKeyDown',
             'scroll': 'onScroll',
-            'click #entries > .entry': 'onEntryClick',
-            'click #entries > .entry > #body > #content > #content-header > #tags > #toggle': 'onEntryCloseToggleClick',
-            'click #entries > .entry > #body > #content > #content-header > #tags > #toggle-read': 'onEntryReadToggleClick'
+            'click #entries > .entry #toggle': 'onEntryToggleClicked',
+            'click #entries > .entry #toggle-read': 'onEntryToggleReadClick',
+            'click #entries > .entry #star': 'onEntryToggleStarClick'
         },
 
         initialize: function () {
@@ -316,23 +316,32 @@ $(function () {
             }
         },
 
-        onEntryClick: function (event) {
+        onEntryToggleClicked: function (event) {
             var index = $(event.target).closest('.entry').index();
-            this.activateEntry(index);
-            this.openEntry(index);
+            var entry =  this.entries.at(index);
+
+            if (entry.get('_open')) {
+                // close entry
+                event.stopPropagation();
+
+                var index = $(event.target).closest('.entry').index();
+                this.openedEntry = -1;
+                this.entries.at(index).set('_open', false);
+            } else {
+                // open entry
+                this.activateEntry(index);
+                this.openEntry(index);
+            }
         },
 
-        onEntryCloseToggleClick: function (event) {
-            event.stopPropagation();
-
-            var index = $(event.target).closest('.entry').index();
-            this.openedEntry = -1;
-            this.entries.at(index).set('_open', false);
-        },
-
-        onEntryReadToggleClick: function (event) {
+        onEntryToggleReadClick: function (event) {
             var index = $(event.target).closest('.entry').index();
             this.entries.at(index).toggleTag(TAG_READ);
+        },
+
+        onEntryToggleStarClick: function (event) {
+            var index = $(event.target).closest('.entry').index();
+            this.entries.at(index).toggleTag(TAG_STAR);
         },
 
         activateEntry: function (index) {
