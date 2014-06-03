@@ -67,6 +67,8 @@ $(function () {
             this.$el.html(this.template({feed: this.model}));
             this.$el.attr('id', this.model.id);
 
+            this.$el.toggleClass('active', window.location.hash == this.model.get('route'));
+
             return this;
         }
     });

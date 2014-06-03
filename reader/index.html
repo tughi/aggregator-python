@@ -16,7 +16,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.6.0/moment.min.js"></script>
 
     <script type="text/template" id="feed-template">
-        <a href="<%= feed.get('route') %>"<% if (window.location.hash == feed.get('route')) { %> class="active" <% } %>>
+        <a href="<%= feed.get('route') %>">
             <div id="title-wrapper">
                 <div id="title"><%= feed.get('title') %></div>
             </div>
