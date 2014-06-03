@@ -286,10 +286,10 @@ $(function () {
                     break;
                 case 79: // o
                     if (this.openedEntry == this.activeEntry) {
+                        // close entry
                         this.openedEntry = -1;
-
-                        // open the requested entry
-                        this.entries.at(this.activeEntry).set({_open: false});
+                        this.entries.at(this.activeEntry).unset('_open');
+                        this.scrollToActive();
                     } else {
                         this.openEntry(this.activeEntry);
                     }
@@ -329,7 +329,7 @@ $(function () {
 
                 var index = $(event.target).closest('.entry').index();
                 this.openedEntry = -1;
-                this.entries.at(index).set('_open', false);
+                this.entries.at(index).unset('_open');
             } else {
                 // open entry
                 this.activateEntry(index);
@@ -360,31 +360,51 @@ $(function () {
         activateEntry: function (index) {
             if (this.activeEntry > -1) {
                 // deactivate current entry
-                this.entries.at(this.activeEntry).set({_active: false});
+                this.entries.at(this.activeEntry).unset('_active');
             }
 
             this.activeEntry = index;
 
             // activate the requested entry
-            this.entries.at(index).set({_active: true});
+            this.entries.at(index).set('_active', true);
         },
 
         openEntry: function (index) {
+            var preloadEntries = _.range(Math.max(index - 2, 0), Math.min(index + 4, this.entries.length));
+
             if (this.openedEntry > -1) {
                 // close current entry
-                this.entries.at(this.openedEntry).set({_open: false});
+                this.entries.at(this.openedEntry).unset('_open');
+
+                // unload far entries
+                var loadedEntries = _.range(Math.max(this.openedEntry - 2, 0), Math.min(this.openedEntry + 4, this.entries.length));
+                _.each(_.difference(loadedEntries, preloadEntries), function (index) {
+                    this.entries.at(index).unset('_loaded');
+                }.bind(this));
+            } else {
             }
+
 
             this.openedEntry = index;
 
-            // open the requested entry
-            var entry = this.entries.at(index);
-            entry.set({_open: true});
+            _.each(preloadEntries, function (index) {
+                var entry = this.entries.at(index);
 
-            if (entry.isUnread()) {
-                // mark as unread
-                entry.toggleTag(TAG_READ);
-            }
+                // preload entry
+                var values = { _loaded: true };
+
+                if (index == this.openedEntry) {
+                    // open entry
+                    values._open = true;
+
+                    if (entry.isUnread()) {
+                        // mark as unread
+                        entry.toggleTag(TAG_READ);
+                    }
+                }
+
+                this.entries.at(index).set(values);
+            }.bind(this));
 
             this.scrollToActive();
         },
