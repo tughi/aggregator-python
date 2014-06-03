@@ -189,7 +189,7 @@ $(function () {
     var SessionOptions = Backbone.Model.extend({
         defaults: {
             with_tags: undefined,
-            without_tags: TAG_READ,
+            without_tags: undefined,
             order: '<',
             feed_id: undefined
         }
@@ -296,7 +296,9 @@ $(function () {
                     this.activateEntry(Math.max(this.activeEntry - 1, 0));
                     break;
                 case 82: // r
-                    this.reload();
+                    if (!event.metaKey) {
+                        this.reload();
+                    }
                     break;
                 case 83: // s
                     if (this.activeEntry > -1) {
@@ -399,7 +401,6 @@ $(function () {
     });
 
     window.reader = new Reader();
-    window.reader.reload();
 
     var Router = Backbone.Router.extend({
         routes: {
@@ -433,8 +434,10 @@ $(function () {
         }
     });
 
-    new Router();
+    var router = new Router();
 
-    Backbone.history.start();
+    if (!Backbone.history.start()) {
+        router.navigate('read', {trigger: true});
+    }
 
 });
