@@ -238,6 +238,9 @@ $(function () {
             this.activeEntry = -1;
             this.openedEntry = -1;
 
+            // clear entries model
+            this.entries.reset();
+
             // update feeds model
             var feeds = [
                 new AllFeed({id: 'all', title: 'All items', sortIndex: 'all'}),
@@ -248,14 +251,12 @@ $(function () {
             });
             this.feeds.reset(feeds);
 
-            // clear entries model
-            this.entries.reset();
-
-            if (this.session.get('entries').length) {
+            var sessionEntries = this.session.get('entries');
+            if (sessionEntries && sessionEntries.length) {
                 // fetch first entries
                 this.entries.fetch({
                     data: {
-                        ids: this.session.get('entries').slice(0, ENTRIES_PER_PAGE).join(',')
+                        ids: sessionEntries.slice(0, ENTRIES_PER_PAGE).join(',')
                     },
                     remove: false
                 });
@@ -263,7 +264,7 @@ $(function () {
         },
 
         reload: function () {
-            this.session.set({feeds: {}, entries: []});
+            this.session.unset('entries');
             this.session.fetch({data: this.sessionOptions.toJSON()});
         },
 

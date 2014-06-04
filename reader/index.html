@@ -52,7 +52,8 @@
                             <span id="star" onclick="javascript: return false"></span>
                         </div>
                         <div id="tags">
-                            <div id="arrow"></div><div id="toggle-read">keep <%= entry.isUnread() ? 'read' : 'unread' %></div><div id="toggle">close</div>
+                            <div id="toggle-read"><%= entry.isUnread() ? 'unread' : 'read' %></div>
+                            <div id="toggle">close</div>
                         </div>
                     </div>
                     <% if (entry.get('content').length || entry.get('summary')) {
@@ -77,6 +78,7 @@
     </div>
 
     <div id="entries">
+        Loading...
     </div>
 
 </body>
