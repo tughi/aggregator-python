@@ -166,7 +166,7 @@ def update_feeds():
             if DEBUG:
                 print('ERROR: Failed to parse feed')
 
-            connection.execute('UPDATE feed SET poll_status = ? WHERE id = ?', [feed_id, -1])
+            connection.execute('UPDATE feed SET poll_status = ? WHERE id = ?', [-1, feed_id])
 
             continue # with next feed
 
