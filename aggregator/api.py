@@ -173,6 +173,10 @@ def update_feeds():
         feed_link = data.feed.get('link')
         status = data.get('status', 0)
 
+        if status == 301:
+            if DEBUG:
+                print('Feed moved to: %s' % data.get('href'))
+
         for entry_data in data.entries:
             guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
