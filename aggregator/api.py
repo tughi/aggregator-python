@@ -181,6 +181,10 @@ def update_feeds():
 
             connection.execute('UPDATE feed SET url = ? WHERE id = ?', [feed_url, feed_id])
 
+        entries_total = len(data.entries)
+        entries_updated = 0
+        entries_created = 0
+
         for entry_data in data.entries:
             guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
@@ -197,6 +201,12 @@ def update_feeds():
             if connection.execute(update_query, update_args).rowcount == 0:
                 # entry doesn't exist
                 connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, json_data])
+                entries_created += 1
+            else:
+                entries_updated += 1
+
+        if DEBUG:
+            print('From %d entries, %d were updated and %d new were created' % (entries_total, entries_updated, entries_created))
 
         day_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 86400]).fetchone()[0]
         week_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 604800]).fetchone()[0]
