@@ -229,30 +229,10 @@ def update_feeds():
             # schedule new poll in 3 hours
             feed_poll_type = u'every 3 hours'
             feed_next_poll = poll + 10800
-        elif poll_rate < 43200:
+        else:
             # schedule new poll in 6 hours
             feed_poll_type = u'every 6 hours'
             feed_next_poll = poll + 21600
-        elif poll_rate < 86400:
-            # schedule new poll in 12 hours
-            feed_poll_type = u'every 12 hours'
-            feed_next_poll = poll + 43200
-        elif poll_rate < 172800:
-            # schedule new poll in 1 day
-            feed_poll_type = u'every day'
-            feed_next_poll = poll + 86400
-        elif poll_rate < 259200:
-            # schedule new poll in 2 day
-            feed_poll_type = u'every 2 days'
-            feed_next_poll = poll + 172800
-        elif poll_rate < 345600:
-            # schedule new poll in 3 day
-            feed_poll_type = u'every 3 days'
-            feed_next_poll = poll + 259200
-        else:
-            # schedule new poll in 4 days
-            feed_poll_type = u'every 4 days'
-            feed_next_poll = poll + 345600
 
         update_query = 'UPDATE feed SET poll_type = ?, next_poll = ?, link = ?, etag = ?, modified = ?, poll = ?, poll_status = ? WHERE id = ?'
         connection.execute(update_query, [feed_poll_type, feed_next_poll, feed_link, data.get('etag'), data.get('modified'), poll, status, feed_id])
