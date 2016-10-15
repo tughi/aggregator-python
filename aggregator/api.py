@@ -1,19 +1,19 @@
 # coding=utf-8
-import os
-import time
-import json
 import calendar
-from collections import OrderedDict
+import json
+import os
+import sys
+import time
 import urlparse
-
-import requests
-
-from aggregator import content
-from aggregator.utils import signed_long
-from bottle import Bottle, response, request
+from collections import OrderedDict
 
 import feedparser
 import opml
+import requests
+from bottle import Bottle, response, request
+
+from aggregator import content
+from aggregator.utils import signed_long
 
 api = Bottle(autojson=False)
 
@@ -277,14 +277,17 @@ def __load_readable_article(connection, feed_id, guid, json_data):
 
             article = requests.get(entry_link, headers=headers)
             if article.status_code == 200:
-                parsed_article = requests.post(bliss_parser, params={'url': entry_link}, json={'html': article.content})
+                try:
+                    parsed_article = requests.post(bliss_parser, params={'url': entry_link}, json={'html': article.content})
 
-                if parsed_article.status_code == 200:
-                    parsed_article = parsed_article.json()
+                    if parsed_article.status_code == 200:
+                        parsed_article = parsed_article.json()
 
-                    json_data['link_content'] = parsed_article.get('body')
-                    json_data['link_etag'] = article.headers.get('etag')
-                    json_data['link_modified'] = article.headers.get('last-modified')
+                        json_data['link_content'] = parsed_article.get('body')
+                        json_data['link_etag'] = article.headers.get('etag')
+                        json_data['link_modified'] = article.headers.get('last-modified')
+                except:
+                    print "Unexpected error:", sys.exc_info()[0]
 
 
 @api.get('/update/favicons')
