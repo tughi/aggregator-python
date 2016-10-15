@@ -1,9 +1,6 @@
-from collections import OrderedDict
-import json
+from bottle import Bottle, request
 
 from aggregator import content, utils
-
-from bottle import Bottle, request
 
 
 reader = Bottle()
