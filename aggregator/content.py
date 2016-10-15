@@ -1,9 +1,6 @@
 # coding=utf-8
+import os
 import sqlite3
-from os import path
-
-
-DATABASE = path.sep.join(('databases', 'aggregator.db'))
 
 
 class transaction(object):
@@ -22,7 +19,10 @@ class transaction(object):
 
 
 def open_connection():
-    connection = sqlite3.connect(DATABASE, isolation_level=None)
+    if not os.path.isdir('databases'):
+        os.mkdir('databases')
+
+    connection = sqlite3.connect(os.path.sep.join(('databases', 'aggregator.db')), isolation_level=None)
 
     version = connection.execute('PRAGMA user_version').fetchone()[0]
     VERSION = 3
@@ -123,4 +123,3 @@ def __upgrade_schema(cursor, version):
                 FROM old_entry
         ''')
         cursor.execute('DROP TABLE old_entry')
-

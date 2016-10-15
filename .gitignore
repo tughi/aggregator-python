@@ -4,7 +4,7 @@
 /.env
 
 # database
-/databases/*
+/databases
 
 # pycharm files
 /.idea
