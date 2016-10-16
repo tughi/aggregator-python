@@ -1,15 +1,12 @@
 # coding=utf-8
 import calendar
 import json
-import os
-import sys
 import time
 import urlparse
 from collections import OrderedDict
 
 import feedparser
 import opml
-import requests
 from bottle import Bottle, response, request
 
 from aggregator import content
@@ -104,8 +101,7 @@ def add_feed():
         for entry_data in data.entries:
             guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
-            args = [feed_id, guid, poll, updated, json.dumps(json_data)]
-            connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', args)
+            connection.execute('INSERT INTO entry (feed_id, guid, poll, updated, data) VALUES (?, ?, ?, ?, ?)', [feed_id, guid, poll, updated, json_data])
 
     return {
         'id': feed_id,
@@ -131,7 +127,7 @@ def __as_entry_data(data, poll_time):
 
     return (
         data.get('id') or link,
-        OrderedDict([
+        json.dumps(OrderedDict([
             ('title', data.title),
             ('link', link),
             ('author', data.get('author_detail')),
@@ -139,7 +135,7 @@ def __as_entry_data(data, poll_time):
             ('content', [__as_content(content_data) for content_data in data.get('content', [])]),
             ('published', data.get('published')),
             ('updated', data.get('updated'))
-        ]),
+        ])),
         calendar.timegm(data.get('updated_parsed') or data.get('published_parsed') or poll_time)
     )
 
@@ -195,10 +191,6 @@ def update_feeds():
         for entry_data in data.entries:
             guid, json_data, updated = __as_entry_data(entry_data, poll_time)
 
-            __load_readable_article(connection, feed_id, guid, json_data)
-
-            json_data = json.dumps(json_data)
-
             update_setters = ['data = ?']
             update_args = [json_data]
 
@@ -247,47 +239,6 @@ def update_feeds():
 
         update_query = 'UPDATE feed SET poll_type = ?, next_poll = ?, link = ?, etag = ?, modified = ?, poll = ?, poll_status = ? WHERE id = ?'
         connection.execute(update_query, [feed_poll_type, feed_next_poll, feed_link, data.get('etag'), data.get('modified'), poll, status, feed_id])
-
-
-config = None
-
-
-def __load_readable_article(connection, feed_id, guid, json_data):
-    global config
-    if config is None:
-        if os.path.isfile('config.json'):
-            with open('config.json') as config_file:
-                config = json.load(config_file)
-        else:
-            config = {}
-
-    bliss_parser = config.get('bliss_parser')
-    if bliss_parser:
-        entry_link = json_data.get('link')
-        if entry_link:
-            headers = {}
-
-            existing_json_data = connection.execute('SELECT data FROM entry WHERE feed_id = ? AND guid = ?', [feed_id, guid]).fetchone()
-            if existing_json_data:
-                existing_json_data = json.loads(existing_json_data[0])
-                if existing_json_data.get('link_etag'):
-                    headers['If-None-Match'] = existing_json_data.get('link_etag')
-                if existing_json_data.get('link_modified'):
-                    headers['If-Modified-Since'] = existing_json_data.get('link_modified')
-
-            article = requests.get(entry_link, headers=headers)
-            if article.status_code == 200:
-                try:
-                    parsed_article = requests.post(bliss_parser, params={'url': entry_link}, json={'html': article.content})
-
-                    if parsed_article.status_code == 200:
-                        parsed_article = parsed_article.json()
-
-                        json_data['link_content'] = parsed_article.get('body')
-                        json_data['link_etag'] = article.headers.get('etag')
-                        json_data['link_modified'] = article.headers.get('last-modified')
-                except:
-                    print "Unexpected error:", sys.exc_info()[0]
 
 
 @api.get('/update/favicons')
