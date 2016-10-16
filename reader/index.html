@@ -51,17 +51,22 @@
                             <span id="date-container">on <span id="date" title="<%= entry.get('published') %>"><%= moment(entry.get('updated')).format('lll') %></span></span>
                             <span id="star" onclick="javascript: return false"></span>
                         </div>
-                        <div id="tags">
-                            <div id="toggle-read"><%= entry.isUnread() ? 'unread' : 'read' %></div>
-                            <div id="toggle">close</div>
+                        <div id="actions">
+                            <a id="bliss">bliss</a>
+                            <a id="toggle-read"><%= entry.isUnread() ? 'unread' : 'read' %></a>
+                            <a id="toggle">close</a>
                         </div>
                     </div>
-                    <% if (entry.get('content').length || entry.get('summary')) {
+                    <%
+                    if (entry.get('_blissed')) {
+                        %><%= entry.get('_blissed_content') || 'Loading...' %><%
+                    } else if (entry.get('content').length || entry.get('summary')) {
                         var content = entry.get('content').length ? entry.get('content') : [entry.get('summary')];
-                        for (var index in content) { %>
-                            <%= content[index].value %>
-                        <% }
-                    } %>
+                        for (var index in content) {
+                            %><%= content[index].value %><%
+                        }
+                    }
+                    %>
                 </div>
                 <div id="footer">
                 </div>

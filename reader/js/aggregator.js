@@ -141,12 +141,40 @@ $(function () {
                     }
                 }.bind(this)
             });
+        },
+
+        toggleBlissed: function (config) {
+            if (config.bliss_parser) {
+                if (this.get('_blissed')) {
+                    this.unset('_blissed');
+                } else {
+                    this.set('_blissed', true);
+
+                    if (!this.has('_blissed_content')) {
+                        $.ajax({
+                            url: config.bliss_parser,
+                            data: {
+                                'url': this.get('link')
+                            },
+                            method: 'get',
+                            type: 'json',
+                            success: function (data) {
+                                this.set('_blissed_content', data['body'])
+                            }.bind(this),
+                            error: function () {
+                                this.set('_blissed_content', 'Load failed...')
+                            }.bind(this)
+                        });
+                    }
+                }
+            }
         }
     });
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: 'api/entries'    });
+        url: 'api/entries'
+    });
 
     var EntryView = Backbone.View.extend({
         tagName: 'div',
@@ -166,6 +194,8 @@ $(function () {
 
             this.$el.toggleClass('active', this.model.get('_active') == true);
             this.$el.toggleClass('open', this.model.get('_open') == true);
+
+            this.$el.toggleClass('blissed', this.model.get('_blissed') == true);
 
             return this;
         }
@@ -213,6 +243,7 @@ $(function () {
             'scroll': 'onScroll',
             'click #entries > .entry #toggle': 'onEntryToggleClicked',
             'click #entries > .entry #toggle-read': 'onEntryToggleReadClick',
+            'click #entries > .entry #bliss': 'onBlissClick',
             'click #entries > .entry #star': 'onEntryToggleStarClick',
             'click #entries > .entry > #body a': 'onEntryAnchorClick'
         },
@@ -270,6 +301,11 @@ $(function () {
 
         onKeyDown: function (event) {
             switch (event.which) {
+                case 66: // b
+                    if (this.activeEntry > -1) {
+                        this.entries.at(this.activeEntry).toggleBlissed(this.session.get('config'));
+                    }
+                    break;
                 case 74: // j
                     this.activateEntry(Math.min(this.entries.length - 1, this.activeEntry + 1));
                     this.openEntry(this.activeEntry);
@@ -343,6 +379,11 @@ $(function () {
         onEntryToggleReadClick: function (event) {
             var index = $(event.target).closest('.entry').index();
             this.entries.at(index).toggleTag(TAG_READ);
+        },
+
+        onBlissClick: function (event) {
+            var index = $(event.target).closest('.entry').index();
+            this.entries.at(index).toggleBlissed(this.session.get('config'));
         },
 
         onEntryToggleStarClick: function (event) {

@@ -1,7 +1,8 @@
+import json
+
 from bottle import Bottle, request
 
 from aggregator import content, utils
-
 
 reader = Bottle()
 
@@ -50,8 +51,11 @@ def session():
                 'unread': count,
             }
 
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+
     return {
         'feeds': feeds,
-        'entries': entries
+        'entries': entries,
+        'config': config,
     }
-

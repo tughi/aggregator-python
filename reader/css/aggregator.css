@@ -350,14 +350,14 @@ body {
     margin-bottom: 0.67em;
 }
 
-#entries > .entry > #body > #content > #content-header > #tags {
+#entries > .entry > #body > #content > #content-header > #actions {
     position: absolute;
     top: 0;
     right: 0;
     cursor: pointer;
 }
 
-#entries > .entry > #body > #content > #content-header > #tags:before {
+#entries > .entry > #body > #content > #content-header > #actions:before {
     content: ' ';
     display: inline-block;
     float: left;
@@ -369,9 +369,10 @@ body {
     border-width: 24px 0 0 24px;
     border-style: solid;
     border-color: #33b5e5 transparent;
+    cursor: default;
 }
 
-#entries > .entry > #body > #content > #content-header > #tags > div {
+#entries > .entry > #body > #content > #content-header > #actions > a {
     background-color: #33b5e5;
     color: white;
     line-height: 24px;
@@ -380,7 +381,11 @@ body {
     float: left;
 }
 
-#entries > .entry.unread > #body > #content > #content-header > #tags > div#toggle-read {
+#entries > .entry.unread > #body > #content > #content-header > #actions > a#toggle-read {
+    background-color: #0099cc;
+}
+
+#entries > .entry.blissed > #body > #content > #content-header > #actions > a#bliss {
     background-color: #0099cc;
 }
 
