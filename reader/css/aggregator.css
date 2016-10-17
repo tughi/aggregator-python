@@ -6,6 +6,35 @@ body {
     overflow-y: scroll;
 }
 
+blockquote {
+    background: #e3f5fb;
+    border-left: 0.25em solid #33b5e5;
+    margin: 0 0 1em;
+    padding: 1em 1em 1em 2.25em;
+    position: relative;
+}
+
+blockquote:before {
+    color: #33b5e5;
+    content: '\e244';
+    font-family: 'Material Icons';
+    font-size: 2em;
+    left: 0;
+    position: absolute;
+    top: -0.5em;
+}
+
+figure {
+    background: #e3f5fb;
+    margin: 0 0 1em;
+    padding: 0.5em;
+    text-align: center;
+}
+
+figcaption {
+    text-align: initial;
+}
+
 @media (max-width: 1199px) {
 
     .desktop #feeds-container {
