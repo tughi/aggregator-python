@@ -1,6 +1,6 @@
 body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 14px;
+    font-size: 1em;
     color: #333333;
 
     overflow-y: scroll;
@@ -9,7 +9,7 @@ body {
 blockquote {
     background: #e3f5fb;
     border-left: 0.25em solid #33b5e5;
-    margin: 0 0 1em;
+    margin: 1em 0 0;
     padding: 1em 1em 1em 2.25em;
     position: relative;
 }
@@ -26,7 +26,7 @@ blockquote:before {
 
 figure {
     background: #e3f5fb;
-    margin: 0 0 1em;
+    margin: 1em 0 0;
     padding: 0.5em;
     text-align: center;
 }
@@ -217,13 +217,13 @@ figcaption {
 
 #entries > .entry > #header {
     position: relative;
-    height: 30px;
-    line-height: 30px;
+    height: 2em;
+    line-height: 2em;
 }
 
 .mobile #entries > .entry > #header {
-    height: 48px;
-    line-height: 48px;
+    height: 3em;
+    line-height: 3em;
 }
 
 #entries > .entry > #header > #title-wrapper,
@@ -238,11 +238,7 @@ figcaption {
 
 #entries > .entry > #header > #title-wrapper {
     overflow: hidden;
-    padding: 0 30px;
-}
-
-.mobile #entries > .entry > #header > #title-wrapper {
-    padding: 0 40px;
+    padding: 0 3em;
 }
 
 #entries > .entry > #header > #title-wrapper > #title {
@@ -257,25 +253,21 @@ figcaption {
     display: table;
     position: absolute;
     top: 0;
-    right: 30px;
+    right: 3em;
     bottom: 0;
     white-space: nowrap;
 }
 
-.mobile #entries > .entry > #header > #date-wrapper {
-    right: 40px;
-}
-
 #entries > .entry > #header > #date-wrapper > #fadeout {
     display: table-cell;
-    width: 30px;
+    width: 3em;
     background-color: transparent;
     background-image: linear-gradient(to right, rgba(255, 255, 255, 0), white);
 }
 
 #entries > .entry > #header > #date-wrapper > #date {
     display: table-cell;
-    padding: 0 4px;
+    padding: 0;
     background-color: white;
 }
 
@@ -285,13 +277,9 @@ figcaption {
     top: 0;
     left: 0;
     bottom: 0;
-    width: 30px;
+    width: 3em;
     background: transparent center no-repeat;
     background-size: 16px;
-}
-
-.mobile #entries > .entry > #header > #favicon {
-    width: 40px;
 }
 
 #entries > .entry > #header > #star {
@@ -300,7 +288,7 @@ figcaption {
     top: 0;
     right: 0;
     bottom: 0;
-    width: 30px;
+    width: 3em;
     background: white;
     text-align: center;
     cursor: pointer;
@@ -308,10 +296,6 @@ figcaption {
 
 #entries > .entry > #header > #star:after {
     content: '\2606';
-}
-
-.mobile #entries > .entry > #header > #star {
-    width: 40px;
 }
 
 #entries > .entry.open {
@@ -360,7 +344,11 @@ figcaption {
 #entries > .entry > #body {
     position: relative;
     display: none;
-    padding: 20px;
+    padding: 1.5em 1em 1em 1em;
+}
+
+.mobile #entries > .entry > #body {
+    padding-top: 2em;
 }
 
 #entries > .entry.open > #header {
@@ -376,7 +364,7 @@ figcaption {
 }
 
 #entries > .entry > #body > #content > #content-header {
-    margin-bottom: 0.67em;
+    margin-bottom: 1em;
 }
 
 #entries > .entry > #body > #content > #content-header > #actions {
@@ -390,24 +378,32 @@ figcaption {
     content: ' ';
     display: inline-block;
     float: left;
-    width: 20px;
+    width: 2em;
     height: 0;
     background-color: transparent;
     padding: 0;
     margin: 1px 1px 0 0;
-    border-width: 24px 0 0 24px;
+    border-width: 1.5em 0 0 1.5em;
     border-style: solid;
     border-color: #33b5e5 transparent;
     cursor: default;
 }
 
+.mobile #entries > .entry > #body > #content > #content-header > #actions:before {
+    border-width: 2em 0 0 2em;
+}
+
 #entries > .entry > #body > #content > #content-header > #actions > a {
     background-color: #33b5e5;
     color: white;
-    line-height: 24px;
-    padding: 0 20px;
+    line-height: 1.5em;
+    padding: 0 1em;
     margin: 1px 1px 0 0;
     float: left;
+}
+
+.mobile #entries > .entry > #body > #content > #content-header > #actions > a {
+    line-height: 2em;
 }
 
 #entries > .entry.unread > #body > #content > #content-header > #actions > a#toggle-read {
@@ -419,11 +415,11 @@ figcaption {
 }
 
 #entries > .entry > #body > #content > #content-header h1 {
-    margin: 0.67em 0 0 0;
+    margin: 1em 0 0 0;
 }
 
 #entries > .entry > #body > #content > #content-header div {
-    line-height: 16px;
+    line-height: 1em;
 }
 
 #entries > .entry > #body > #content > #content-header div * {
@@ -442,6 +438,10 @@ figcaption {
 
 #entries > .entry.starred > #body > #content > #content-header #star:after {
     content: '\2605';
+}
+
+#entries > .entry > #body p {
+    margin: 1em 0 0;
 }
 
 #entries > .entry > #body img {
