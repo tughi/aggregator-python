@@ -1,6 +1,8 @@
 # coding=utf-8
 import calendar
 import json
+
+import requests
 import time
 import urlparse
 from collections import OrderedDict
@@ -119,7 +121,12 @@ def __get_favicon(feed_link):
         for link in data.feed.get('links', []):
             if link.rel == 'icon':
                 return link.href
-    return '{0}://{1}/favicon.ico'.format(*urlparse.urlparse(feed_link))
+
+    favicon = '{0}://{1}/favicon.ico'.format(*urlparse.urlparse(feed_link))
+    if requests.head(favicon).status_code == 200:
+        return favicon
+
+    return None
 
 
 def __as_entry_data(data, poll_time):
@@ -254,7 +261,8 @@ def update_favicons():
             if DEBUG:
                 print('Detected favicon: %s' % favicon)
 
-            connection.execute('UPDATE feed SET favicon = ? WHERE id = ?', [favicon, feed_id])
+            if favicon:
+                connection.execute('UPDATE feed SET favicon = ? WHERE id = ?', [favicon, feed_id])
 
 
 @api.delete('/feeds/<feed_id:int>')
