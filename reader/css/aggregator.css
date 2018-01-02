@@ -310,11 +310,11 @@ figcaption {
 #entries > .entry.active > #header,
 #entries > .entry.active > #header > #star,
 #entries > .entry.active > #header > #date-wrapper > #date {
-    background-color: #33b5e5;
+    background-color: #e3f5fb;
 }
 
 #entries > .entry.active > #header > #date-wrapper > #fadeout {
-    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #33b5e5);
+    background-image: linear-gradient(to right, rgba(227, 245, 251, 0), #e3f5fb);
 }
 
 .desktop #entries > .entry:hover > #header,
@@ -326,11 +326,11 @@ figcaption {
 .desktop #entries > .entry.active:hover > #header,
 .desktop #entries > .entry.active:hover > #header > #star,
 .desktop #entries > .entry.active:hover > #header > #date-wrapper > #date {
-    background-color: #0099cc;
+    background-color: #cfe1e7;
 }
 
 .desktop #entries > .entry.active:hover > #header > #date-wrapper > #fadeout {
-    background-image: linear-gradient(to right, rgba(51, 181, 229, 0), #0099cc);
+    background-image: linear-gradient(to right, rgba(207, 225, 231, 0), #cfe1e7);
 }
 
 .desktop #entries > .entry:hover > #header > #date-wrapper > #fadeout {
@@ -385,8 +385,12 @@ figcaption {
     margin: 1px 1px 0 0;
     border-width: 1.5em 0 0 1.5em;
     border-style: solid;
-    border-color: #33b5e5 transparent;
+    border-color: #e5e5e5 transparent;
     cursor: default;
+}
+
+#entries > .entry.active > #body > #content > #content-header > #actions:before {
+    border-color: #33b5e5 transparent;
 }
 
 .mobile #entries > .entry > #body > #content > #content-header > #actions:before {
@@ -394,12 +398,16 @@ figcaption {
 }
 
 #entries > .entry > #body > #content > #content-header > #actions > a {
-    background-color: #33b5e5;
+    background-color: #e5e5e5;
     color: white;
     line-height: 1.5em;
     padding: 0 1em;
     margin: 1px 1px 0 0;
     float: left;
+}
+
+#entries > .entry.active > #body > #content > #content-header > #actions > a {
+    background-color: #33b5e5;
 }
 
 .mobile #entries > .entry > #body > #content > #content-header > #actions > a {
