@@ -5,6 +5,9 @@
 # database
 /databases/aggregator.db
 
+# docker-compose
+/docker-compose.override.yaml
+
 # virtualenv
 /.virtualenv
 
