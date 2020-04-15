@@ -3,7 +3,10 @@
 /config.json
 
 # database
-/databases
+/databases/aggregator.db
+
+# virtualenv
+/.virtualenv
 
 # pycharm files
 /.idea

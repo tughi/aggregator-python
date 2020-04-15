@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  app:
+    build:
+      context: ./
+    ports:
+      - 8000:8000
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./databases/:/app/databases/:rw
