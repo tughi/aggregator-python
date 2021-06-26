@@ -1,10 +1,12 @@
 import json
 
-from bottle import Bottle, request
+from flask import Blueprint
+from flask import request
 
-from aggregator import content, utils
+from aggregator import content
+from aggregator import utils
 
-reader = Bottle()
+reader = Blueprint('reader', __name__)
 
 
 @reader.get('/session')
@@ -14,25 +16,25 @@ def session():
     where = []
     whereArgs = []
 
-    if 'feed_id' in request.query:
+    if 'feed_id' in request.args:
         where.append('feed_id = ?')
-        whereArgs.append(int(request.query.feed_id))
+        whereArgs.append(int(request.args['feed_id']))
 
-    if 'with_tags' in request.query:
-        tags = utils.signed_long(request.query.with_tags)
+    if 'with_tags' in request.args:
+        tags = utils.signed_long(request.args['with_tags'])
         where.append('(reader_tags | server_tags) & ? = ?')
         whereArgs.append(tags)
         whereArgs.append(tags)
 
-    if 'without_tags' in request.query:
-        tags = utils.signed_long(request.query.without_tags)
+    if 'without_tags' in request.args:
+        tags = utils.signed_long(request.args['without_tags'])
         where.append('(reader_tags | server_tags) & ? = 0')
         whereArgs.append(tags)
 
     if where:
         select = ' WHERE '.join((select, ' AND '.join(where)))
 
-    select = ' ORDER BY '.join((select, 'updated' if request.query.get('order', '<') == '<' else 'updated DESC'))
+    select = ' ORDER BY '.join((select, 'updated' if request.args.get('order', '<') == '<' else 'updated DESC'))
 
     entries = []
     feeds = {}

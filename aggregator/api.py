@@ -1,49 +1,33 @@
 # coding=utf-8
 import calendar
 import json
-
-import requests
 import time
-import urlparse
 from collections import OrderedDict
+from urllib.parse import urlparse
 
 import feedparser
 import opml
-from bottle import Bottle, response, request
+import requests
+from flask import Blueprint
+from flask import current_app
+from flask import jsonify
+from flask import request
 
 from aggregator import content
 from aggregator.utils import signed_long
 
-api = Bottle(autojson=False)
+api = Blueprint('api', __name__)
 
 
-class ApiException:
+class ApiException(Exception):
     def __init__(self, code, message):
         self.code = code
         self.message = message
 
 
-class ApiPlugin(object):
-    def apply(self, callback, route):
-        def decorator(*args, **kwargs):
-            response.headers['Content-Type'] = 'application/json'
-
-            try:
-                result = callback(*args, **kwargs)
-            except ApiException, e:
-                response.status = e.code
-                result = {
-                    'error': e.message
-                }
-
-            return json.dumps(result, indent=True)
-
-        return decorator
-
-
-api.install(ApiPlugin())
-
-DEBUG = True
+@api.errorhandler(ApiException)
+def handle_api_exception(exception: ApiException):
+    return dict(error=exception.message), exception.code
 
 
 @api.get('/feeds')
@@ -58,21 +42,21 @@ def get_feeds():
             'url': feed_url,
         })
 
-    return result
+    return jsonify(result)
 
 
 @api.post('/feeds')
 def add_feed():
-    feed_url = request.forms.get("url")
+    feed_url = request.form.get("url")
     if not feed_url:
         raise ApiException(400, 'the url parameter is required')
 
-    feed_title = request.forms.get("title")
+    feed_title = request.form.get("title")
 
     poll_time = time.localtime()
     poll = time.mktime(poll_time)
 
-    if DEBUG:
+    if current_app.debug:
         print('Adding feed: %s' % feed_url)
 
     connection = content.open_connection()
@@ -90,7 +74,7 @@ def add_feed():
 
     feed_title = feed_title or data.feed.get('title')
     feed_link = data.feed.get('link')
-    feed_favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(feed_url)))
+    feed_favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse(feed_url)))
 
     with content.transaction(connection) as cursor:
         cursor.execute(
@@ -122,7 +106,7 @@ def __get_favicon(feed_link):
             if link.rel == 'icon':
                 return link.href
 
-    favicon = '{0}://{1}/favicon.ico'.format(*urlparse.urlparse(feed_link))
+    favicon = '{0}://{1}/favicon.ico'.format(*urlparse(feed_link))
     if requests.head(favicon).status_code == 200:
         return favicon
 
@@ -163,7 +147,7 @@ def update_feeds():
     poll = time.mktime(poll_time)
 
     for feed_id, feed_url, feed_etag, feed_modified in connection.execute('SELECT id, url, etag, modified FROM feed WHERE next_poll <= ?', [poll]):
-        if DEBUG:
+        if current_app.debug:
             print('Updating feed: %s' % feed_url)
 
         poll_time = time.localtime()
@@ -172,7 +156,7 @@ def update_feeds():
         data = feedparser.parse(feed_url, etag=feed_etag, modified=feed_modified)
 
         if not data:
-            if DEBUG:
+            if current_app.debug:
                 print('ERROR: Failed to parse feed')
 
             connection.execute('UPDATE feed SET poll_status = ? WHERE id = ?', [-1, feed_id])
@@ -186,7 +170,7 @@ def update_feeds():
         if status == 301:
             feed_url = data.get('href')
 
-            if DEBUG:
+            if current_app.debug:
                 print('Feed moved to: %s' % feed_url)
 
             connection.execute('UPDATE feed SET url = ? WHERE id = ?', [feed_url, feed_id])
@@ -215,7 +199,7 @@ def update_feeds():
             else:
                 entries_updated += 1
 
-        if DEBUG:
+        if current_app.debug:
             print('From %d entries, %d were updated and %d new were created' % (entries_total, entries_updated, entries_created))
 
         day_entries = connection.execute('SELECT COUNT(1) FROM entry WHERE feed_id = ? AND updated >= ?', [feed_id, poll - 86400]).fetchone()[0]
@@ -246,6 +230,7 @@ def update_feeds():
 
         update_query = 'UPDATE feed SET poll_type = ?, next_poll = ?, link = ?, etag = ?, modified = ?, poll = ?, poll_status = ? WHERE id = ?'
         connection.execute(update_query, [feed_poll_type, feed_next_poll, feed_link, data.get('etag'), data.get('modified'), poll, status, feed_id])
+    return 'OK'
 
 
 @api.get('/update/favicons')
@@ -253,24 +238,26 @@ def update_favicons():
     connection = content.open_connection()
     with content.transaction(connection) as cursor:
         for feed_id, feed_url, feed_link in cursor.execute('SELECT id, url, link FROM feed'):
-            if DEBUG:
+            if current_app.debug:
                 print('Updating favicon for: %s' % feed_url)
 
-            favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse.urlparse(feed_url)))
+            favicon = __get_favicon(feed_link or '{0}://{1}'.format(*urlparse(feed_url)))
 
-            if DEBUG:
+            if current_app.debug:
                 print('Detected favicon: %s' % favicon)
 
             if favicon:
                 connection.execute('UPDATE feed SET favicon = ? WHERE id = ?', [favicon, feed_id])
+    return 'OK'
 
 
-@api.delete('/feeds/<feed_id:int>')
+@api.delete('/feeds/<int:feed_id>')
 def delete_feed(feed_id):
     connection = content.open_connection()
     with content.transaction(connection):
         connection.execute('DELETE FROM entry WHERE feed_id = ?', [feed_id])
         connection.execute('DELETE FROM feed WHERE id = ?', [feed_id])
+    return 'OK'
 
 
 def import_opml(store, opml_source):
@@ -291,14 +278,14 @@ def import_opml(store, opml_source):
 
     import_outline(outlines)
 
-    return result
+    return jsonify(result)
 
 
 @api.get('/entries')
 def get_entries():
     # validate query
     entries = OrderedDict()
-    for entry_id in request.query.get('ids', '').split(','):
+    for entry_id in request.args.get('ids', '').split(','):
         if int(entry_id):
             entries[str(entry_id)] = None
 
@@ -307,7 +294,7 @@ def get_entries():
 
         select = 'SELECT data, id, feed_id, updated, reader_tags, server_tags FROM entry WHERE id IN (%s)' % ', '.join(entries.keys())
         for entry_data, entry_id, feed_id, updated, reader_tags, server_tags in connection.execute(select):
-            entry = json.loads(unicode(entry_data))
+            entry = json.loads(entry_data)
             entry['id'] = entry_id
             entry['feed_id'] = feed_id
             entry['updated'] = updated * 1000
@@ -316,14 +303,15 @@ def get_entries():
 
             entries[str(entry_id)] = entry
 
-    return entries.values()
+    return jsonify(list(entries.values()))
 
 
-@api.route('/entries/<entry_id:int>', method='PATCH')
+@api.patch('/entries/<int:entry_id>')
 def update_entry(entry_id):
-    reader_tags = request.forms.get('reader_tags')
+    reader_tags = request.form.get('reader_tags')
     if reader_tags:
         reader_tags = signed_long(reader_tags)
 
         connection = content.open_connection()
         connection.execute('UPDATE entry SET reader_tags = ? WHERE id = ?', [reader_tags, entry_id])
+    return 'OK'

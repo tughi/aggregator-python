@@ -1,5 +1,5 @@
 def signed_long(value):
-    if isinstance(value, basestring):
+    if isinstance(value, str):
         value = int(value)
 
     # convert to signed 64bit signed
@@ -7,5 +7,3 @@ def signed_long(value):
     if value > 0x7FFFFFFFFFFFFFFF:
         value -= 0x10000000000000000
     return value
-
-
