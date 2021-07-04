@@ -2,7 +2,7 @@ FROM python:3.8.10-alpine
 
 WORKDIR /app
 
-RUN apk --no-cache add curl g++ gcc libxslt-dev linux-headers musl-dev
+RUN apk --no-cache add curl g++ gcc libxslt-dev linux-headers musl-dev postgresql-dev
 
 COPY requirements.txt ./
 

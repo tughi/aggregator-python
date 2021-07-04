@@ -1,9 +1,16 @@
 version: '2'
 
 services:
-  app:
+  aggregator:
     build:
       context: ./
+    depends_on:
+      - database
+    environment:
+      DATABASE_URL: postgresql://postgres:$DATABASE_PASSWORD@database
     volumes:
       - ./config.json:/app/config.json:ro
-      - ./databases/:/app/databases/:rw
+  database:
+    image: bitnami/postgresql:13.3.0
+    environment:
+      POSTGRES_PASSWORD: $DATABASE_PASSWORD

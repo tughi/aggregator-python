@@ -3,6 +3,7 @@ flask==2.0.1
 flask-sqlalchemy==2.5.1
 gunicorn==20.1.0
 opml==0.5
+psycopg2-binary==2.9.1
 python-dotenv==0.17.1
 requests==2.25.1
 sqlalchemy==1.4.18
