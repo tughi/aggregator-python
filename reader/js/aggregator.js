@@ -1,8 +1,5 @@
 $(function () {
 
-    var TAG_READ = 1;
-    var TAG_STAR = 2;
-
     var Feed = Backbone.Model.extend({
         countAttr: 'unread',
 
@@ -99,11 +96,11 @@ $(function () {
         },
 
         isUnread: function () {
-            return  (this.get('reader_tags') & TAG_READ) == 0;
+            return !this.get('read_flag');
         },
 
         isStarred: function () {
-            return  (this.get('reader_tags') & TAG_STAR) == TAG_STAR;
+            return this.get('star_flag');
         },
 
         formatDate: function (date) {
@@ -121,23 +118,23 @@ $(function () {
             return date.format('MMM DD');
         },
 
-        toggleTag: function (tag) {
-            var reader_tags = this.get('reader_tags');
-            var patched_reader_tags = reader_tags ^ tag;
+        toggleFlag: function (flag) {
+            var old_value = this.get(flag);
+            var new_value = !old_value;
             $.ajax({
-                url: 'api/entries/' + this.id,
+                url: 'reader/entries/' + this.id,
                 method: 'PATCH',
                 data: {
-                    reader_tags: patched_reader_tags
+                    [flag]: new_value
                 },
                 success: function () {
                     // update entry
-                    this.set('reader_tags', patched_reader_tags);
+                    this.set(flag, new_value);
 
-                    if (tag == TAG_READ) {
+                    if (flag === 'read_flag') {
                         // update feed unread count
                         var feed = this.getFeed();
-                        feed.set('unread', feed.get('unread') + ((patched_reader_tags & TAG_READ) == 0 ? 1 : -1));
+                        feed.set('unread', feed.get('unread') + (new_value ? -1 : 1));
                     }
                 }.bind(this)
             });
@@ -173,7 +170,7 @@ $(function () {
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: 'api/entries'
+        url: 'reader/entries'
     });
 
     var EntryView = Backbone.View.extend({
@@ -220,8 +217,8 @@ $(function () {
 
     var SessionOptions = Backbone.Model.extend({
         defaults: {
-            with_tags: undefined,
-            without_tags: undefined,
+            only_unread: undefined,
+            only_starred: undefined,
             order: '<',
             feed_id: undefined
         }
@@ -316,7 +313,7 @@ $(function () {
                     break;
                 case 77: // m
                     if (this.activeEntry > -1) {
-                        this.entries.at(this.activeEntry).toggleTag(TAG_READ);
+                        this.entries.at(this.activeEntry).toggleFlag('read_flag');
                     }
                     break;
                 case 78: // n
@@ -344,7 +341,7 @@ $(function () {
                     break;
                 case 83: // s
                     if (this.activeEntry > -1) {
-                        this.entries.at(this.activeEntry).toggleTag(TAG_STAR);
+                        this.entries.at(this.activeEntry).toggleFlag('star_flag');
                     }
                     break;
                 case 86: // v
@@ -378,7 +375,7 @@ $(function () {
 
         onEntryToggleReadClick: function (event) {
             var index = $(event.target).closest('.entry').index();
-            this.entries.at(index).toggleTag(TAG_READ);
+            this.entries.at(index).toggleFlag('read_flag');
         },
 
         onBlissClick: function (event) {
@@ -388,7 +385,7 @@ $(function () {
 
         onEntryToggleStarClick: function (event) {
             var index = $(event.target).closest('.entry').index();
-            this.entries.at(index).toggleTag(TAG_STAR);
+            this.entries.at(index).toggleFlag('star_flag');
         },
 
         onEntryAnchorClick: function (event) {
@@ -443,7 +440,7 @@ $(function () {
 
                     if (entry.isUnread()) {
                         // mark as unread
-                        entry.toggleTag(TAG_READ);
+                        entry.toggleFlag('read_flag');
                     }
                 }
 
@@ -498,24 +495,24 @@ $(function () {
 
         read: function () {
             window.reader.sessionOptions.set({
-                with_tags: undefined,
-                without_tags: TAG_READ,
+                only_unread: true,
+                only_starred: undefined,
                 feed_id: undefined
             });
         },
 
         readStarred: function () {
             window.reader.sessionOptions.set({
-                with_tags: TAG_STAR,
-                without_tags: undefined,
+                only_unread: undefined,
+                only_starred: true,
                 feed_id: undefined
             });
         },
 
         readFeed: function (feed_id) {
             window.reader.sessionOptions.set({
-                with_tags: undefined,
-                without_tags: TAG_READ,
+                only_unread: true,
+                only_starred: undefined,
                 feed_id: feed_id
             });
         }

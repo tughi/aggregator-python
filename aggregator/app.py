@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask
 
 from aggregator.api import api
@@ -5,10 +7,15 @@ from aggregator.config import Config
 from aggregator.models import db
 from aggregator.reader import reader
 
+logging.basicConfig()
+
 
 def create_app(config=Config()):
     app = Flask(__name__, static_folder='../reader')
     app.config.from_object(config)
+
+    if app.debug:
+        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
     db.init_app(app)
 

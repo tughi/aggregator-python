@@ -4,7 +4,7 @@
 /config.json
 
 # database
-/databases/aggregator.db
+/aggregator.db
 
 # docker-compose
 /docker-compose.override.yaml
