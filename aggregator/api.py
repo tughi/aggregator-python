@@ -5,7 +5,7 @@ from flask import request
 from aggregator import engine
 from aggregator.models import Feed
 
-api = Blueprint('api', __name__)
+blueprint = Blueprint('api', __name__)
 
 
 class ApiException(Exception):
@@ -14,12 +14,12 @@ class ApiException(Exception):
         self.message = message
 
 
-@api.errorhandler(ApiException)
+@blueprint.errorhandler(ApiException)
 def handle_api_exception(exception: ApiException):
     return dict(error=exception.message), exception.code
 
 
-@api.get('/feeds')
+@blueprint.get('/feeds')
 def get_feeds():
     feeds = []
 
@@ -33,7 +33,7 @@ def get_feeds():
     return jsonify(feeds)
 
 
-@api.post('/feeds')
+@blueprint.post('/feeds')
 def add_feed():
     feed_url = request.form.get("url")
     if not feed_url:
@@ -46,21 +46,21 @@ def add_feed():
     )
 
 
-@api.get('/update/feeds')
+@blueprint.get('/update/feeds')
 def update_feeds():
     return jsonify(
         engine.update_feeds()
     )
 
 
-@api.get('/update/favicons')
+@blueprint.get('/update/favicons')
 def update_favicons():
     engine.update_favicons()
 
     return 'OK'
 
 
-@api.delete('/feeds/<int:feed_id>')
+@blueprint.delete('/feeds/<int:feed_id>')
 def delete_feed(feed_id):
     engine.delete_feed(feed_id)
 

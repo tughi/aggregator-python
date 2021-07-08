@@ -11,10 +11,10 @@ from aggregator.models import Entry
 from aggregator.models import Feed
 from aggregator.models import db
 
-reader = Blueprint('reader', __name__)
+blueprint = Blueprint('reader', __name__)
 
 
-@reader.get('/session')
+@blueprint.get('/session')
 def session():
     query = db.session.query(Entry.id)
 
@@ -61,7 +61,7 @@ def session():
     }
 
 
-@reader.get('/entries')
+@blueprint.get('/entries')
 def get_entries():
     # validate query
     entries = OrderedDict()
@@ -90,7 +90,7 @@ def get_entries():
     return jsonify(list(entries.values()))
 
 
-@reader.patch('/entries/<int:entry_id>')
+@blueprint.patch('/entries/<int:entry_id>')
 def update_entry(entry_id):
     entry = Entry.query.get(entry_id)
 

@@ -1,13 +1,12 @@
 import logging
 
-import click
 from flask import Flask
 
-from aggregator import content
-from aggregator.api import api
+from aggregator.api import blueprint as api
+from aggregator.cli import blueprint as cli
 from aggregator.config import Config
 from aggregator.models import db
-from aggregator.reader import reader
+from aggregator.reader import blueprint as reader
 
 logging.basicConfig()
 
@@ -23,12 +22,9 @@ def create_app(config=Config()):
 
     app.add_url_rule('/', 'root', lambda: app.send_static_file('index.html'))
     app.add_url_rule('/<path:path>', 'files', lambda path: app.send_static_file(path))
-    app.register_blueprint(api, url_prefix='/api')
-    app.register_blueprint(reader, url_prefix='/reader')
 
-    @app.cli.command('restore')
-    @click.argument('file', type=click.File('r'))
-    def restore(file):
-        content.restore(file)
+    app.register_blueprint(api, url_prefix='/api')
+    app.register_blueprint(cli)
+    app.register_blueprint(reader, url_prefix='/reader')
 
     return app
