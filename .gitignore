@@ -6,6 +6,9 @@
 # database
 /aggregator.db
 
+# dumps
+/dumps/*.json
+
 # docker-compose
 /docker-compose.override.yaml
 

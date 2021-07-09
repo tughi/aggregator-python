@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  aggregator:
+  app:
     build:
       context: ./
     depends_on:
@@ -10,8 +10,9 @@ services:
       DATABASE_URL: postgresql://postgres:$DATABASE_PASSWORD@database
     volumes:
       - ./config.json:/app/config.json:ro
+      - ./dumps:/app/dumps:rw
     restart: unless-stopped
-  aggregator-sync:
+  sync:
     build:
       context: ./
     depends_on:
