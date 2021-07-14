@@ -4,7 +4,7 @@ import click
 from flask import Blueprint
 
 from aggregator import content
-from aggregator import sync
+from aggregator import engine
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,6 +18,13 @@ def restore(file):
     content.restore(file)
 
 
-@blueprint.cli.command('sync')
-def start_sync():
-    sync.start()
+@blueprint.cli.command('update-feeds')
+def update_feeds():
+    logger.info("Updating feeds")
+    engine.update_feeds()
+
+
+@blueprint.cli.command('update-favicons')
+def update_favicons():
+    logger.info("Updating favicons")
+    engine.update_favicons()

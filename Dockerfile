@@ -17,6 +17,9 @@ ENV FLASK_APP=aggregator.app
 
 RUN adduser -D -h /app -u 1000 abuser
 
+COPY crontab ./
+RUN crontab ./crontab
+
 USER abuser
 
 CMD sh -c "gunicorn"

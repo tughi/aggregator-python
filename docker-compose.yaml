@@ -19,8 +19,9 @@ services:
       - database
     environment:
       DATABASE_URL: postgresql://postgres:$DATABASE_PASSWORD@database
+    command: crond -f
+    user: root
     restart: unless-stopped
-    command: flask sync
   database:
     image: bitnami/postgresql:13.3.0
     environment:
