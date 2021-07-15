@@ -1,2 +1,2 @@
 * * * * *   su abuser -c "cd; flask update-feeds"
-0 0 1 * *   su abuser -c "cd; flask update-favicons"
+0 3 * * *   su abuser -c "cd; flask update-favicons"
