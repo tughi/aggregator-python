@@ -50,11 +50,12 @@ def update_feeds():
         status.append(
             update_feed(feed)
         )
+    logger.info(f"Updated {len(status)} feed{'s' if len(status) != 1 else ''}")
     return status
 
 
 def update_feed(feed: Feed):
-    logger.info(f"Updating feed: {feed.url}")
+    logger.info(f"Updating feed - {feed.user_title or feed.title} ({feed.url})")
 
     update_time = datetime.now(tz=timezone.utc)
     feed.last_update_time = update_time
@@ -109,6 +110,8 @@ def update_feed(feed: Feed):
     logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
 
     schedule_next_update(feed, update_time)
+
+    logger.info(f"Next update time: {feed.next_update_time}")
 
     feed.http_etag = feed_data.get('etag')
     feed.http_last_modified = feed_data.get('modified')
@@ -170,6 +173,8 @@ def schedule_next_update(feed: Feed, update_time: datetime):
         feed.update_mode = 'EVERY_6_HOURS'
         feed.next_update_time = update_time + timedelta(hours=6)
 
+    feed.next_update_time = feed.next_update_time.replace(microsecond=0)
+
 
 def update_favicons():
     logger.info("Updating favicons")
@@ -178,9 +183,9 @@ def update_favicons():
 
 
 def update_favicon(feed: Feed):
-    logger.info(f"Updating favicon for: {feed.url}")
-
     feed_link = feed.link or '{0}://{1}'.format(*urlparse(feed.url))
+
+    logger.info(f"Updating feed favicon - {feed.user_title or feed.title} ({feed_link})")
 
     feed_favicon_url = None
 
