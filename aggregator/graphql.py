@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import graphene
 import graphene_sqlalchemy
 from flask import Blueprint
@@ -28,21 +30,28 @@ class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):
 
 class UpdateFeedMutation(graphene.Mutation):
     class Arguments:
-        id = graphene.Int(required=True)
-        url = graphene.String()
+        feed_id = graphene.Int(name='id', required=True)
+        feed_url = graphene.String(name='url')
+        feed_user_title = graphene.String(name='userTitle')
 
     ok = graphene.Boolean()
     feed = graphene.Field(FeedType)
 
     @staticmethod
-    def mutate(source, info, id: int, url: str = None):
-        feed = Feed.query.get(id)
+    def mutate(source, info, feed_id: int, feed_url: str = None, feed_user_title: str = None):
+        feed = Feed.query.get(feed_id)
         if not feed:
             return GraphQLError("No such feed")
 
-        url = url.strip() if url else None
-        if url:
-            feed.url = url
+        feed_url = feed_url.strip() if feed_url else None
+        if feed_url:
+            if feed_url != feed.url:
+                feed.next_update_time = datetime.utcnow()
+            feed.url = feed_url
+
+        feed_user_title = feed_user_title.strip() if feed_user_title else None
+        if feed_user_title:
+            feed.user_title = feed_user_title
 
         db.session.commit()
 
