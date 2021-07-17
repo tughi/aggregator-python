@@ -2,11 +2,12 @@ import logging
 
 from flask import Flask
 
-from aggregator.api import blueprint as api
-from aggregator.cli import blueprint as cli
+from aggregator import api
+from aggregator import cli
+from aggregator import graphql
+from aggregator import reader
 from aggregator.config import Config
 from aggregator.models import db
-from aggregator.reader import blueprint as reader
 
 logging.basicConfig()
 
@@ -23,8 +24,9 @@ def create_app(config=Config()):
     app.add_url_rule('/', 'root', lambda: app.send_static_file('index.html'))
     app.add_url_rule('/<path:path>', 'files', lambda path: app.send_static_file(path))
 
-    app.register_blueprint(api, url_prefix='/api')
-    app.register_blueprint(cli)
-    app.register_blueprint(reader, url_prefix='/reader')
+    app.register_blueprint(api.blueprint, url_prefix='/api')
+    app.register_blueprint(cli.blueprint)
+    app.register_blueprint(graphql.blueprint, url_prefix='/')
+    app.register_blueprint(reader.blueprint, url_prefix='/reader')
 
     return app
