@@ -6,6 +6,7 @@ from flask import Blueprint
 from flask_graphql import GraphQLView
 from graphql import GraphQLError
 
+from aggregator import engine
 from aggregator.models import Entry
 from aggregator.models import Feed
 from aggregator.models import db
@@ -22,6 +23,10 @@ class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):
     next_update_time = graphene.DateTime()
 
     unread_entries = graphene.Int()
+
+    entries_created = graphene.Int()
+    entries_updated = graphene.Int()
+    entries_deleted = graphene.Int()
 
     @staticmethod
     def resolve_unread_entries(feed: Feed, info):
@@ -58,6 +63,24 @@ class UpdateFeedMutation(graphene.Mutation):
         return dict(ok=True, feed=feed)
 
 
+class RefreshFeedMutation(graphene.Mutation):
+    class Arguments:
+        feed_id = graphene.Int(name='id', required=True)
+        forced = graphene.Boolean()
+
+    feed = graphene.Field(FeedType)
+
+    @staticmethod
+    def mutate(source, info, feed_id: int, forced: bool = False):
+        feed = Feed.query.get(feed_id)
+        if not feed:
+            return GraphQLError("No such feed")
+
+        engine.update_feed(feed, forced)
+
+        return dict(feed=feed)
+
+
 class EntryType(graphene.ObjectType):
     class Meta:
         name = Entry.__name__
@@ -73,6 +96,7 @@ class Query(graphene.ObjectType):
 
 
 class Mutations(graphene.ObjectType):
+    refresh_feed = RefreshFeedMutation.Field()
     update_feed = UpdateFeedMutation.Field()
 
 

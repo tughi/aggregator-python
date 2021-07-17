@@ -54,13 +54,17 @@ def update_feeds():
     return status
 
 
-def update_feed(feed: Feed):
+def update_feed(feed: Feed, forced: bool = False):
     logger.info(f"Updating feed - {feed.user_title or feed.title} ({feed.url})")
 
     update_time = datetime.now(tz=timezone.utc)
     feed.last_update_time = update_time
 
-    feed_data = feedparser.parse(feed.url, etag=feed.http_etag, modified=feed.http_last_modified)
+    feed_data = feedparser.parse(
+        feed.url,
+        etag=None if forced else feed.http_etag,
+        modified=None if forced else feed.http_last_modified,
+    )
 
     if not feed_data:
         logger.warning(f"Failed to parse feed")
@@ -118,9 +122,12 @@ def update_feed(feed: Feed):
 
     db.session.commit()
 
+    feed.entries_created = entries_created
+    feed.entries_updated = entries_updated
+
     return dict(
         id=feed.id,
-        title=feed.user_title or feed.title,
+        title=feed.user_title,
         url=feed.url,
         next_update=feed.next_update_time,
         entries=dict(
