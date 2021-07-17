@@ -213,7 +213,7 @@ def update_favicon(feed: Feed):
         if requests.head(feed_favicon_url).status_code != 200:
             feed_favicon_url = None
 
-    feed.favicon_url = feed_favicon_url
+    feed.favicon_url = feed_favicon_url or feed.favicon_url
     db.session.commit()
 
     logger.info(f"Using favicon: {feed.favicon_url}")

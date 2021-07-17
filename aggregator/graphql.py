@@ -81,6 +81,23 @@ class RefreshFeedMutation(graphene.Mutation):
         return dict(feed=feed)
 
 
+class RefreshFeedFaviconMutation(graphene.Mutation):
+    class Arguments:
+        feed_id = graphene.Int(name='id', required=True)
+
+    feed = graphene.Field(FeedType)
+
+    @staticmethod
+    def mutate(source, info, feed_id: int):
+        feed = Feed.query.get(feed_id)
+        if not feed:
+            return GraphQLError("No such feed")
+
+        engine.update_favicon(feed)
+
+        return dict(feed=feed)
+
+
 class EntryType(graphene.ObjectType):
     class Meta:
         name = Entry.__name__
@@ -97,6 +114,7 @@ class Query(graphene.ObjectType):
 
 class Mutations(graphene.ObjectType):
     refresh_feed = RefreshFeedMutation.Field()
+    refresh_feed_favicon = RefreshFeedFaviconMutation.Field()
     update_feed = UpdateFeedMutation.Field()
 
 
