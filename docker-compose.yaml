@@ -3,18 +3,18 @@ version: '2'
 services:
   app:
     build:
-      context: ./
+      context: ./application
     depends_on:
       - database
     environment:
       DATABASE_URL: postgresql://postgres:$DATABASE_PASSWORD@database
     volumes:
-      - ./config.json:/app/config.json:ro
-      - ./dumps:/app/dumps:rw
+      - ./application/config.json:/app/config.json:ro
+      - ./application/dumps:/app/dumps:rw
     restart: unless-stopped
   sync:
     build:
-      context: ./
+      context: ./application
     depends_on:
       - database
     environment:

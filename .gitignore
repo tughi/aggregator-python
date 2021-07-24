@@ -1,23 +1,2 @@
-*.py[cod]
-
 /.env
-/config.json
-
-# database
-/aggregator.db
-
-# dumps
-/dumps/*.json
-
-# docker-compose
 /docker-compose.override.yaml
-
-# virtualenv
-/.virtualenv
-
-# pycharm files
-/.idea
-
-# system files
-.DS_Store
-*.swp
