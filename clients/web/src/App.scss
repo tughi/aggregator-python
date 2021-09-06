@@ -1,2 +1,51 @@
+@import "../node_modules/bootstrap/scss/bootstrap";
+
 .App {
+   position: absolute;
+   width: 100%;
+   height: 100%;
+
+   display: flex;
+   flex-direction: row;
+
+   > * {
+      height: 100%;
+   }
+
+   > .FeedsView {
+      width: 20em;
+      background-color: $gray-200;
+      overflow-y: scroll;
+
+      .feed-item {
+         display: flex;
+
+         padding: 0 1rem;
+         line-height: 2rem;
+         white-space: nowrap;
+
+         &:hover {
+            background-color: $gray-100;
+         }
+
+         > .label {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+         }
+
+         > .count {
+            padding-left: 1rem;
+         }
+      }
+   }
+
+   > .FeedView {
+      width: 20em;
+      background-color: $gray-100;
+   }
+
+   > .EntryView {
+      flex-grow: 1;
+   }
 }
