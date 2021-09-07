@@ -24,6 +24,8 @@
          line-height: 2rem;
          white-space: nowrap;
 
+         cursor: pointer;
+
          &:hover {
             background-color: $gray-100;
          }
@@ -43,6 +45,7 @@
    > .FeedView {
       width: 20em;
       background-color: $gray-100;
+      overflow-y: scroll;
    }
 
    > .EntryView {
