@@ -46,6 +46,12 @@
       width: 20em;
       background-color: $gray-100;
       overflow-y: scroll;
+
+      .entry-item {
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+      }
    }
 
    > .EntryView {
