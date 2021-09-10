@@ -1,8 +1,7 @@
 import axios from "axios"
 import { useEffect, useMemo, useState } from "react"
 
-
-const useQuery = (query, variables) => {
+const useQuery = (query, { variables }) => {
    const [loading, setLoading] = useState(false)
    const [data, setData] = useState(null)
 
@@ -33,64 +32,36 @@ const useQuery = (query, variables) => {
    return { loading, data }
 }
 
-const entryFields = `
-   id
-   title
-   link
-   summary { value }
-   content { value }
-   publishText
-   publishTime
-   readTime
-   starTime
-`
+export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
+   const variables = useMemo(() => ({ feedId, onlyUnread, onlyStarred, entriesLimit }), [feedId, onlyUnread, onlyStarred, entriesLimit])
 
-export const useEntries = (entryIds) => {
-   const variables = useMemo(() => ({ entryIds }), [entryIds])
-   const { loading, data } = useQuery(`
-      query ($entryIds: [Int]!) {
-         entries(entryIds: $entryIds) {
-            ${entryFields}
-         }
-      }
-   `, variables)
-
-   return { loading, entries: data?.entries || [] }
-}
-
-export const useFeeds = () => {
-   const { loading, data } = useQuery(`
-      query {
-         feeds {
-            id
-            title
-            userTitle
-            unreadEntries
-         }
-      }
-   `)
-
-   return { loading, feeds: data?.feeds || [] }
-}
-
-export const useSession = ({ feedId, onlyUnread, onlyStarred, firstEntries }) => {
-   const variables = useMemo(() => ({ feedId, onlyUnread, onlyStarred, firstEntries }), [feedId, onlyUnread, onlyStarred, firstEntries])
-   const { loading, data } = useQuery(`
-      query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $firstEntries: Int!) {
+   const { loading, data } = useQuery(
+      `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!) {
          session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred) {
-            entries(first: $firstEntries) {
-               ${entryFields}
+            entries(limit: $entriesLimit) {
+               id
+               feedId
+               title
+               link
+               summary { value }
+               content { value }
+               publishText
+               publishTime
+               readTime
+               starTime
             }
             entryIds
             feeds {
                id
+               faviconUrl
                title
                userTitle
                unreadEntries
             }
          }
-      }
-   `, variables)
+      }`,
+      { variables },
+   )
 
    return { loading, session: data?.session }
 }

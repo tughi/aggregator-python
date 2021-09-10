@@ -1,0 +1,108 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+
+.Reader {
+   display: flex;
+   height: 100%;
+
+   > .feeds {
+      width: 20rem;
+      background-color: $gray-100;
+      padding: 1rem 0;
+      border-right: 1px solid $gray-300;
+
+      > a.feed {
+         display: flex;
+         padding: 0 1rem;
+         color: $gray-500;
+         text-decoration: none;
+         font-weight: normal;
+         line-height: 2rem;
+
+         &.active {
+            color: $gray-600;
+            background-color: $gray-200;
+         }
+
+         &:hover {
+            color: $black;
+         }
+
+         > .title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+         }
+
+         > .count {
+            font-weight: bold;
+         }
+      }
+
+      > hr {
+         background-color: $gray-500;
+      }
+   }
+
+   > .entries {
+      margin: 0 auto;
+      width: 56rem;
+
+      > .entry {
+         display: flex;
+         line-height: 2rem;
+         min-height: 2rem;
+         border-bottom: 1px solid var(--bs-gray-200);
+
+         &:first-child {
+            margin-top: 1rem;
+         }
+
+         &:last-child {
+            margin-bottom: 1rem;
+            border-bottom: none;
+         }
+
+         &:hover {
+            background-color: var(--bs-gray-200);
+         }
+
+         > a.favicon {
+            flex-shrink: 0;
+            width: 3rem;
+            height: 2rem;
+            background: transparent center no-repeat;
+            background-size: 1rem;
+
+            &:hover {
+               filter: grayscale(75%) opacity(.75);
+            }
+         }
+
+         > .feed-title {
+            flex-shrink: 0;
+            width: 16rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 1rem;
+         }
+
+         > .title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+         }
+
+         > .date {
+            flex-shrink: 0;
+            white-space: nowrap;
+            padding: 0 1rem;
+         }
+      }
+   }
+}

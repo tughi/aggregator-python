@@ -68,13 +68,13 @@ class SessionType(graphene.ObjectType):
     class Meta:
         name = 'Session'
 
-    entries = graphene.List(EntryType, first=graphene.Int(required=True))
+    entries = graphene.List(EntryType, limit=graphene.Int(required=True))
     entry_ids = graphene.List(graphene.Int)
     feeds = graphene.List(FeedType)
 
     @staticmethod
-    def resolve_entries(session: dict, info, first):
-        entry_ids = session.get('entry_ids', [])[:first]
+    def resolve_entries(session: dict, info, limit):
+        entry_ids = session.get('entry_ids', [])[:limit]
         entries = OrderedDict((entry_id, None) for entry_id in entry_ids)
         for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
             entries[entry.id] = entry
@@ -149,7 +149,13 @@ class RefreshFeedFaviconMutation(graphene.Mutation):
 class Query(graphene.ObjectType):
     entries = graphene.List(EntryType, entry_ids=graphene.List(graphene.Int, required=True))
     feeds = graphene.List(FeedType)
-    session = graphene.Field(SessionType, feed_id=graphene.Int(), only_unread=graphene.Boolean(), only_starred=graphene.Boolean())
+    session = graphene.Field(
+        SessionType,
+        feed_id=graphene.Int(),
+        only_unread=graphene.Boolean(),
+        only_starred=graphene.Boolean(),
+        latest_first=graphene.Boolean(),
+    )
 
     @staticmethod
     def resolve_entries(source, info, entry_ids=None):
@@ -160,7 +166,7 @@ class Query(graphene.ObjectType):
         return Feed.query
 
     @staticmethod
-    def resolve_session(source, info, feed_id=None, only_unread=True, only_starred=False):
+    def resolve_session(source, info, feed_id=None, only_unread=True, only_starred=False, latest_first=False):
         entry_ids = db.session.query(Entry.id)
         if feed_id:
             entry_ids = entry_ids.filter(Entry.feed_id == feed_id)
@@ -168,6 +174,7 @@ class Query(graphene.ObjectType):
             entry_ids = entry_ids.filter(Entry.read_time.is_(None))
         if only_starred:
             entry_ids = entry_ids.filter(Entry.star_time.is_not(None))
+        entry_ids = entry_ids.order_by(Entry.publish_time.desc() if latest_first else Entry.publish_time.asc())
 
         feeds = OrderedDict((feed.id, feed) for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)))
         unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)

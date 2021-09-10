@@ -1,6 +1,13 @@
+import "./Reader.scss"
+
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
 import { useSession } from "./hooks/backend"
+import classNames from "classnames"
+
+const fullDateFormat = new Intl.DateTimeFormat(window.navigator.language, { year: 'numeric', month: 'short', day: '2-digit' })
+const shortDateFormat = new Intl.DateTimeFormat(window.navigator.language, { month: 'short', day: '2-digit' })
+const timeFormat = new Intl.DateTimeFormat(window.navigator.language, { hour: '2-digit', minute: '2-digit' })
 
 export const Reader = ({ match }) => {
    const sessionParams = useMemo(() => {
@@ -10,10 +17,10 @@ export const Reader = ({ match }) => {
       if (match.path === '/reader/starred') {
          onlyUnread = false
          onlyStarred = true
-      } else if (match.path === '/reader/feed/:feedId') {
+      } else if (match.path === '/reader/feeds/:feedId') {
          feedId = parseInt(match.params.feedId)
       }
-      return { feedId, onlyUnread, onlyStarred, firstEntries: 50 }
+      return { feedId, onlyUnread, onlyStarred }
    }, [match])
 
    const { session } = useSession(sessionParams)
@@ -22,41 +29,51 @@ export const Reader = ({ match }) => {
       return session ? session.feeds.reduce((sum, feed) => sum + feed.unreadEntries, 0) : 0
    }, [session])
 
+   const feeds = useMemo(() => session ? session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }) : {}, [session])
+
+   const now = new Date()
+   const formatEntryTime = entryTime => {
+      const date = new Date(entryTime)
+      if (now.getFullYear() !== date.getFullYear()) {
+         return fullDateFormat.format(date)
+      }
+      if (now.getDate() === date.getDate() && now.getMonth() === date.getMonth()) {
+         return timeFormat.format(date)
+      }
+      return shortDateFormat.format(date)
+   }
+
    return (
-      <>
-         {session && (
-            <>
-               <div className="FeedsView">
-                  <FeedItem title="All" unreadEntries={allUnreadEntries} link="/reader/all" />
-                  <FeedItem title="Starred" unreadEntries={0} link="/reader/starred" />
-                  <hr />
-                  {session.feeds.map(feed => (
-                     <FeedItem key={feed.id} title={feed.userTitle || feed.title} unreadEntries={feed.unreadEntries} link={`/reader/feed/${feed.id}`} />
-                  ))}
-               </div>
-               <div className="FeedView">
-                  {session.entries.map(entry => (
-                     <EntryItem key={entry.id} entry={entry} />
-                  ))}
-               </div>
-               <div className="EntryView" />
-            </>
-         )}
-      </>
+      <div className="Reader">
+         <div className="feeds">
+            <FeedItem title="All" active={match.path === "/reader/all"} unreadEntries={allUnreadEntries} link="/reader/all" />
+            <FeedItem title="Starred" active={match.path === "/reader/starred"} unreadEntries={0} link="/reader/starred" />
+            <hr />
+            {session?.feeds.map(feed => (
+               <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} unreadEntries={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
+            ))}
+         </div>
+         <div className="entries">
+            {session && session.entries.map(entry => {
+               const feed = feeds[entry.feedId]
+               return (
+                  <div className="entry" key={entry.id}>
+                     <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
+                     <div className="title text-body">{entry.title}</div>
+                     <div className="date text-secondary">{formatEntryTime(entry.publishTime)}</div>
+                  </div>
+               )
+            })}
+         </div>
+      </div>
    )
 }
 
-const FeedItem = ({ title, unreadEntries, link }) => (
-   <Link className="feed-item" to={link}>
-      <span className="label text-body">{title}</span>
+const FeedItem = ({ title, active, unreadEntries, link }) => (
+   <Link className={classNames("feed", { active })} to={link}>
+      <span className="title">{title}</span>
       {unreadEntries > 0 && (
-         <span className="count text-secondary">{unreadEntries}</span>
+         <span className="count">{unreadEntries}</span>
       )}
    </Link>
-)
-
-const EntryItem = ({ entry }) => (
-   <div className="entry-item">
-      {entry.title}
-   </div>
 )
