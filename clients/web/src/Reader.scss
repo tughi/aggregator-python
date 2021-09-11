@@ -92,12 +92,7 @@
          max-width: 56rem;
 
          > .entry {
-            display: flex;
-            line-height: 2rem;
-            min-height: 2rem;
             border-bottom: 1px solid $gray-200;
-            color: $text-secondary;
-            cursor: pointer;
 
             &:first-child {
                margin-top: 1rem;
@@ -108,43 +103,79 @@
                border-bottom: none;
             }
 
-            &:hover {
-               background-color: $gray-100;
-            }
-
-            > a.favicon {
-               flex-shrink: 0;
-               width: 3rem;
-               height: 2rem;
-               background: transparent center no-repeat;
-               background-size: 1rem;
+            > .summary {
+               display: flex;
+               line-height: 2rem;
+               min-height: 2rem;
+               color: $text-secondary;
+               cursor: pointer;
 
                &:hover {
-                  filter: grayscale(75%) opacity(.75);
+                  background-color: $gray-100;
+               }
+               
+               > a.favicon {
+                  flex-shrink: 0;
+                  width: 3rem;
+                  height: 2rem;
+                  background: transparent center no-repeat;
+                  background-size: 1rem;
+   
+                  &:hover {
+                     filter: grayscale(75%) opacity(.75);
+                  }
+               }
+
+               > .title {
+                  flex-grow: 1;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+               }
+
+               > .date {
+                  flex-shrink: 0;
+                  white-space: nowrap;
+                  padding: 0 1rem;
                }
             }
 
-            > .title {
-               flex-grow: 1;
-               overflow: hidden;
-               text-overflow: ellipsis;
-               white-space: nowrap;
-            }
+            > .content {
+               display: none;
 
-            > .date {
-               flex-shrink: 0;
-               white-space: nowrap;
-               padding: 0 1rem;
+               position: relative;
+               padding: 1rem;
+
+               p {
+                  margin: 1em 0 0;
+               }
+              
+               img {
+                  max-width: 100%;
+                  height: auto;
+               }
+              
+               a {
+                  color: #0099cc;
+                  text-decoration: inherit;
+               }
             }
 
             &.unread {
-               > .title {
-                  color: $text-body;
+               > .summary {
+                  > .title {
+                     color: $text-body;
+                  }
                }
             }
-
+   
             &.open {
-               background-color: $orange-200;
+               > .summary {
+                  display: none;
+               }
+               > .content {
+                  display: block;
+               }
             }
          }
       }

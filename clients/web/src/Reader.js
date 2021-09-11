@@ -1,6 +1,6 @@
 import "./Reader.scss"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useSession } from "./hooks/backend"
 import classNames from "classnames"
@@ -8,7 +8,9 @@ import classNames from "classnames"
 const fullDateFormat = new Intl.DateTimeFormat(window.navigator.language, { year: 'numeric', month: 'short', day: '2-digit' })
 const shortDateFormat = new Intl.DateTimeFormat(window.navigator.language, { month: 'short', day: '2-digit' })
 const timeFormat = new Intl.DateTimeFormat(window.navigator.language, { hour: '2-digit', minute: '2-digit' })
-const formatEntryTime = (now, entryTime) => {
+
+const formatRelativeEntryTime = (entryTime) => {
+   const now = new Date()
    const date = new Date(entryTime)
    if (now.getFullYear() !== date.getFullYear()) {
       return fullDateFormat.format(date)
@@ -17,6 +19,13 @@ const formatEntryTime = (now, entryTime) => {
       return timeFormat.format(date)
    }
    return shortDateFormat.format(date)
+}
+
+const dateTimeFormat = new Intl.DateTimeFormat(window.navigator.language, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', weekday: 'short' })
+
+const formatFullEntryTime = (entryTime) => {
+   const date = new Date(entryTime)
+   return dateTimeFormat.format(date)
 }
 
 export const Reader = ({ match }) => {
@@ -37,13 +46,11 @@ export const Reader = ({ match }) => {
 
    const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
 
-   const now = new Date()
-
    const [openEntryIndex, setOpenEntryIndex] = useState(null)
    useEffect(() => setOpenEntryIndex(null), [session])
    const openEntryCallback = useCallback(entryElement => {
       if (entryElement) {
-         entryElement.scrollIntoView({ behavior: 'smooth' })
+         entryElement.scrollIntoView()
       }
    }, [])
 
@@ -51,28 +58,27 @@ export const Reader = ({ match }) => {
       <div className="Reader">
          <div className="side-nav">
             <div className="feeds">
-               <FeedItem title="All" active={match.path === "/reader/all"} count={session.unreadEntries} link="/reader/all" />
-               <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session.starredEntries} link="/reader/starred" />
+               <FeedItem title="All" count={session.unreadEntries} link="/reader/all" active={match.path === "/reader/all"} />
+               <FeedItem title="Starred" count={session.starredEntries} link="/reader/starred" active={match.path === "/reader/starred"} />
                <hr />
                {session.feeds.map(feed => (
-                  <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
+                  <FeedItem key={feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} active={sessionParams.feedId === feed.id} />
                ))}
             </div>
          </div>
          <div className="content">
             <div className="entries">
-               {session.entries.map((entry, entryIndex) => {
-                  const feed = feeds[entry.feedId]
-                  const open = entryIndex === openEntryIndex
-                  const ref = open ? openEntryCallback : null
-                  return (
-                     <div className={classNames("entry", { unread: !entry.readTime, open })} key={entry.id} ref={ref} onClick={() => setOpenEntryIndex(entryIndex)}>
-                        <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer" />
-                        <div className="title">{entry.title}</div>
-                        <div className="date">{formatEntryTime(now, entry.publishTime)}</div>
-                     </div>
-                  )
-               })}
+               {session.entries.map((entry, entryIndex) => (
+                  <EntryItem
+                     key={entry.id}
+                     ref={entryIndex === openEntryIndex ? openEntryCallback : null}
+                     entry={entry}
+                     feed={feeds[entry.feedId]}
+                     toggle={() => setOpenEntryIndex(current => current !== entryIndex ? entryIndex : null)}
+                     isOpen={entryIndex === openEntryIndex}
+                     hasContent={openEntryIndex !== null && entryIndex >= Math.max(openEntryIndex - 2, 0) && entryIndex <= openEntryIndex + 2}
+                  />
+               ))}
             </div>
          </div>
       </div>
@@ -87,3 +93,38 @@ const FeedItem = ({ title, count, active, link }) => (
       )}
    </Link>
 )
+
+const EntryItem = React.forwardRef(({ entry, feed, toggle, isOpen, hasContent }, ref) => {
+   return (
+      <div className={classNames("entry", { unread: !entry.readTime, open: isOpen })} ref={ref}>
+         <div className="summary" onClick={toggle}>
+            <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer" />
+            <div className="title">{entry.title}</div>
+            <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
+         </div>
+         {hasContent && (
+            <div className="content">
+               <div className="content-header">
+                  <h1><a className="title" href={entry.link}>{entry.title}</a></h1>
+                  <div>
+                     {entry.author && (
+                        <span className="author-container">by <span className="author">{entry.author.name}</span>,</span>
+                     )}
+                     <a className="feed" href={feed.link}>{feed.title}</a>
+                     <span className="date-container">on <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span></span>
+                     <span className="star" onClick={event => event.stopPropagation()}></span>
+                  </div>
+                  <div className="actions">
+                     <a className="bliss">bliss</a>
+                     <a className="toggle-read">{entry.readTime ? 'unread' : 'read'}</a>
+                     <a className="toggle">close</a>
+                  </div>
+               </div>
+               {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
+                  <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
+               ))}
+            </div>
+         )}
+      </div>
+   )
+})
