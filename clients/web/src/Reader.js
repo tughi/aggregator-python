@@ -59,8 +59,8 @@ export const Reader = ({ match }) => {
                return (
                   <div className="entry" key={entry.id}>
                      <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
-                     <div className="title text-body">{entry.title}</div>
-                     <div className="date text-secondary">{formatEntryTime(entry.publishTime)}</div>
+                     <div className="title">{entry.title}</div>
+                     <div className="date">{formatEntryTime(entry.publishTime)}</div>
                   </div>
                )
             })}
@@ -70,7 +70,7 @@ export const Reader = ({ match }) => {
 }
 
 const FeedItem = ({ title, active, unreadEntries, link }) => (
-   <Link className={classNames("feed", { active })} to={link}>
+   <Link className={classNames("feed", { active, hidden: !unreadEntries })} to={link}>
       <span className="title">{title}</span>
       {unreadEntries > 0 && (
          <span className="count">{unreadEntries}</span>
