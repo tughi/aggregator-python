@@ -29,7 +29,7 @@
       width: 20rem;
 
       overflow: hidden auto;
-      @include custom-scrollbar($gray-400, $gray-200);
+      @include custom-scrollbar($gray-500, $gray-200);
 
       background-color: $gray-100;
       padding: 1rem 0;
@@ -64,13 +64,14 @@
          }
 
          > .count {
+            padding-left: 1rem;
             font-weight: bold;
          }
       }
 
       > hr {
          border: none;
-         border-top: 1px solid $gray-300;
+         border-top: 1px solid $gray-200;
       }
    }
 
@@ -78,7 +79,7 @@
       flex-grow: 1;
 
       overflow: hidden scroll;
-      @include custom-scrollbar($gray-400, $gray-100);
+      @include custom-scrollbar($gray-500, $gray-200);
 
       > .entries {
          margin: 0 auto;
@@ -114,15 +115,6 @@
                &:hover {
                   filter: grayscale(75%) opacity(.75);
                }
-            }
-
-            > .feed-title {
-               flex-shrink: 0;
-               width: 16rem;
-               overflow: hidden;
-               text-overflow: ellipsis;
-               white-space: nowrap;
-               padding-right: 1rem;
             }
 
             > .title {

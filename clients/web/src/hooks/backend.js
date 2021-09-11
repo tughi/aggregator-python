@@ -32,6 +32,14 @@ const useQuery = (query, { variables }) => {
    return { loading, data }
 }
 
+const createEmptySession = () => ({
+   entries: [],
+   entryIds: [],
+   feeds: [],
+   unreadEntries: 0,
+   starredEntries: 0,
+})
+
 export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
    const variables = useMemo(() => ({ feedId, onlyUnread, onlyStarred, entriesLimit }), [feedId, onlyUnread, onlyStarred, entriesLimit])
 
@@ -65,5 +73,21 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 
       { variables },
    )
 
-   return { loading, session: data?.session }
+   const [session, setSession] = useState(createEmptySession)
+
+   useEffect(() => {
+      setSession(session => ({
+         ...session,
+         entryIds: [],
+         entries: []
+      }))
+   }, [variables])
+
+   useEffect(() => {
+      if (data) {
+         setSession(data.session)
+      }
+   }, [data])
+
+   return { loading, session }
 }

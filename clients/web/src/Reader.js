@@ -25,7 +25,7 @@ export const Reader = ({ match }) => {
 
    const { session } = useSession(sessionParams)
 
-   const feeds = useMemo(() => session ? session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }) : {}, [session])
+   const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
 
    const now = new Date()
    const formatEntryTime = entryTime => {
@@ -42,16 +42,16 @@ export const Reader = ({ match }) => {
    return (
       <div className="Reader">
          <div className="feeds">
-            <FeedItem title="All" active={match.path === "/reader/all"} count={session?.unreadEntries} link="/reader/all" />
-            <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session?.starredEntries} link="/reader/starred" />
+            <FeedItem title="All" active={match.path === "/reader/all"} count={session.unreadEntries} link="/reader/all" />
+            <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session.starredEntries} link="/reader/starred" />
             <hr />
-            {session?.feeds.map(feed => (
+            {session.feeds.map(feed => (
                <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
             ))}
          </div>
          <div className="content">
             <div className="entries">
-               {session && session.entries.map(entry => {
+               {session.entries.map(entry => {
                   const feed = feeds[entry.feedId]
                   return (
                      <div className="entry" key={entry.id}>
