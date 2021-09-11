@@ -54,7 +54,7 @@ export const Reader = ({ match }) => {
                {session.entries.map(entry => {
                   const feed = feeds[entry.feedId]
                   return (
-                     <div className="entry" key={entry.id}>
+                     <div className={classNames("entry", { unread: !entry.readTime })} key={entry.id}>
                         <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
                         <div className="title">{entry.title}</div>
                         <div className="date">{formatEntryTime(entry.publishTime)}</div>

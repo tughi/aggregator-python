@@ -90,6 +90,7 @@
             line-height: 2rem;
             min-height: 2rem;
             border-bottom: 1px solid $gray-200;
+            color: $text-secondary;
             cursor: pointer;
 
             &:first-child {
@@ -129,6 +130,12 @@
                white-space: nowrap;
                padding: 0 1rem;
                color: $text-secondary;
+            }
+
+            &.unread {
+               > .title {
+                  color: $text-body;
+               }
             }
          }
       }
