@@ -1,6 +1,6 @@
 import "./Reader.scss"
 
-import { useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useSession } from "./hooks/backend"
 import classNames from "classnames"
@@ -8,6 +8,16 @@ import classNames from "classnames"
 const fullDateFormat = new Intl.DateTimeFormat(window.navigator.language, { year: 'numeric', month: 'short', day: '2-digit' })
 const shortDateFormat = new Intl.DateTimeFormat(window.navigator.language, { month: 'short', day: '2-digit' })
 const timeFormat = new Intl.DateTimeFormat(window.navigator.language, { hour: '2-digit', minute: '2-digit' })
+const formatEntryTime = (now, entryTime) => {
+   const date = new Date(entryTime)
+   if (now.getFullYear() !== date.getFullYear()) {
+      return fullDateFormat.format(date)
+   }
+   if (now.getDate() === date.getDate() && now.getMonth() === date.getMonth()) {
+      return timeFormat.format(date)
+   }
+   return shortDateFormat.format(date)
+}
 
 export const Reader = ({ match }) => {
    const sessionParams = useMemo(() => {
@@ -28,16 +38,14 @@ export const Reader = ({ match }) => {
    const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
 
    const now = new Date()
-   const formatEntryTime = entryTime => {
-      const date = new Date(entryTime)
-      if (now.getFullYear() !== date.getFullYear()) {
-         return fullDateFormat.format(date)
+
+   const [openEntryIndex, setOpenEntryIndex] = useState(null)
+   useEffect(() => setOpenEntryIndex(null), [session])
+   const openEntryCallback = useCallback(entryElement => {
+      if (entryElement) {
+         entryElement.scrollIntoView({ behavior: 'smooth' })
       }
-      if (now.getDate() === date.getDate() && now.getMonth() === date.getMonth()) {
-         return timeFormat.format(date)
-      }
-      return shortDateFormat.format(date)
-   }
+   }, [])
 
    return (
       <div className="Reader">
@@ -53,13 +61,15 @@ export const Reader = ({ match }) => {
          </div>
          <div className="content">
             <div className="entries">
-               {session.entries.map(entry => {
+               {session.entries.map((entry, entryIndex) => {
                   const feed = feeds[entry.feedId]
+                  const open = entryIndex === openEntryIndex
+                  const ref = open ? openEntryCallback : null
                   return (
-                     <div className={classNames("entry", { unread: !entry.readTime })} key={entry.id}>
-                        <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
+                     <div className={classNames("entry", { unread: !entry.readTime, open })} key={entry.id} ref={ref} onClick={() => setOpenEntryIndex(entryIndex)}>
+                        <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer" />
                         <div className="title">{entry.title}</div>
-                        <div className="date">{formatEntryTime(entry.publishTime)}</div>
+                        <div className="date">{formatEntryTime(now, entry.publishTime)}</div>
                      </div>
                   )
                })}
