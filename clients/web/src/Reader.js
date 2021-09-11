@@ -25,10 +25,6 @@ export const Reader = ({ match }) => {
 
    const { session } = useSession(sessionParams)
 
-   const allUnreadEntries = useMemo(() => {
-      return session ? session.feeds.reduce((sum, feed) => sum + feed.unreadEntries, 0) : 0
-   }, [session])
-
    const feeds = useMemo(() => session ? session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }) : {}, [session])
 
    const now = new Date()
@@ -46,11 +42,11 @@ export const Reader = ({ match }) => {
    return (
       <div className="Reader">
          <div className="feeds">
-            <FeedItem title="All" active={match.path === "/reader/all"} unreadEntries={allUnreadEntries} link="/reader/all" />
-            <FeedItem title="Starred" active={match.path === "/reader/starred"} unreadEntries={0} link="/reader/starred" />
+            <FeedItem title="All" active={match.path === "/reader/all"} count={session?.unreadEntries} link="/reader/all" />
+            <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session?.starredEntries} link="/reader/starred" />
             <hr />
             {session?.feeds.map(feed => (
-               <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} unreadEntries={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
+               <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
             ))}
          </div>
          <div className="content">
@@ -71,11 +67,11 @@ export const Reader = ({ match }) => {
    )
 }
 
-const FeedItem = ({ title, active, unreadEntries, link }) => (
-   <Link className={classNames("feed", { active, hidden: !unreadEntries })} to={link}>
+const FeedItem = ({ title, count, active, link }) => (
+   <Link className={classNames("feed", { active, hidden: !count })} to={link}>
       <span className="title">{title}</span>
-      {unreadEntries > 0 && (
-         <span className="count">{unreadEntries}</span>
+      {count > 0 && (
+         <span className="count">{count}</span>
       )}
    </Link>
 )

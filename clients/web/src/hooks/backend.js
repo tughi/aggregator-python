@@ -58,6 +58,8 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 
                userTitle
                unreadEntries
             }
+            unreadEntries
+            starredEntries
          }
       }`,
       { variables },

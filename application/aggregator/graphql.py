@@ -71,6 +71,8 @@ class SessionType(graphene.ObjectType):
     entries = graphene.List(EntryType, limit=graphene.Int(required=True))
     entry_ids = graphene.List(graphene.Int)
     feeds = graphene.List(FeedType)
+    unread_entries = graphene.Int()
+    starred_entries = graphene.Int()
 
     @staticmethod
     def resolve_entries(session: dict, info, limit):
@@ -79,6 +81,22 @@ class SessionType(graphene.ObjectType):
         for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
             entries[entry.id] = entry
         return entries.values()
+
+    @staticmethod
+    def resolve_feeds(session: dict, info):
+        feeds = OrderedDict((feed.id, feed) for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)))
+        unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)
+        for feed_id, unread_entries in unread_entries_query:
+            feeds[feed_id].unread_entries = unread_entries
+        return feeds.values()
+
+    @staticmethod
+    def resolve_unread_entries(session: dict, info):
+        return db.session.query(Entry.id).filter(Entry.read_time.is_(None)).count()
+
+    @staticmethod
+    def resolve_starred_entries(session: dict, info):
+        return db.session.query(Entry.id).filter(Entry.star_time.is_not(None)).count()
 
 
 class UpdateFeedMutation(graphene.Mutation):
@@ -176,14 +194,8 @@ class Query(graphene.ObjectType):
             entry_ids = entry_ids.filter(Entry.star_time.is_not(None))
         entry_ids = entry_ids.order_by(Entry.publish_time.desc() if latest_first else Entry.publish_time.asc())
 
-        feeds = OrderedDict((feed.id, feed) for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)))
-        unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)
-        for feed_id, unread_entries in unread_entries_query:
-            feeds[feed_id].unread_entries = unread_entries
-
         return dict(
             entry_ids=[entry_id for entry_id, in entry_ids],
-            feeds=feeds.values(),
         )
 
 
