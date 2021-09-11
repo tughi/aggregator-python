@@ -24,7 +24,8 @@
    display: flex;
    height: 100vh;
 
-   > .feeds {
+   > .side-nav {
+      transform: scaleX(-1);
       flex-shrink: 0;
       width: 20rem;
 
@@ -32,46 +33,51 @@
       @include custom-scrollbar($gray-500, $gray-200);
 
       background-color: $gray-100;
-      padding: 1rem 0;
-      border-right: 1px solid $gray-300;
+      border-left: 1px solid $gray-300;
 
-      > a.feed {
-         display: flex;
-         padding: 0 1rem;
-         color: $text-secondary;
-         text-decoration: none;
-         font-weight: normal;
-         line-height: 2rem;
+      > .feeds {
+         transform: scaleX(-1);
 
-         &.active {
-            color: $gray-600;
-            background-color: $gray-200;
+         padding: 1rem 0;
+
+         > a.feed {
+            display: flex;
+            padding: 0 1rem;
+            color: $text-secondary;
+            text-decoration: none;
+            font-weight: normal;
+            line-height: 2rem;
+
+            &.active {
+               color: $gray-600;
+               background-color: $gray-200;
+            }
+
+            &:hover {
+               color: $text-body;
+            }
+
+            &.hidden {
+               // display: none;
+            }
+
+            > .title {
+               flex-grow: 1;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               white-space: nowrap;
+            }
+
+            > .count {
+               padding-left: 1rem;
+               font-weight: bold;
+            }
          }
 
-         &:hover {
-            color: $text-body;
+         > hr {
+            border: none;
+            border-top: 1px solid $gray-200;
          }
-
-         &.hidden {
-            // display: none;
-         }
-
-         > .title {
-            flex-grow: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-         }
-
-         > .count {
-            padding-left: 1rem;
-            font-weight: bold;
-         }
-      }
-
-      > hr {
-         border: none;
-         border-top: 1px solid $gray-200;
       }
    }
 

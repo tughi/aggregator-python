@@ -41,13 +41,15 @@ export const Reader = ({ match }) => {
 
    return (
       <div className="Reader">
-         <div className="feeds">
-            <FeedItem title="All" active={match.path === "/reader/all"} count={session.unreadEntries} link="/reader/all" />
-            <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session.starredEntries} link="/reader/starred" />
-            <hr />
-            {session.feeds.map(feed => (
-               <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
-            ))}
+         <div className="side-nav">
+            <div className="feeds">
+               <FeedItem title="All" active={match.path === "/reader/all"} count={session.unreadEntries} link="/reader/all" />
+               <FeedItem title="Starred" active={match.path === "/reader/starred"} count={session.starredEntries} link="/reader/starred" />
+               <hr />
+               {session.feeds.map(feed => (
+                  <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
+               ))}
+            </div>
          </div>
          <div className="content">
             <div className="entries">
