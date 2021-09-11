@@ -53,17 +53,19 @@ export const Reader = ({ match }) => {
                <FeedItem key={feed.id} active={sessionParams.feedId === feed.id} title={feed.userTitle || feed.title} unreadEntries={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} />
             ))}
          </div>
-         <div className="entries">
-            {session && session.entries.map(entry => {
-               const feed = feeds[entry.feedId]
-               return (
-                  <div className="entry" key={entry.id}>
-                     <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
-                     <div className="title">{entry.title}</div>
-                     <div className="date">{formatEntryTime(entry.publishTime)}</div>
-                  </div>
-               )
-            })}
+         <div className="content">
+            <div className="entries">
+               {session && session.entries.map(entry => {
+                  const feed = feeds[entry.feedId]
+                  return (
+                     <div className="entry" key={entry.id}>
+                        <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} href={entry.link} target="_blank" rel="noreferrer" />
+                        <div className="title">{entry.title}</div>
+                        <div className="date">{formatEntryTime(entry.publishTime)}</div>
+                     </div>
+                  )
+               })}
+            </div>
          </div>
       </div>
    )

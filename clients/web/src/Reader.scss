@@ -1,36 +1,35 @@
 @import "./colors.scss";
 
+@mixin custom-scrollbar($thumb-color, $track-color) {
+   scrollbar-color: $thumb-color $track-color;
+   scrollbar-width: 12px;
+   &::-webkit-scrollbar {
+      width: 12px;
+   }
+   &::-webkit-scrollbar-thumb {
+      background-clip: padding-box;
+      background-color: $thumb-color;
+      border-radius: 12px;
+      border: 3px solid $track-color;
+      &:hover {
+         background-color: darken($thumb-color, 10%);
+      }
+   }
+   &::-webkit-scrollbar-track {
+      background-color: $track-color;
+   }
+}
+
 .Reader {
    display: flex;
    height: 100vh;
 
    > .feeds {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
+      flex-shrink: 0;
       width: 20rem;
-   }
 
-   > .feeds {
       overflow: hidden auto;
-      scrollbar-color: $gray-400 $gray-200;
-      scrollbar-width: 12px;
-      &::-webkit-scrollbar {
-         width: 12px;
-      }
-      &::-webkit-scrollbar-thumb {
-         background-clip: padding-box;
-         background-color: $gray-400;
-         border-radius: 12px;
-         border: 3px solid $gray-200;
-         &:hover {
-            background-color: $gray-500;
-         }
-      }
-      &::-webkit-scrollbar-track {
-         background-color: $gray-200;
-      }
+      @include custom-scrollbar($gray-400, $gray-200);
 
       background-color: $gray-100;
       padding: 1rem 0;
@@ -75,62 +74,69 @@
       }
    }
 
-   > .entries {
-      margin: 0 auto;
-      width: 56rem;
+   > .content {
+      flex-grow: 1;
 
-      > .entry {
-         display: flex;
-         line-height: 2rem;
-         min-height: 2rem;
-         border-bottom: 1px solid $gray-200;
+      overflow: hidden scroll;
+      @include custom-scrollbar($gray-400, $gray-100);
 
-         &:first-child {
-            margin-top: 1rem;
-         }
+      > .entries {
+         margin: 0 auto;
+         max-width: 56rem;
 
-         &:last-child {
-            margin-bottom: 1rem;
-            border-bottom: none;
-         }
+         > .entry {
+            display: flex;
+            line-height: 2rem;
+            min-height: 2rem;
+            border-bottom: 1px solid $gray-200;
 
-         &:hover {
-            background-color: $gray-200;
-         }
+            &:first-child {
+               margin-top: 1rem;
+            }
 
-         > a.favicon {
-            flex-shrink: 0;
-            width: 3rem;
-            height: 2rem;
-            background: transparent center no-repeat;
-            background-size: 1rem;
+            &:last-child {
+               margin-bottom: 1rem;
+               border-bottom: none;
+            }
 
             &:hover {
-               filter: grayscale(75%) opacity(.75);
+               background-color: $gray-100;
             }
-         }
 
-         > .feed-title {
-            flex-shrink: 0;
-            width: 16rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            padding-right: 1rem;
-         }
+            > a.favicon {
+               flex-shrink: 0;
+               width: 3rem;
+               height: 2rem;
+               background: transparent center no-repeat;
+               background-size: 1rem;
 
-         > .title {
-            flex-grow: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-         }
+               &:hover {
+                  filter: grayscale(75%) opacity(.75);
+               }
+            }
 
-         > .date {
-            flex-shrink: 0;
-            white-space: nowrap;
-            padding: 0 1rem;
-            color: $text-secondary;
+            > .feed-title {
+               flex-shrink: 0;
+               width: 16rem;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               white-space: nowrap;
+               padding-right: 1rem;
+            }
+
+            > .title {
+               flex-grow: 1;
+               overflow: hidden;
+               text-overflow: ellipsis;
+               white-space: nowrap;
+            }
+
+            > .date {
+               flex-shrink: 0;
+               white-space: nowrap;
+               padding: 0 1rem;
+               color: $text-secondary;
+            }
          }
       }
    }
