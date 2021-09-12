@@ -98,7 +98,9 @@ const EntryItem = React.forwardRef(({ entry, feed, toggle, isOpen, hasContent },
    return (
       <div className={classNames("entry", { unread: !entry.readTime, open: isOpen })} ref={ref}>
          <div className="summary" onClick={toggle}>
-            <a className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer" />
+            <a className="favicon" onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer">
+               <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
+            </a>
             <div className="title">{entry.title}</div>
             <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
          </div>
