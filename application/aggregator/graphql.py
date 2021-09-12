@@ -16,10 +16,17 @@ from aggregator.models import Feed
 from aggregator.models import db
 
 
+class AuthorType(graphene.ObjectType):
+    name = graphene.String()
+    href = graphene.String()
+    email = graphene.String()
+
+
 class ContentType(graphene.ObjectType):
+    value = graphene.String()
     type = graphene.String()
     language = graphene.String()
-    value = graphene.String()
+    base = graphene.String()
 
 
 class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
@@ -31,6 +38,7 @@ class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
 
     summary = graphene.Field(ContentType)
     content = graphene.List(ContentType)
+    author = graphene.Field(AuthorType)
 
     publish_time = graphene.DateTime()
 
@@ -40,9 +48,15 @@ class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
     read_time = graphene.DateTime()
     star_time = graphene.DateTime()
 
+    @staticmethod
+    def resolve_author(self: Entry, info):
+        return json.loads(self.author)
+
+    @staticmethod
     def resolve_content(self: Entry, info):
         return json.loads(self.content)
 
+    @staticmethod
     def resolve_summary(self: Entry, info):
         return json.loads(self.summary)
 

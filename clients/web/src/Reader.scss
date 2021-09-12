@@ -164,6 +164,18 @@
                   }
                }
 
+               > .header {
+                  > .source {
+                     > .author {
+                        color: $text-secondary;
+
+                        &::before {
+                           content: ' :: ';
+                        }
+                     }
+                  }
+               }
+
                p {
                   margin: 1em 0 0;
                }

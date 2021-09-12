@@ -53,6 +53,7 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 
                link
                summary { value }
                content { value }
+               author { name }
                publishText
                publishTime
                readTime

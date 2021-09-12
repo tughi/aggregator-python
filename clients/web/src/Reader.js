@@ -106,7 +106,7 @@ const EntryItem = React.forwardRef(({ entry, feed, toggle, isOpen, hasContent },
          </div>
          {hasContent && (
             <div className="content">
-               <div className="content-header">
+               <div className="header">
                   <div className="source">
                      <span className="feed">{feed.userTitle || feed.title}</span>
                      {entry.author && (
