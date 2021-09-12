@@ -153,9 +153,16 @@
 
             > .content {
                display: none;
+               overflow: auto;
 
-               position: relative;
-               padding: 1rem;
+               > div {
+                  padding: 1rem;
+                  border-bottom: 1px solid $orange-500;
+
+                  &:last-child {
+                     border-bottom: none;
+                  }
+               }
 
                p {
                   margin: 1em 0 0;
@@ -167,7 +174,7 @@
                }
               
                a {
-                  color: #0099cc;
+                  color: $text-primary;
                   text-decoration: inherit;
                }
             }

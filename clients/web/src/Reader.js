@@ -107,19 +107,15 @@ const EntryItem = React.forwardRef(({ entry, feed, toggle, isOpen, hasContent },
          {hasContent && (
             <div className="content">
                <div className="content-header">
-                  <h1><a className="title" href={entry.link}>{entry.title}</a></h1>
-                  <div>
+                  <div className="source">
+                     <span className="feed">{feed.userTitle || feed.title}</span>
                      {entry.author && (
-                        <span className="author-container">by <span className="author">{entry.author.name}</span>,</span>
+                        <span className="author">{entry.author.name}</span>
                      )}
-                     <a className="feed" href={feed.link}>{feed.title}</a>
-                     <span className="date-container">on <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span></span>
-                     <span className="star" onClick={event => event.stopPropagation()}></span>
                   </div>
-                  <div className="actions">
-                     <a className="bliss">bliss</a>
-                     <a className="toggle-read">{entry.readTime ? 'unread' : 'read'}</a>
-                     <a className="toggle">close</a>
+                  <h2><a className="title" href={entry.link} target="_blank" rel="noreferrer">{entry.title}</a></h2>
+                  <div>
+                     <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
                   </div>
                </div>
                {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
