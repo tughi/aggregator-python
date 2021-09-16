@@ -46,11 +46,17 @@ export const Reader = ({ match }) => {
 
    const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
 
-   const [openEntryIndex, setOpenEntryIndex] = useState(null)
-   useEffect(() => setOpenEntryIndex(null), [session])
-   const openEntryCallback = useCallback(entryElement => {
+   const [activeEntryIndex, setActiveEntryIndex] = useState(null)
+   const [showEntry, setShowEntry] = useState(false)
+
+   useEffect(() => {
+      setActiveEntryIndex(null)
+      setShowEntry(false)
+   }, [session])
+
+   const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
-         entryElement.scrollIntoView()
+         entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
    }, [])
 
@@ -66,20 +72,27 @@ export const Reader = ({ match }) => {
                ))}
             </div>
          </div>
-         <div className="content">
-            <div className="entries">
-               {session.entries.map((entry, entryIndex) => (
-                  <EntryItem
-                     key={entry.id}
-                     ref={entryIndex === openEntryIndex ? openEntryCallback : null}
-                     entry={entry}
-                     feed={feeds[entry.feedId]}
-                     toggle={() => setOpenEntryIndex(current => current !== entryIndex ? entryIndex : null)}
-                     isOpen={entryIndex === openEntryIndex}
-                     hasContent={openEntryIndex !== null && entryIndex >= Math.max(openEntryIndex - 2, 0) && entryIndex <= openEntryIndex + 2}
-                  />
-               ))}
+         <div className="container">
+            <div className="feed-view">
+               <div className="entries">
+                  {session.entries.map((entry, entryIndex) => (
+                     <EntryItem
+                        key={entry.id}
+                        ref={entryIndex === activeEntryIndex ? activeEntryCallback : null}
+                        entry={entry}
+                        feed={feeds[entry.feedId]}
+                        isActive={entryIndex === activeEntryIndex}
+                        onClick={() => {
+                           setActiveEntryIndex(entryIndex)
+                           setShowEntry(true)
+                        }}
+                     />
+                  ))}
+               </div>
             </div>
+            {showEntry && session.entries.length > activeEntryIndex && (
+               <Entry entry={session.entries[activeEntryIndex]} feed={feeds[session.entries[activeEntryIndex].feedId]} />
+            )}
          </div>
       </div>
    )
@@ -94,35 +107,40 @@ const FeedItem = ({ title, count, active, link }) => (
    </Link>
 )
 
-const EntryItem = React.forwardRef(({ entry, feed, toggle, isOpen, hasContent }, ref) => {
+const EntryItem = React.forwardRef(({ entry, feed, isActive, onClick }, ref) => {
    return (
-      <div className={classNames("entry", { unread: !entry.readTime, open: isOpen })} ref={ref}>
-         <div className="summary" onClick={toggle}>
+      <div className={classNames("entry", { unread: !entry.readTime, active: isActive })} ref={ref}>
+         <div className="summary" onClick={onClick}>
             <a className="favicon" onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer">
                <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
             </a>
             <div className="title">{entry.title}</div>
             <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
          </div>
-         {hasContent && (
-            <div className="content">
-               <div className="header">
-                  <div className="source">
-                     <span className="feed">{feed.userTitle || feed.title}</span>
-                     {entry.author && (
-                        <span className="author">{entry.author.name}</span>
-                     )}
-                  </div>
-                  <h2><a className="title" href={entry.link} target="_blank" rel="noreferrer">{entry.title}</a></h2>
-                  <div>
-                     <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
-                  </div>
-               </div>
-               {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
-                  <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
-               ))}
-            </div>
-         )}
       </div>
    )
 })
+
+const Entry = ({ entry, feed }) => (
+   <div className="entry">
+      {entry && (
+         <div className="content">
+            <div className="header">
+               <div className="source">
+                  <span className="feed">{feed.userTitle || feed.title}</span>
+                  {entry.author && (
+                     <span className="author">{entry.author.name}</span>
+                  )}
+               </div>
+               <h2><a className="title" href={entry.link} target="_blank" rel="noreferrer">{entry.title}</a></h2>
+               <div>
+                  <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
+               </div>
+            </div>
+            {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
+               <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
+            ))}
+         </div>
+      )}
+   </div>
+)

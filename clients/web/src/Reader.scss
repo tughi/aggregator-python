@@ -81,131 +81,156 @@
       }
    }
 
-   > .content {
+   > .container {
       flex-grow: 1;
+      position: relative;
 
-      overflow: hidden scroll;
-      @include custom-scrollbar($gray-500, $gray-200);
+      > .feed-view {
+         position: absolute;
+         top: 0;
+         bottom: 0;
+         left: 0;
+         right: 0;
 
-      > .entries {
-         margin: 0 auto;
-         max-width: 56rem;
+         overflow: hidden scroll;
+         @include custom-scrollbar($gray-500, $gray-200);
 
-         > .entry {
-            border-bottom: 1px solid $gray-200;
+         > .entries {
+            margin: 0 auto;
+            max-width: 56rem;
 
-            &:first-child {
-               margin-top: 1rem;
-            }
+            > .entry {
+               border-bottom: 1px solid $gray-200;
 
-            &:last-child {
-               margin-bottom: 1rem;
-               border-bottom: none;
-            }
-
-            > .summary {
-               display: flex;
-               line-height: 2rem;
-               min-height: 2rem;
-               color: $text-secondary;
-               cursor: pointer;
-
-               &:hover {
-                  background-color: $gray-100;
+               &:first-child {
+                  margin-top: 1rem;
                }
-               
-               > a.favicon {
-                  flex-shrink: 0;
+
+               &:last-child {
+                  margin-bottom: 1rem;
+                  border-bottom: none;
+               }
+
+               > .summary {
                   display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  width: 3rem;
-                  height: 2rem;
-   
-                  > .image {
-                     display: block;
-                     width: 2rem;
-                     height: 2rem;
-                     background: transparent center no-repeat;
-                     background-size: 1rem;
-                  }
+                  line-height: 2rem;
+                  min-height: 2rem;
+                  color: $text-secondary;
+                  cursor: pointer;
 
                   &:hover {
+                     background-color: $gray-100;
+                  }
+                  
+                  > a.favicon {
+                     flex-shrink: 0;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center;
+                     width: 3rem;
+                     height: 2rem;
+      
                      > .image {
-                        background-color: $gray-200;
+                        display: block;
+                        width: 2rem;
+                        height: 2rem;
+                        background: transparent center no-repeat;
+                        background-size: 1rem;
                      }
-                  }
-               }
 
-               > .title {
-                  flex-grow: 1;
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-               }
-
-               > .date {
-                  flex-shrink: 0;
-                  white-space: nowrap;
-                  padding: 0 1rem;
-               }
-            }
-
-            > .content {
-               display: none;
-               overflow: auto;
-
-               > div {
-                  padding: 1rem;
-                  border-bottom: 1px solid $orange-500;
-
-                  &:last-child {
-                     border-bottom: none;
-                  }
-               }
-
-               > .header {
-                  > .source {
-                     > .author {
-                        color: $text-secondary;
-
-                        &::before {
-                           content: ' :: ';
+                     &:hover {
+                        > .image {
+                           background-color: $gray-200;
                         }
                      }
                   }
-               }
 
-               p {
-                  margin: 1em 0 0;
-               }
-              
-               img {
-                  max-width: 100%;
-                  height: auto;
-               }
-              
-               a {
-                  color: $text-primary;
-                  text-decoration: inherit;
-               }
-            }
-
-            &.unread {
-               > .summary {
                   > .title {
-                     color: $text-body;
+                     flex-grow: 1;
+                     overflow: hidden;
+                     text-overflow: ellipsis;
+                     white-space: nowrap;
+                  }
+
+                  > .date {
+                     flex-shrink: 0;
+                     white-space: nowrap;
+                     padding: 0 1rem;
+                  }
+               }
+
+               &.unread {
+                  > .summary {
+                     > .title {
+                        color: $text-body;
+                     }
+                  }
+               }
+
+               &.active {
+                  background-color: $orange-100;
+
+                  > .summary {
+                     color: $orange-300;
+
+                     > .title {
+                        color: $orange-500;
+                     }
                   }
                }
             }
-   
-            &.open {
-               > .summary {
-                  display: none;
+         }
+      }
+
+      > .entry {
+         position: absolute;
+         top: 0;
+         bottom: 0;
+         left: 0;
+         right: 0;
+
+         overflow: hidden auto;
+         @include custom-scrollbar($gray-500, $gray-200);
+
+         background-color: white;
+
+         > .content {
+            max-width: 56rem;
+            margin: 0 auto;
+
+            > div {
+               padding: 1rem;
+               border-bottom: 1px solid $orange-500;
+
+               &:last-child {
+                  border-bottom: none;
                }
-               > .content {
-                  display: block;
+            }
+
+            > .header {
+               > .source {
+                  > .author {
+                     color: $text-secondary;
+
+                     &::before {
+                        content: ' :: ';
+                     }
+                  }
                }
+            }
+
+            p {
+               margin: 1em 0 0;
+            }
+         
+            img {
+               max-width: 100%;
+               height: auto;
+            }
+         
+            a {
+               color: $text-primary;
+               text-decoration: inherit;
             }
          }
       }
