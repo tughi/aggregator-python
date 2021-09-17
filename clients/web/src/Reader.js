@@ -46,11 +46,11 @@ export const Reader = ({ match }) => {
 
    const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
 
-   const [activeEntryIndex, setActiveEntryIndex] = useState(null)
+   const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [showEntry, setShowEntry] = useState(false)
 
    useEffect(() => {
-      setActiveEntryIndex(null)
+      setActiveEntryIndex(-1)
       setShowEntry(false)
    }, [session])
 
@@ -59,6 +59,39 @@ export const Reader = ({ match }) => {
          entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
    }, [])
+
+   useEffect(() => {
+      const onKeyDown = event => {
+         const key = event.which
+         if (key === 66/*b*/ && activeEntryIndex !== -1) {
+            // TODO: toggle bliss
+         } else if (key === 74/*j*/ && session.entries.length) {
+            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
+            setShowEntry(true)
+         } else if (key === 75/*k*/ && session.entries.length) {
+            setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
+            setShowEntry(true)
+         } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
+            // TODO: toggle read/pinned
+         } else if (key === 78/*n*/ && session.entries.length) {
+            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
+         } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
+            setShowEntry(showEntry => !showEntry)
+         } else if (key === 80/*p*/ && session.entries.length) {
+            setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
+         } else if (key === 82/*r*/) {
+            // TODO: reload session
+         } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
+            // TODO: toggle star
+         }
+      }
+
+      window.addEventListener('keydown', onKeyDown)
+
+      return () => {
+         window.removeEventListener('keydown', onKeyDown)
+      }
+   }, [session, activeEntryIndex])
 
    return (
       <div className="Reader">
