@@ -40,8 +40,12 @@ const createEmptySession = () => ({
    starredEntries: 0,
 })
 
-export const useSession = ({ feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
-   const variables = useMemo(() => ({ feedId, onlyUnread, onlyStarred, entriesLimit }), [feedId, onlyUnread, onlyStarred, entriesLimit])
+export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
+   const variables = useMemo(() => {
+      if (sessionTime) {
+         return { feedId, onlyUnread, onlyStarred, entriesLimit }
+      }
+   }, [sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit])
 
    const { loading, data } = useQuery(
       `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!) {

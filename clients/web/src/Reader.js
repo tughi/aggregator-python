@@ -29,6 +29,7 @@ const formatFullEntryTime = (entryTime) => {
 }
 
 export const Reader = ({ match }) => {
+   const [sessionTime, setSessionTime] = useState(() => Date.now())
    const sessionParams = useMemo(() => {
       let feedId = null
       let onlyUnread = true
@@ -39,8 +40,8 @@ export const Reader = ({ match }) => {
       } else if (match.path === '/reader/feeds/:feedId') {
          feedId = parseInt(match.params.feedId)
       }
-      return { feedId, onlyUnread, onlyStarred }
-   }, [match])
+      return { sessionTime, feedId, onlyUnread, onlyStarred }
+   }, [match, sessionTime])
 
    const { session } = useSession(sessionParams)
 
@@ -80,7 +81,7 @@ export const Reader = ({ match }) => {
          } else if (key === 80/*p*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
          } else if (key === 82/*r*/) {
-            // TODO: reload session
+            setSessionTime(Date.now())
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
             // TODO: toggle star
          }
