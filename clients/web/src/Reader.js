@@ -43,9 +43,7 @@ export const Reader = ({ match }) => {
       return { sessionTime, feedId, onlyUnread, onlyStarred }
    }, [match, sessionTime])
 
-   const { session } = useSession(sessionParams)
-
-   const feeds = useMemo(() => session.feeds.reduce((feeds, feed) => { feeds[feed.id] = feed; return feeds }, {}), [session])
+   const { feeds, feedsById, entryIds, entries, unreadEntries, starredEntries } = useSession(sessionParams)
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [showEntry, setShowEntry] = useState(false)
@@ -53,7 +51,7 @@ export const Reader = ({ match }) => {
    useEffect(() => {
       setActiveEntryIndex(-1)
       setShowEntry(false)
-   }, [session])
+   }, [entryIds])
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
@@ -61,24 +59,25 @@ export const Reader = ({ match }) => {
       }
    }, [])
 
+   const entriesLength = entries.length
    useEffect(() => {
       const onKeyDown = event => {
          const key = event.which
          if (key === 66/*b*/ && activeEntryIndex !== -1) {
             // TODO: toggle bliss
-         } else if (key === 74/*j*/ && session.entries.length) {
-            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
+         } else if (key === 74/*j*/ && entriesLength) {
+            setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
             setShowEntry(true)
-         } else if (key === 75/*k*/ && session.entries.length) {
+         } else if (key === 75/*k*/ && entriesLength) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
             setShowEntry(true)
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
             // TODO: toggle read/pinned
-         } else if (key === 78/*n*/ && session.entries.length) {
-            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
+         } else if (key === 78/*n*/ && entriesLength) {
+            setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
          } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
             setShowEntry(showEntry => !showEntry)
-         } else if (key === 80/*p*/ && session.entries.length) {
+         } else if (key === 80/*p*/ && entriesLength) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
          } else if (key === 82/*r*/) {
             setSessionTime(Date.now())
@@ -92,16 +91,16 @@ export const Reader = ({ match }) => {
       return () => {
          window.removeEventListener('keydown', onKeyDown)
       }
-   }, [session, activeEntryIndex])
+   }, [activeEntryIndex, entriesLength])
 
    return (
       <div className="Reader">
          <div className="side-nav">
             <div className="feeds">
-               <FeedItem title="All" count={session.unreadEntries} link="/reader/all" active={match.path === "/reader/all"} />
-               <FeedItem title="Starred" count={session.starredEntries} link="/reader/starred" active={match.path === "/reader/starred"} />
+               <FeedItem title="All" count={unreadEntries} link="/reader/all" active={match.path === "/reader/all"} />
+               <FeedItem title="Starred" count={starredEntries} link="/reader/starred" active={match.path === "/reader/starred"} />
                <hr />
-               {session.feeds.map(feed => (
+               {feeds.map(feed => (
                   <FeedItem key={feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} active={sessionParams.feedId === feed.id} />
                ))}
             </div>
@@ -109,12 +108,12 @@ export const Reader = ({ match }) => {
          <div className="container">
             <div className="feed-view">
                <div className="entries">
-                  {session.entries.map((entry, entryIndex) => (
+                  {entries.map((entry, entryIndex) => (
                      <EntryItem
                         key={entry.id}
                         ref={entryIndex === activeEntryIndex ? activeEntryCallback : null}
                         entry={entry}
-                        feed={feeds[entry.feedId]}
+                        feed={feedsById[entry.feedId]}
                         isActive={entryIndex === activeEntryIndex}
                         onClick={() => {
                            setActiveEntryIndex(entryIndex)
@@ -124,8 +123,8 @@ export const Reader = ({ match }) => {
                   ))}
                </div>
             </div>
-            {showEntry && session.entries.length > activeEntryIndex && (
-               <Entry entry={session.entries[activeEntryIndex]} feed={feeds[session.entries[activeEntryIndex].feedId]} />
+            {showEntry && entriesLength > activeEntryIndex && (
+               <Entry entry={entries[activeEntryIndex]} feed={feedsById[entries[activeEntryIndex].feedId]} />
             )}
          </div>
       </div>

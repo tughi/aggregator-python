@@ -1,9 +1,8 @@
 import axios from "axios"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
-const useQuery = (query, { variables }) => {
+const useQuery = ({ query, variables, consumeData }) => {
    const [loading, setLoading] = useState(false)
-   const [data, setData] = useState(null)
 
    useEffect(() => {
       let cancelRequest
@@ -16,8 +15,8 @@ const useQuery = (query, { variables }) => {
          data: { query, variables },
          cancelToken: new axios.CancelToken(cancel => cancelRequest = cancel)
       }).then(response => {
-         setData(response.data.data)
          setLoading(false)
+         consumeData(response.data.data)
       }).catch(error => {
          if (axios.isCancel(error)) {
             return
@@ -27,18 +26,10 @@ const useQuery = (query, { variables }) => {
       return () => {
          cancelRequest()
       }
-   }, [query, variables])
+   }, [query, variables, consumeData])
 
-   return { loading, data }
+   return loading
 }
-
-const createEmptySession = () => ({
-   entries: [],
-   entryIds: [],
-   feeds: [],
-   unreadEntries: 0,
-   starredEntries: 0,
-})
 
 export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
    const variables = useMemo(() => {
@@ -47,8 +38,29 @@ export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entri
       }
    }, [sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit])
 
-   const { loading, data } = useQuery(
-      `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!) {
+   const [feeds, setFeeds] = useState([])
+   const [feedsById, setFeedsById] = useState({})
+   const [unreadEntries, setUnreadEntries] = useState(0)
+   const [starredEntries, setStarredEntries] = useState(0)
+   const [entryIds, setEntryIds] = useState([])
+   const [entries, setEntries] = useState([])
+
+   useEffect(() => {
+      setEntryIds([])
+      setEntries([])
+   }, [variables])
+
+   const consumeSessionData = useCallback(({ session }) => {
+      setFeeds(session.feeds)
+      setFeedsById(session.feeds.reduce((feedsById, feed) => ({ ...feedsById, [feed.id]: feed })))
+      setUnreadEntries(session.unreadEntries)
+      setStarredEntries(session.starredEntries)
+      setEntryIds(session.entryIds)
+      setEntries(session.entries)
+   }, [])
+
+   const loading = useQuery({
+      query: `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!) {
          session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred) {
             entries(limit: $entriesLimit) {
                id
@@ -75,24 +87,17 @@ export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entri
             starredEntries
          }
       }`,
-      { variables },
-   )
+      variables,
+      consumeData: consumeSessionData,
+   })
 
-   const [session, setSession] = useState(createEmptySession)
-
-   useEffect(() => {
-      setSession(session => ({
-         ...session,
-         entryIds: [],
-         entries: []
-      }))
-   }, [variables])
-
-   useEffect(() => {
-      if (data) {
-         setSession(data.session)
-      }
-   }, [data])
-
-   return { loading, session }
+   return {
+      loading,
+      feeds,
+      feedsById,
+      entryIds,
+      entries,
+      unreadEntries,
+      starredEntries,
+   }
 }
