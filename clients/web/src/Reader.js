@@ -115,15 +115,17 @@ export const Reader = ({ match }) => {
       }
    }, [activeEntryIndex, entriesLength])
 
+   const onFeedClick = useCallback(() => setSessionTime(Date.now()), [])
+
    return (
       <div className="Reader">
          <div className="side-nav">
             <div className="feeds">
-               <FeedItem title="All" count={unreadEntries} link="/reader/all" active={match.path === "/reader/all"} />
-               <FeedItem title="Starred" count={starredEntries} link="/reader/starred" active={match.path === "/reader/starred"} />
+               <FeedItem title="All" count={unreadEntries} link="/reader/all" active={match.path === "/reader/all"} onClick={onFeedClick} />
+               <FeedItem title="Starred" count={starredEntries} link="/reader/starred" active={match.path === "/reader/starred"} onClick={onFeedClick} />
                <hr />
                {feeds.map(feed => (
-                  <FeedItem key={feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} active={sessionParams.feedId === feed.id} />
+                  <FeedItem key={feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} active={sessionParams.feedId === feed.id} onClick={onFeedClick} />
                ))}
             </div>
          </div>
@@ -158,8 +160,8 @@ export const Reader = ({ match }) => {
    )
 }
 
-const FeedItem = ({ title, count, active, link }) => (
-   <Link className={classNames("feed", { active, hidden: !count })} to={link}>
+const FeedItem = ({ title, count, active, link, onClick }) => (
+   <Link className={classNames("feed", { active, hidden: !count })} to={link} onClick={onClick}>
       <span className="title">{title}</span>
       {count > 0 && (
          <span className="count">{count}</span>
