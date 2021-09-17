@@ -191,7 +191,10 @@ class Query(graphene.ObjectType):
 
     @staticmethod
     def resolve_entries(source, info, entry_ids=None):
-        return Entry.query.filter(Entry.id.in_(entry_ids))
+        entries = OrderedDict((entry_id, None) for entry_id in entry_ids)
+        for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
+            entries[entry.id] = entry
+        return entries.values()
 
     @staticmethod
     def resolve_feeds(source, info):
