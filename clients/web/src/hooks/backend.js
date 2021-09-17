@@ -1,43 +1,39 @@
 import axios from "axios"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-const useQuery = ({ query, variables, consumeData }) => {
+const useQuery = ({ query, variables, consumeData, ignore }) => {
    const [loading, setLoading] = useState(false)
 
    useEffect(() => {
-      let cancelRequest
+      if (!ignore) {
+         let cancelRequest
 
-      setLoading(true)
+         setLoading(true)
 
-      axios({
-         url: '/graphql',
-         method: 'post',
-         data: { query, variables },
-         cancelToken: new axios.CancelToken(cancel => cancelRequest = cancel)
-      }).then(response => {
-         setLoading(false)
-         consumeData(response.data.data)
-      }).catch(error => {
-         if (axios.isCancel(error)) {
-            return
+         axios({
+            url: '/graphql',
+            method: 'post',
+            data: { query, variables },
+            cancelToken: new axios.CancelToken(cancel => cancelRequest = cancel)
+         }).then(response => {
+            setLoading(false)
+            consumeData(response.data.data)
+         }).catch(error => {
+            if (axios.isCancel(error)) {
+               return
+            }
+         })
+
+         return () => {
+            cancelRequest()
          }
-      })
-
-      return () => {
-         cancelRequest()
       }
-   }, [query, variables, consumeData])
+   }, [query, variables, consumeData, ignore])
 
    return loading
 }
 
 export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit = 50 }) => {
-   const variables = useMemo(() => {
-      if (sessionTime) {
-         return { feedId, onlyUnread, onlyStarred, entriesLimit }
-      }
-   }, [sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit])
-
    const [feeds, setFeeds] = useState([])
    const [feedsById, setFeedsById] = useState({})
    const [unreadEntries, setUnreadEntries] = useState(0)
@@ -45,10 +41,19 @@ export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entri
    const [entryIds, setEntryIds] = useState([])
    const [entries, setEntries] = useState([])
 
+   const [entriesOffset, setEntriesOffset] = useState(0)
+
+   const sessionQueryVariables = useMemo(() => {
+      if (sessionTime) {
+         return { feedId, onlyUnread, onlyStarred, entriesLimit }
+      }
+   }, [sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit])
+
    useEffect(() => {
       setEntryIds([])
       setEntries([])
-   }, [variables])
+      setEntriesOffset(0)
+   }, [sessionQueryVariables])
 
    const consumeSessionData = useCallback(({ session }) => {
       setFeeds(session.feeds)
@@ -59,7 +64,7 @@ export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entri
       setEntries(session.entries)
    }, [])
 
-   const loading = useQuery({
+   const sessionIsLoading = useQuery({
       query: `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!) {
          session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred) {
             entries(limit: $entriesLimit) {
@@ -87,17 +92,50 @@ export const useSession = ({ sessionTime, feedId, onlyUnread, onlyStarred, entri
             starredEntries
          }
       }`,
-      variables,
+      variables: sessionQueryVariables,
       consumeData: consumeSessionData,
    })
 
+   const entriesQueryVariables = useMemo(() => ({ entryIds: entryIds.slice(entriesOffset, entriesOffset + entriesLimit) }), [entryIds, entriesOffset, entriesLimit])
+
+   const consumeEntriesData = useCallback(({ entries }) => {
+      setEntries(currentEntries => [...currentEntries, ...entries])
+   }, [])
+
+   const entriesAreLoading = useQuery({
+      query: `query ($entryIds: [Int]!) {
+         entries(entryIds: $entryIds) {
+            id
+            feedId
+            title
+            link
+            summary { value }
+            content { value }
+            author { name }
+            publishText
+            publishTime
+            readTime
+            starTime
+         }
+      }`,
+      variables: entriesQueryVariables,
+      consumeData: consumeEntriesData,
+      ignore: entriesOffset === 0,
+   })
+
+   const loadMoreEntries = useCallback(() => {
+      setEntriesOffset(entries.length)
+   }, [entries])
+
    return {
-      loading,
+      isLoading: sessionIsLoading || entriesAreLoading,
       feeds,
       feedsById,
       entryIds,
       entries,
       unreadEntries,
       starredEntries,
+      hasMoreEntries: entries.length < entryIds.length,
+      loadMoreEntries,
    }
 }

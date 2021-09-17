@@ -1,6 +1,6 @@
 import "./Reader.scss"
 
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { useSession } from "./hooks/backend"
 import classNames from "classnames"
@@ -28,6 +28,8 @@ const formatFullEntryTime = (entryTime) => {
    return dateTimeFormat.format(date)
 }
 
+const entriesLimit = 100
+
 export const Reader = ({ match }) => {
    const [sessionTime, setSessionTime] = useState(() => Date.now())
    const sessionParams = useMemo(() => {
@@ -40,10 +42,11 @@ export const Reader = ({ match }) => {
       } else if (match.path === '/reader/feeds/:feedId') {
          feedId = parseInt(match.params.feedId)
       }
-      return { sessionTime, feedId, onlyUnread, onlyStarred }
+      return { sessionTime, feedId, onlyUnread, onlyStarred, entriesLimit }
    }, [match, sessionTime])
 
-   const { feeds, feedsById, entryIds, entries, unreadEntries, starredEntries } = useSession(sessionParams)
+   const { isLoading, feeds, feedsById, entryIds, entries, unreadEntries, starredEntries, hasMoreEntries, loadMoreEntries } = useSession(sessionParams)
+   const entriesLength = entries.length
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [showEntry, setShowEntry] = useState(false)
@@ -59,7 +62,26 @@ export const Reader = ({ match }) => {
       }
    }, [])
 
-   const entriesLength = entries.length
+   const triggerEntryIndex = hasMoreEntries ? entriesLength - Math.round(entriesLimit / 3) : -1
+   const triggerEntryObserver = useRef(null)
+   const triggerEntryCallback = useCallback(entryElement => {
+      if (isLoading) {
+         return
+      }
+      if (triggerEntryObserver.current) {
+         triggerEntryObserver.current.disconnect()
+         triggerEntryObserver.current = null
+      }
+      if (entryElement) {
+         triggerEntryObserver.current = new IntersectionObserver(observerEntries => {
+            if (observerEntries[0].isIntersecting) {
+               loadMoreEntries()
+            }
+         })
+         triggerEntryObserver.current.observe(entryElement)
+      }
+   }, [isLoading, loadMoreEntries])
+
    useEffect(() => {
       const onKeyDown = event => {
          const key = event.which
@@ -111,7 +133,7 @@ export const Reader = ({ match }) => {
                   {entries.map((entry, entryIndex) => (
                      <EntryItem
                         key={entry.id}
-                        ref={entryIndex === activeEntryIndex ? activeEntryCallback : null}
+                        ref={entryIndex === triggerEntryIndex ? triggerEntryCallback : entryIndex === activeEntryIndex ? activeEntryCallback : null}
                         entry={entry}
                         feed={feedsById[entry.feedId]}
                         isActive={entryIndex === activeEntryIndex}
@@ -121,6 +143,11 @@ export const Reader = ({ match }) => {
                         }}
                      />
                   ))}
+                  {isLoading && (
+                     <div style={{ textAlign: 'center' }}>
+                        Loading...
+                     </div>
+                  )}
                </div>
             </div>
             {showEntry && entriesLength > activeEntryIndex && (
