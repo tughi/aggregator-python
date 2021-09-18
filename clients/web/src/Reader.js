@@ -115,10 +115,15 @@ export const Reader = ({ match }) => {
       }
    }, [activeEntryIndex, entriesLength])
 
-   const onFeedClick = useCallback(() => setSessionTime(Date.now()), [])
+   const [showSideNav, setShowSideNav] = useState(false)
+
+   const onFeedClick = useCallback(() => {
+      setSessionTime(Date.now())
+      setShowSideNav(false)
+   }, [])
 
    return (
-      <div className="Reader">
+      <div className={classNames("Reader", { 'show-side-nav': showSideNav })}>
          <div className="side-nav">
             <div className="feeds">
                <FeedItem title="All" count={unreadEntries} link="/reader/all" active={match.path === "/reader/all"} onClick={onFeedClick} />
@@ -129,6 +134,7 @@ export const Reader = ({ match }) => {
                ))}
             </div>
          </div>
+         <div className="side-nav-toggler" onClick={() => setShowSideNav(showSideNav => !showSideNav)}>{showSideNav ? '\u00d7' : '\u2630'}</div>
          <div className="container">
             <div className="feed-view">
                <div className="entries">
