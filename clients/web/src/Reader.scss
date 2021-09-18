@@ -25,9 +25,64 @@
    height: 100vh;
    -webkit-tap-highlight-color: transparent;
 
+   @media screen and (max-width: 70rem) {
+      overflow: hidden;
+
+      > .side-nav {
+         position: absolute;
+         top: 0;
+         bottom: 0;
+         left: -20rem;
+         z-index: 1;
+         transition: left .25s linear;
+      }
+
+      > .container {
+         width: 100vw;
+         transition: transform .25s linear;
+
+         &::after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            pointer-events: none;
+            background-color: transparent;
+            transition: background-color .25s linear;
+         }
+   }
+
+      &.show-side-nav {
+         > .side-nav {
+            left: 0;
+         }
+
+         > .container {
+            transform: translateX(20rem);
+            pointer-events: none;
+
+            &::after {
+               background-color: rgba($gray-500, .75);
+            }
+         }
+      }
+   }
+
+   @media screen and (min-width: 70rem) {
+      > .side-nav {
+         flex-shrink: 0;
+      }
+
+      > .container {
+         flex-grow: 1;
+      }
+   }
+
    > .side-nav {
       transform: scaleX(-1);
-      flex-shrink: 0;
       width: 20rem;
 
       overflow: hidden auto;
@@ -83,7 +138,6 @@
    }
 
    > .container {
-      flex-grow: 1;
       position: relative;
 
       > .feed-view {
@@ -98,7 +152,7 @@
 
          > .entries {
             margin: 0 auto;
-            max-width: 56rem;
+            max-width: 50rem;
 
             > .entry {
                border-bottom: 1px solid $gray-200;
@@ -196,7 +250,7 @@
          background-color: white;
 
          > .content {
-            max-width: 56rem;
+            max-width: 50rem;
             margin: 0 auto;
 
             > div {
