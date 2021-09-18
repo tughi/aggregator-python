@@ -23,6 +23,7 @@
 .Reader {
    display: flex;
    height: 100vh;
+   -webkit-tap-highlight-color: transparent;
 
    > .side-nav {
       transform: scaleX(-1);
