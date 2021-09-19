@@ -1,4 +1,6 @@
 import "./Reader.scss"
+import { ReactComponent as CloseIcon } from "./icons/close.svg"
+import { ReactComponent as MenuIcon } from "./icons/menu.svg"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
@@ -134,7 +136,13 @@ export const Reader = ({ match }) => {
                ))}
             </div>
          </div>
-         <div className="side-nav-toggler" onClick={() => setShowSideNav(showSideNav => !showSideNav)}>{showSideNav ? '\u00d7' : '\u2630'}</div>
+         <div className="side-nav-toggler" onClick={() => setShowSideNav(showSideNav => !showSideNav)}>
+            {showSideNav ? (
+               <CloseIcon />
+            ) : (
+               <MenuIcon />
+            )}
+         </div>
          <div className="container">
             <div className="feed-view">
                <div className="entries">

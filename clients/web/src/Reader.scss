@@ -44,19 +44,23 @@
          left: 0;
          transition: left .25s linear;
 
-         font-size: 1rem;
-         line-height: 2.5rem;
-         text-align: center;
-         padding: 0 1rem 0 .5rem;
-         background-color: $gray-200;
-         border-radius: 0 3rem 3rem 0;
+         padding: .5rem .75rem .5rem .5rem;
+         background-color: $gray-100;
+         border-radius: 0 1rem 1rem 0;
          border: 1px solid $gray-300;
          border-left: none;
-         color: $gray-500;
-         font-weight: bold;
+         box-sizing: border-box;
+         cursor: pointer;
 
-         &:active {
-            background-color: $gray-300;
+         &:hover {
+            background-color: $gray-200;
+         }
+
+         > svg {
+            display: block;
+            width: 1.5rem;
+            height: 1.5rem;
+            stroke: $gray-500;
          }
       }
 
@@ -125,6 +129,7 @@
 
       background-color: $gray-100;
       border-left: 1px solid $gray-300;
+      box-sizing: border-box;
 
       > .feeds {
          transform: scaleX(-1);
