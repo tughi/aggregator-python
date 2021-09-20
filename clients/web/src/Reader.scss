@@ -45,22 +45,22 @@
          transition: left .25s linear;
 
          padding: .5rem .75rem .5rem .5rem;
-         background-color: $gray-100;
+         background-color: $gray-200;
          border-radius: 0 1rem 1rem 0;
-         border: 1px solid $gray-300;
+         border: 1px solid $gray-500;
          border-left: none;
          box-sizing: border-box;
          cursor: pointer;
 
          &:hover {
-            background-color: $gray-200;
+            background-color: $gray-300;
          }
 
          > svg {
             display: block;
             width: 1.5rem;
             height: 1.5rem;
-            stroke: $gray-500;
+            stroke: $gray-600 !important;
          }
       }
 
@@ -128,7 +128,7 @@
       @include custom-scrollbar($gray-500, $gray-200);
 
       background-color: $gray-100;
-      border-left: 1px solid $gray-300;
+      border-left: 1px solid $gray-400;
       box-sizing: border-box;
 
       > .feeds {
@@ -139,23 +139,10 @@
          > a.feed {
             display: flex;
             padding: 0 1rem;
-            color: $text-secondary;
+            color: $gray-600;
             text-decoration: none;
             font-weight: normal;
             line-height: 2rem;
-
-            &.active {
-               color: $orange-500;
-               background-color: $orange-100;
-            }
-
-            &:hover {
-               background-color: $gray-200;
-            }
-
-            &.hidden {
-               display: none;
-            }
 
             > .title {
                flex-grow: 1;
@@ -166,13 +153,30 @@
 
             > .count {
                padding-left: 1rem;
-               font-weight: bold;
+               color: $gray-500;
+            }
+
+            &.active {
+               color: $orange-500;
+               background-color: $orange-100;
+
+               > .count {
+                  color: $orange-300;
+               }   
+            }
+
+            &:hover {
+               background-color: $gray-200;
+            }
+
+            &.hidden {
+               display: none;
             }
          }
 
          > hr {
             border: none;
-            border-top: 1px solid $gray-200;
+            border-top: 1px solid $gray-400;
          }
       }
    }
@@ -284,15 +288,18 @@
          left: 0;
          right: 0;
 
-         overflow: hidden auto;
+         overflow: hidden scroll;
          @include custom-scrollbar($gray-500, $gray-200);
 
          background-color: white;
 
          > .content {
             max-width: 50rem;
+            min-height: calc(100vh - 2.5rem);
             margin: 0 auto;
-
+            padding: 4rem 0 4rem 0;
+            box-sizing: border-box;
+            
             > div {
                padding: 1rem;
                border-bottom: 1px solid $orange-500;
@@ -326,6 +333,78 @@
             a {
                color: $text-primary;
                text-decoration: inherit;
+            }
+         }
+
+         > .entry-toolbar {
+            position: sticky;
+            bottom: 2rem;
+            left: 0;
+            right: 0;
+            height: 2.5rem;
+
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            button {
+               display: flex;
+               flex-direction: row;
+               align-items: center;
+               background-color: $gray-200;
+               border: 1px solid $gray-500;
+               box-sizing: border-box;
+
+               > svg {
+                  width: 1.5rem;
+                  height: 1.5rem;
+               }
+
+               &:hover {
+                  background-color: $gray-100; 
+               }
+
+               &:active {
+                  background-color: $gray-300;
+               }
+            }
+
+            > button.prev {
+               border-radius: 0 1rem 1rem 0;
+               border-left: none;
+               padding: 0 .75rem 0 .5rem;
+            }
+
+            > button.next {
+               border-radius: 1rem 0 0 1rem;
+               border-right: none;
+               padding: 0 .5rem 0 .75rem;
+            }
+
+            > .actions {
+               display: flex;
+
+               > button.star {
+                  border-radius: 1rem 0 0 1rem;
+                  border-right: none;
+                  padding: 0 .5rem 0 .75rem;
+               }
+
+               > button.pin {
+                  border-radius: 0 1rem 1rem 0;
+                  border-left: none;
+                  padding: 0 .75rem 0 .5rem;
+               }   
+
+               > .text {
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  min-width: 8rem;
+                  text-align: center;
+                  background-color: $gray-200;
+                  border: 1px solid $gray-500;   
+               }
             }
          }
       }

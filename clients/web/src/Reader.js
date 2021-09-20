@@ -1,6 +1,8 @@
 import "./Reader.scss"
 import { ReactComponent as CloseIcon } from "./icons/close.svg"
 import { ReactComponent as MenuIcon } from "./icons/menu.svg"
+import { ReactComponent as NextIcon } from "./icons/next.svg"
+import { ReactComponent as PrevIcon } from "./icons/prev.svg"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
@@ -30,7 +32,7 @@ const formatFullEntryTime = (entryTime) => {
    return dateTimeFormat.format(date)
 }
 
-const entriesLimit = 100
+const entriesLimit = 50
 
 export const Reader = ({ match }) => {
    const [sessionTime, setSessionTime] = useState(() => Date.now())
@@ -167,7 +169,23 @@ export const Reader = ({ match }) => {
                </div>
             </div>
             {showEntry && entriesLength > activeEntryIndex && (
-               <Entry entry={entries[activeEntryIndex]} feed={feedsById[entries[activeEntryIndex].feedId]} />
+               <Entry entry={entries[activeEntryIndex]} feed={feedsById[entries[activeEntryIndex].feedId]}>
+                  <div className="entry-toolbar">
+                     <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
+                        <PrevIcon />
+                     </button>
+
+                     <div className="actions">
+                        <button className="star">S</button>
+                        <div className="text">{activeEntryIndex + 1} / {entriesLength}</div>
+                        <button className="pin">P</button>
+                     </div>
+
+                     <button className="next" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1}>
+                        <NextIcon />
+                     </button>
+                  </div>
+               </Entry>
             )}
          </div>
       </div>
@@ -197,7 +215,7 @@ const EntryItem = React.forwardRef(({ entry, feed, isActive, onClick }, ref) => 
    )
 })
 
-const Entry = ({ entry, feed }) => (
+const Entry = ({ entry, feed, children }) => (
    <div className="entry">
       {entry && (
          <div className="content">
@@ -218,5 +236,6 @@ const Entry = ({ entry, feed }) => (
             ))}
          </div>
       )}
+      {children}
    </div>
 )
