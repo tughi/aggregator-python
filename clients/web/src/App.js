@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Switch, Redirect, Route } from "react-router-dom"
-import { Reader } from "./Reader"
+import { Reader } from "./reader/Reader"
 
 export const App = () => (
    <div className="App">

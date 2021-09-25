@@ -1,4 +1,4 @@
-@import "./colors.scss";
+@import "../colors.scss";
 
 @mixin custom-scrollbar($thumb-color, $track-color) {
    scrollbar-color: $thumb-color $track-color;

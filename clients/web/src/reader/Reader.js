@@ -1,12 +1,12 @@
 import "./Reader.scss"
-import { ReactComponent as CloseIcon } from "./icons/close.svg"
-import { ReactComponent as MenuIcon } from "./icons/menu.svg"
-import { ReactComponent as NextIcon } from "./icons/next.svg"
-import { ReactComponent as PrevIcon } from "./icons/prev.svg"
+import { ReactComponent as CloseIcon } from "../icons/close.svg"
+import { ReactComponent as MenuIcon } from "../icons/menu.svg"
+import { ReactComponent as NextIcon } from "../icons/next.svg"
+import { ReactComponent as PrevIcon } from "../icons/prev.svg"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
-import { useSession } from "./hooks/backend"
+import { useSession } from "./Session"
 import classNames from "classnames"
 
 const fullDateFormat = new Intl.DateTimeFormat(window.navigator.language, { year: 'numeric', month: 'short', day: '2-digit' })
