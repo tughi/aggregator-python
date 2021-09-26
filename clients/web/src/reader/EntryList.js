@@ -47,7 +47,7 @@ export const EntryList = () => {
       <div className="EntryList content">
          <div className="header">
             <div className="action-bar">
-               <button className="menu action" onClick={() => setShowSideNav(true)}></button>
+               <button className="menu action" onClick={() => setShowSideNav(showSideNav => !showSideNav)}></button>
                <div className="title">
                   {feedId == null && !onlyStarred && "All"}
                   {feedId == null && onlyStarred && "Starred"}

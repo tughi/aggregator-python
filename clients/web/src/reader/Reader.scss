@@ -58,13 +58,16 @@
    @media screen and (min-width: 70rem) {
       > .side-nav {
          flex-shrink: 0;
+         transition: width .25s linear;
       }
 
       > .main {
          flex-grow: 1;
+      }
 
-         > .EntryList > .header > .action-bar > .action.menu {
-            visibility: hidden;
+      &.show-side-nav {
+         > .side-nav {
+            width: 0;
          }
       }
    }
