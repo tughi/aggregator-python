@@ -44,7 +44,7 @@ export const EntryList = () => {
    }, [isLoading, loadMoreEntries])
 
    return (
-      <div className="EntryList">
+      <div className="EntryList content">
          <div>
             {entries.map((entry, entryIndex) => (
                <EntryItem

@@ -32,7 +32,7 @@ export const Reader = ({ match }) => {
                   <FeedList />
                </div>
                <div className="side-nav-toggler" onClick={() => setShowSideNav(showSideNav => !showSideNav)} />
-               <div className="container">
+               <div className="main">
                   <EntryList />
                   <EntryPager />
                </div>

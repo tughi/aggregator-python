@@ -5,6 +5,7 @@ import { ReactComponent as PrevIcon } from "../icons/prev.svg"
 import { formatFullEntryTime } from "../utils/date"
 import { useController } from "./Controller"
 import { useSessionContext } from "./Session"
+import classNames from "classnames"
 
 export const EntryPager = () => {
    const { feedsById, entries } = useSessionContext()
@@ -12,10 +13,12 @@ export const EntryPager = () => {
 
    const { activeEntryIndex, setActiveEntryIndex, showEntry } = useController()
 
+   const activeEntry = entries[activeEntryIndex]
+
    return (
-      <div className="EntryPager">
-         {showEntry && entriesLength > activeEntryIndex && (
-            <Entry entry={entries[activeEntryIndex]} feed={feedsById[entries[activeEntryIndex].feedId]}>
+      <div className={classNames("EntryPager", "content", { active: showEntry })}>
+         {showEntry && activeEntry && (
+            <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
                <div className="entry-toolbar">
                   <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
                      <PrevIcon />

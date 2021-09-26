@@ -47,7 +47,7 @@
          }
       }
 
-      > .container {
+      > .main {
          width: 100vw;
          transition: transform .25s linear;
 
@@ -81,8 +81,8 @@
                mask-image: url('../icons/close.svg');
             }
          }
-   
-         > .container {
+
+         > .main {
             transform: translateX(20rem);
             pointer-events: none;
 
@@ -97,12 +97,12 @@
       > .side-nav {
          flex-shrink: 0;
       }
-      
+
       > .side-nav-toggler {
          display: none;
       }
 
-      > .container {
+      > .main {
          flex-grow: 1;
       }
    }
@@ -119,7 +119,14 @@
       box-sizing: border-box;
    }
 
-   > .container {
+   > .main {
       position: relative;
+      overflow: hidden;
+
+      > .content {
+         position: absolute;
+         width: 100%;
+         height: 100%;
+      }
    }
 }
