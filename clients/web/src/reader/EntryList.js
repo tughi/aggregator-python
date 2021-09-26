@@ -7,7 +7,7 @@ import { ENTRIES_LIMIT, useSessionContext } from "./Session"
 import { useController } from "./Controller"
 
 export const EntryList = () => {
-   const { isLoading, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries } = useSessionContext()
+   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = useSessionContext()
    const entriesLength = entries.length
 
    const { activeEntryIndex, setActiveEntryIndex, setShowEntry } = useController()
@@ -19,7 +19,7 @@ export const EntryList = () => {
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
-         entryElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+         entryElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
    }, [])
 
@@ -45,7 +45,17 @@ export const EntryList = () => {
 
    return (
       <div className="EntryList content">
-         <div>
+         <div className="header">
+            <div className="action-bar">
+               <div className="title">
+                  {feedId == null && !onlyStarred && "All"}
+                  {feedId == null && onlyStarred && "Starred"}
+                  {feedId && feedsById[feedId]?.title}
+               </div>
+               <button className="action" onClick={() => refresh()}>R</button>
+            </div>
+         </div>
+         <div className="body">
             {entries.map((entry, entryIndex) => (
                <EntryItem
                   key={entry.id}
