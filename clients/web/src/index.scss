@@ -5,4 +5,5 @@
 body {
    font-family: sans-serif;
    color: $text-body;
+   overscroll-behavior: contain;
 }
