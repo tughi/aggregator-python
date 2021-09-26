@@ -1,24 +1,4 @@
-@import "../colors.scss";
-
-@mixin custom-scrollbar($thumb-color, $track-color) {
-   scrollbar-color: $thumb-color $track-color;
-   scrollbar-width: 12px;
-   &::-webkit-scrollbar {
-      width: 12px;
-   }
-   &::-webkit-scrollbar-thumb {
-      background-clip: padding-box;
-      background-color: $thumb-color;
-      border-radius: 12px;
-      border: 3px solid $track-color;
-      &:hover {
-         background-color: darken($thumb-color, 10%);
-      }
-   }
-   &::-webkit-scrollbar-track {
-      background-color: $track-color;
-   }
-}
+@import "./utils.scss";
 
 .Reader {
    display: flex;
@@ -52,15 +32,18 @@
          box-sizing: border-box;
          cursor: pointer;
 
-         &:hover {
-            background-color: $gray-300;
-         }
-
-         > svg {
+         &::after {
+            content: '';
             display: block;
             width: 1.5rem;
             height: 1.5rem;
-            stroke: $gray-600 !important;
+            mask-image: url('../icons/menu.svg');
+            mask-size: 1.5rem;
+            background-color: $gray-600 !important;
+         }
+
+         &:hover {
+            background-color: $gray-300;
          }
       }
 
@@ -93,9 +76,13 @@
 
          > .side-nav-toggler {
             left: 20rem;
+
+            &::after {
+               mask-image: url('../icons/close.svg');
+            }
          }
    
-            > .container {
+         > .container {
             transform: translateX(20rem);
             pointer-events: none;
 
@@ -130,284 +117,9 @@
       background-color: $gray-100;
       border-left: 1px solid $gray-400;
       box-sizing: border-box;
-
-      > .feeds {
-         transform: scaleX(-1);
-
-         padding: 1rem 0;
-
-         > a.feed {
-            display: flex;
-            padding: 0 1rem;
-            color: $gray-600;
-            text-decoration: none;
-            font-weight: normal;
-            line-height: 2rem;
-
-            > .title {
-               flex-grow: 1;
-               overflow: hidden;
-               text-overflow: ellipsis;
-               white-space: nowrap;
-            }
-
-            > .count {
-               padding-left: 1rem;
-               color: $gray-500;
-            }
-
-            &.active {
-               color: $orange-500;
-               background-color: $orange-100;
-
-               > .count {
-                  color: $orange-300;
-               }   
-            }
-
-            &:hover {
-               background-color: $gray-200;
-            }
-
-            &.hidden {
-               display: none;
-            }
-         }
-
-         > hr {
-            border: none;
-            border-top: 1px solid $gray-400;
-         }
-      }
    }
 
    > .container {
       position: relative;
-
-      > .feed-view {
-         position: absolute;
-         top: 0;
-         bottom: 0;
-         left: 0;
-         right: 0;
-
-         overflow: hidden scroll;
-         @include custom-scrollbar($gray-500, $gray-200);
-
-         > .entries {
-            margin: 0 auto;
-            max-width: 50rem;
-
-            > .entry {
-               border-bottom: 1px solid $gray-200;
-
-               &:first-child {
-                  margin-top: 1rem;
-               }
-
-               &:last-child {
-                  margin-bottom: 1rem;
-                  border-bottom: none;
-               }
-
-               > .summary {
-                  display: flex;
-                  line-height: 2rem;
-                  min-height: 2rem;
-                  color: $text-secondary;
-                  cursor: pointer;
-
-                  &:hover {
-                     background-color: $gray-100;
-                  }
-                  
-                  > a.favicon {
-                     flex-shrink: 0;
-                     display: flex;
-                     align-items: center;
-                     justify-content: center;
-                     width: 3rem;
-                     height: 2rem;
-      
-                     > .image {
-                        display: block;
-                        width: 2rem;
-                        height: 2rem;
-                        background: transparent center no-repeat;
-                        background-size: 1rem;
-                     }
-
-                     &:hover {
-                        > .image {
-                           background-color: $gray-200;
-                        }
-                     }
-                  }
-
-                  > .title {
-                     flex-grow: 1;
-                     overflow: hidden;
-                     text-overflow: ellipsis;
-                     white-space: nowrap;
-                  }
-
-                  > .date {
-                     flex-shrink: 0;
-                     white-space: nowrap;
-                     padding: 0 1rem;
-                  }
-               }
-
-               &.unread {
-                  > .summary {
-                     > .title {
-                        color: $text-body;
-                     }
-                  }
-               }
-
-               &.active {
-                  background-color: $orange-100;
-
-                  > .summary {
-                     color: $orange-300;
-
-                     > .title {
-                        color: $orange-500;
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-      > .entry {
-         position: absolute;
-         top: 0;
-         bottom: 0;
-         left: 0;
-         right: 0;
-
-         overflow: hidden scroll;
-         @include custom-scrollbar($gray-500, $gray-200);
-
-         background-color: white;
-
-         > .content {
-            max-width: 50rem;
-            min-height: calc(100vh - 2.5rem);
-            margin: 0 auto;
-            padding: 4rem 0 4rem 0;
-            box-sizing: border-box;
-            line-height: 1.5;
-            
-            > div {
-               padding: 1rem;
-               border-bottom: 1px solid $orange-500;
-
-               &:last-child {
-                  border-bottom: none;
-               }
-            }
-
-            > .header {
-               > .source {
-                  > .author {
-                     color: $text-secondary;
-
-                     &::before {
-                        content: ' :: ';
-                     }
-                  }
-               }
-            }
-
-            p {
-               margin: 1em 0 0;
-            }
-         
-            img {
-               max-width: 100%;
-               height: auto;
-            }
-         
-            a {
-               color: $text-primary;
-               text-decoration: inherit;
-            }
-         }
-
-         > .entry-toolbar {
-            position: sticky;
-            bottom: 2rem;
-            left: 0;
-            right: 0;
-            height: 2.5rem;
-
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-
-            button {
-               display: flex;
-               flex-direction: row;
-               align-items: center;
-               background-color: $gray-200;
-               border: 1px solid $gray-500;
-               box-sizing: border-box;
-
-               > svg {
-                  width: 1.5rem;
-                  height: 1.5rem;
-               }
-
-               &:hover {
-                  background-color: $gray-100; 
-               }
-
-               &:active {
-                  background-color: $gray-300;
-               }
-            }
-
-            > button.prev {
-               border-radius: 0 1rem 1rem 0;
-               border-left: none;
-               padding: 0 .75rem 0 .5rem;
-            }
-
-            > button.next {
-               border-radius: 1rem 0 0 1rem;
-               border-right: none;
-               padding: 0 .5rem 0 .75rem;
-            }
-
-            > .actions {
-               display: flex;
-
-               > button.star {
-                  border-radius: 1rem 0 0 1rem;
-                  border-right: none;
-                  padding: 0 .5rem 0 .75rem;
-               }
-
-               > button.pin {
-                  border-radius: 0 1rem 1rem 0;
-                  border-left: none;
-                  padding: 0 .75rem 0 .5rem;
-               }   
-
-               > .text {
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: center;
-                  min-width: 8rem;
-                  text-align: center;
-                  background-color: $gray-200;
-                  border: 1px solid $gray-500;   
-               }
-            }
-         }
-      }
    }
 }
