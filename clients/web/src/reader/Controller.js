@@ -48,7 +48,7 @@ export const Controller = ({ setShowSideNav, children }) => {
       setShowSideNav(false)
    }, [refresh, setShowSideNav])
 
-   const controller = useMemo(() => ({ activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, onFeedClick }), [activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, onFeedClick])
+   const controller = useMemo(() => ({ activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, onFeedClick }), [activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, onFeedClick])
 
    return (
       <ControllerContext.Provider value={controller}>

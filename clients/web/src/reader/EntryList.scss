@@ -18,20 +18,58 @@
 
          > .title {
             flex-grow: 1;
-            padding-left: 3rem;
          }
 
          > .action {
+            flex-shrink: 0;
+            position: relative;
             width: 3rem;
             background: none;
             border: none;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+
+            &::before,
+            &::after {
+               content: '';
+               display: block;
+               position: absolute;
+               top: .5rem;
+               left: .5rem;
+               width: 2rem;
+               height: 2rem;
+            }
+
+            &::after {
+               background-color: $gray-600;
+               mask-size: 1.5rem;
+               mask-repeat: no-repeat;
+               mask-position: center;
+            }
 
             &:hover {
-               background-color: $gray-100;
+               &::before {
+                  background-color: $gray-100;
+               }
             }
 
             &:active {
-               background-color: $gray-200;
+               &::before {
+                  background-color: $gray-200;
+               }
+            }
+
+            &.menu::after {
+               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_menu_24px.svg");
+            }
+
+            &.close::after {
+               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_close_24px.svg");
+            }
+
+            &.refresh::after {
+               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_refresh_24px.svg");
             }
          }
       }

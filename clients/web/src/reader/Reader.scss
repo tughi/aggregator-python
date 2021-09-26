@@ -17,36 +17,6 @@
          transition: left .25s linear;
       }
 
-      > .side-nav-toggler {
-         position: absolute;
-         z-index: 1;
-         top: 1rem;
-         left: 0;
-         transition: left .25s linear;
-
-         padding: .5rem .75rem .5rem .5rem;
-         background-color: $gray-200;
-         border-radius: 0 1rem 1rem 0;
-         border: 1px solid $gray-500;
-         border-left: none;
-         box-sizing: border-box;
-         cursor: pointer;
-
-         &::after {
-            content: '';
-            display: block;
-            width: 1.5rem;
-            height: 1.5rem;
-            mask-image: url('../icons/menu.svg');
-            mask-size: 1.5rem;
-            background-color: $gray-600 !important;
-         }
-
-         &:hover {
-            background-color: $gray-300;
-         }
-      }
-
       > .main {
          width: 100vw;
          transition: transform .25s linear;
@@ -74,14 +44,6 @@
             left: 0;
          }
 
-         > .side-nav-toggler {
-            left: 20rem;
-
-            &::after {
-               mask-image: url('../icons/close.svg');
-            }
-         }
-
          > .main {
             transform: translateX(20rem);
             pointer-events: none;
@@ -98,12 +60,12 @@
          flex-shrink: 0;
       }
 
-      > .side-nav-toggler {
-         display: none;
-      }
-
       > .main {
          flex-grow: 1;
+
+         > .EntryList > .header > .action-bar > .action.menu {
+            visibility: hidden;
+         }
       }
    }
 

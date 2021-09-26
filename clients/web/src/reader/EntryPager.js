@@ -1,6 +1,4 @@
 import "./EntryPager.scss"
-import { ReactComponent as NextIcon } from "../icons/next.svg"
-import { ReactComponent as PrevIcon } from "../icons/prev.svg"
 
 import { formatFullEntryTime } from "../utils/date"
 import { useController } from "./Controller"
@@ -21,7 +19,6 @@ export const EntryPager = () => {
             <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
                <div className="entry-toolbar">
                   <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
-                     <PrevIcon />
                   </button>
 
                   <div className="actions">
@@ -31,7 +28,6 @@ export const EntryPager = () => {
                   </div>
 
                   <button className="next" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1}>
-                     <NextIcon />
                   </button>
                </div>
             </Entry>

@@ -10,7 +10,7 @@ export const EntryList = () => {
    const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = useSessionContext()
    const entriesLength = entries.length
 
-   const { activeEntryIndex, setActiveEntryIndex, setShowEntry } = useController()
+   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav } = useController()
 
    useEffect(() => {
       setActiveEntryIndex(-1)
@@ -47,12 +47,13 @@ export const EntryList = () => {
       <div className="EntryList content">
          <div className="header">
             <div className="action-bar">
+               <button className="menu action" onClick={() => setShowSideNav(true)}></button>
                <div className="title">
                   {feedId == null && !onlyStarred && "All"}
                   {feedId == null && onlyStarred && "Starred"}
                   {feedId && feedsById[feedId]?.title}
                </div>
-               <button className="action" onClick={() => refresh()}>R</button>
+               <button className="refresh action" onClick={() => refresh()}></button>
             </div>
          </div>
          <div className="body">

@@ -31,7 +31,6 @@ export const Reader = ({ match }) => {
                <div className="side-nav">
                   <FeedList />
                </div>
-               <div className="side-nav-toggler" onClick={() => setShowSideNav(showSideNav => !showSideNav)} />
                <div className="main">
                   <EntryList />
                   <EntryPager />
