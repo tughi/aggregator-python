@@ -1,0 +1,97 @@
+@import "../colors.scss";
+
+
+.ActionBar {
+   height: 3rem;
+   border-bottom: 1px solid $gray-300;
+   padding-right: 12px;
+
+   > .bar {
+      margin: 0 auto;
+      max-width: 50rem;
+      line-height: 3rem;
+      display: flex;
+
+      > .title {
+         flex-grow: 1;
+      }
+
+      > .action {
+         flex-shrink: 0;
+         position: relative;
+         width: 3rem;
+         background: none;
+         border: none;
+         margin: 0;
+         padding: 0;
+         cursor: pointer;
+
+         &::before,
+         &::after {
+            content: '';
+            display: block;
+            position: absolute;
+            top: .5rem;
+            left: .5rem;
+            width: 2rem;
+            height: 2rem;
+         }
+
+         &::before {
+            border-radius: .5rem;
+         }
+
+         &::after {
+            background-color: $gray-600;
+            mask-size: 1.5rem;
+            mask-repeat: no-repeat;
+            mask-position: center;
+         }
+
+         &:hover {
+            &::before {
+               background-color: $gray-100;
+            }
+         }
+
+         &:active {
+            &::before {
+               background-color: $gray-200;
+            }
+         }
+
+         &.close::after {
+            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_close_24px.svg");
+         }
+
+         &.entry-done::after {
+            mask-image: url("../icons/actions/entry_done.svg");
+         }
+
+         &.entry-new::after {
+            mask-image: url("../icons/actions/entry_new.svg");
+         }
+
+         &.entry-pinned::after {
+            mask-image: url("../icons/actions/entry_pinned.svg");
+         }
+
+         &.menu::after {
+            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_menu_24px.svg");
+         }
+
+         &.refresh::after {
+            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_refresh_24px.svg");
+         }
+
+         &.star-off::after {
+            mask-image: url("../../node_modules/material-design-icons/toggle/svg/production/ic_star_border_24px.svg");
+         }
+
+         &.star-on::after {
+            mask-image: url("../../node_modules/material-design-icons/toggle/svg/production/ic_star_24px.svg");
+         }
+      }
+   }
+}
+

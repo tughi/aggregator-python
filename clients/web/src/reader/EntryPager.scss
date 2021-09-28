@@ -24,9 +24,9 @@
 
       > .content {
          max-width: 50rem;
-         min-height: calc(100vh - 2.5rem);
+         min-height: calc(100vh - 5.5rem);
          margin: 0 auto;
-         padding: 4rem 0 4rem 0;
+         padding: 1rem 0 5rem 0;
          box-sizing: border-box;
          line-height: 1.5;
 
@@ -68,7 +68,7 @@
 
       > .entry-toolbar {
          position: sticky;
-         bottom: 2rem;
+         bottom: 5rem;
          left: 0;
          right: 0;
          height: 2.5rem;
@@ -81,17 +81,22 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            background-color: $gray-200;
-            border: 1px solid $gray-500;
+            background-color: $gray-100;
+            border: 1px solid $gray-200;
             box-sizing: border-box;
 
-            > svg {
-               width: 1.5rem;
-               height: 1.5rem;
+            &::after {
+               content: '';
+               display: block;
+               width: 2rem;
+               height: 2rem;
+               background-color: $gray-500;
+               mask-position: center;
+               mask-repeat: no-repeat;
             }
 
             &:hover {
-               background-color: $gray-100;
+               background-color: $gray-200;
             }
 
             &:active {
@@ -103,37 +108,19 @@
             border-radius: 0 1rem 1rem 0;
             border-left: none;
             padding: 0 .75rem 0 .5rem;
+
+            &::after {
+               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_arrow_back_24px.svg");
+            }
          }
 
          > button.next {
             border-radius: 1rem 0 0 1rem;
             border-right: none;
             padding: 0 .5rem 0 .75rem;
-         }
 
-         > .actions {
-            display: flex;
-
-            > button.star {
-               border-radius: 1rem 0 0 1rem;
-               border-right: none;
-               padding: 0 .5rem 0 .75rem;
-            }
-
-            > button.pin {
-               border-radius: 0 1rem 1rem 0;
-               border-left: none;
-               padding: 0 .75rem 0 .5rem;
-            }
-
-            > .text {
-               display: flex;
-               flex-direction: column;
-               justify-content: center;
-               min-width: 8rem;
-               text-align: center;
-               background-color: $gray-200;
-               border: 1px solid $gray-500;
+            &::after {
+               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_arrow_forward_24px.svg");
             }
          }
       }

@@ -4,34 +4,41 @@ import { formatFullEntryTime } from "../utils/date"
 import { useController } from "./Controller"
 import { useSessionContext } from "./Session"
 import classNames from "classnames"
+import { ActionBar } from "./ActionBar"
 
 export const EntryPager = () => {
-   const { feedsById, entries } = useSessionContext()
+   const { feedsById, entries, entryIds } = useSessionContext()
    const entriesLength = entries.length
 
-   const { activeEntryIndex, setActiveEntryIndex, showEntry } = useController()
+   const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry } = useController()
 
    const activeEntry = entries[activeEntryIndex]
 
    return (
       <div className={classNames("EntryPager", "content", { active: showEntry })}>
-         {showEntry && activeEntry && (
-            <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
-               <div className="entry-toolbar">
-                  <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
-                  </button>
+         <div className="header">
+            <ActionBar>
+               <ActionBar.Action icon="close" onClick={() => setShowEntry(false)} />
+               <ActionBar.Title>
+                  {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
+               </ActionBar.Title>
+               <ActionBar.Action icon={activeEntry?.starTime ? "star-on" : "star-off"} />
+               <ActionBar.Action icon={activeEntry?.readTime ? "entry-done" : "entry-new"} />
+            </ActionBar>
+         </div>
+         <div className="body">
+            {showEntry && activeEntry && (
+               <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
+                  <div className="entry-toolbar">
+                     <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
+                     </button>
 
-                  <div className="actions">
-                     <button className="star">S</button>
-                     <div className="text">{activeEntryIndex + 1} / {entriesLength}</div>
-                     <button className="pin">P</button>
+                     <button className="next" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1}>
+                     </button>
                   </div>
-
-                  <button className="next" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1}>
-                  </button>
-               </div>
-            </Entry>
-         )}
+               </Entry>
+            )}
+         </div>
       </div>
    )
 }

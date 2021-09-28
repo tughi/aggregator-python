@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef } from "react"
 import { formatRelativeEntryTime } from "../utils/date"
 import { ENTRIES_LIMIT, useSessionContext } from "./Session"
 import { useController } from "./Controller"
+import { ActionBar } from "./ActionBar"
 
 export const EntryList = () => {
    const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = useSessionContext()
@@ -45,17 +46,15 @@ export const EntryList = () => {
 
    return (
       <div className="EntryList content">
-         <div className="header">
-            <div className="action-bar">
-               <button className="menu action" onClick={() => setShowSideNav(showSideNav => !showSideNav)}></button>
-               <div className="title">
-                  {feedId == null && !onlyStarred && "All"}
-                  {feedId == null && onlyStarred && "Starred"}
-                  {feedId && feedsById[feedId]?.title}
-               </div>
-               <button className="refresh action" onClick={() => refresh()}></button>
-            </div>
-         </div>
+         <ActionBar>
+            <ActionBar.Action icon="menu" onClick={() => setShowSideNav(showSideNav => !showSideNav)} />
+            <ActionBar.Title>
+               {feedId == null && !onlyStarred && "All"}
+               {feedId == null && onlyStarred && "Starred"}
+               {feedId && feedsById[feedId]?.title}
+            </ActionBar.Title>
+            <ActionBar.Action icon="refresh" onClick={() => refresh()} />
+         </ActionBar>
          <div className="body">
             {entries.map((entry, entryIndex) => (
                <EntryItem
