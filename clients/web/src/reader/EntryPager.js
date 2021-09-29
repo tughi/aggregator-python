@@ -5,25 +5,44 @@ import { useController } from "./Controller"
 import { useSessionContext } from "./Session"
 import classNames from "classnames"
 import { ActionBar } from "./ActionBar"
+import { useEffect } from "react"
 
 export const EntryPager = () => {
-   const { feedsById, entries, entryIds } = useSessionContext()
+   const { feedsById, entries, entryIds, markEntryAsDone, markEntryAsPinned } = useSessionContext()
    const entriesLength = entries.length
 
    const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry } = useController()
 
    const activeEntry = entries[activeEntryIndex]
 
+   useEffect(() => {
+      if (activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
+         markEntryAsDone(activeEntry.id)
+      }
+   }, [activeEntry, markEntryAsDone])
+
+   const toggleEntryReadState = entry => {
+      if (entry.keepTime == null) {
+         markEntryAsPinned(entry.id)
+      } else {
+         markEntryAsDone(entry.id)
+      }
+   }
+
    return (
       <div className={classNames("EntryPager", "content", { active: showEntry })}>
          <div className="header">
             <ActionBar>
                <ActionBar.Action icon="close" onClick={() => setShowEntry(false)} />
-               <ActionBar.Title>
-                  {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
-               </ActionBar.Title>
-               <ActionBar.Action icon={activeEntry?.starTime ? "star-on" : "star-off"} />
-               <ActionBar.Action icon={activeEntry?.readTime ? "entry-done" : "entry-new"} />
+               {activeEntry && (
+                  <>
+                     <ActionBar.Title>
+                        {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
+                     </ActionBar.Title>
+                     <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} />
+                     <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => toggleEntryReadState(activeEntry)} />
+                  </>
+               )}
             </ActionBar>
          </div>
          <div className="body">

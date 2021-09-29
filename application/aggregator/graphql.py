@@ -45,6 +45,7 @@ class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
     insert_time = graphene.DateTime()
     update_time = graphene.DateTime()
 
+    keep_time = graphene.DateTime()
     read_time = graphene.DateTime()
     star_time = graphene.DateTime()
 
@@ -178,6 +179,46 @@ class RefreshFeedFaviconMutation(graphene.Mutation):
         return dict(feed=feed)
 
 
+class TimeStampAction(graphene.Enum):
+    CLEAR = 1
+    SET = 2
+
+
+class UpdateEntry(graphene.Mutation):
+    class Arguments:
+        entry_id = graphene.Int(name='id', required=True)
+        keep_time = TimeStampAction()
+        read_time = TimeStampAction()
+        star_time = TimeStampAction()
+
+    entry = graphene.Field(EntryType)
+
+    @staticmethod
+    def mutate(source, info, entry_id: int, keep_time: int = None, read_time: int = None, star_time: int = None):
+        entry = Entry.query.get(entry_id)
+        if not entry:
+            return GraphQLError("No such entry")
+
+        if keep_time == TimeStampAction.CLEAR:
+            entry.keep_time = None
+        elif keep_time == TimeStampAction.SET:
+            entry.keep_time = datetime.now()
+
+        if read_time == TimeStampAction.CLEAR:
+            entry.read_time = None
+        elif read_time == TimeStampAction.SET:
+            entry.read_time = datetime.now()
+
+        if star_time == TimeStampAction.CLEAR:
+            entry.star_time = None
+        elif star_time == TimeStampAction.SET:
+            entry.star_time = datetime.now()
+
+        db.session.commit()
+
+        return dict(entry=entry)
+
+
 class Query(graphene.ObjectType):
     entries = graphene.List(EntryType, entry_ids=graphene.List(graphene.Int, required=True))
     feeds = graphene.List(FeedType)
@@ -220,6 +261,7 @@ class Mutations(graphene.ObjectType):
     refresh_feed = RefreshFeedMutation.Field()
     refresh_feed_favicon = RefreshFeedFaviconMutation.Field()
     update_feed = UpdateFeedMutation.Field()
+    set_entry_read_state = UpdateEntry.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutations)

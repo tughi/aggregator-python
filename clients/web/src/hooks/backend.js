@@ -1,5 +1,6 @@
 import axios from "axios"
 import { useEffect, useState } from "react"
+import { useCallback } from "react/cjs/react.development"
 
 export const useQuery = ({ query, variables, consumeData, ignore }) => {
    const [loading, setLoading] = useState(false)
@@ -31,4 +32,23 @@ export const useQuery = ({ query, variables, consumeData, ignore }) => {
    }, [query, variables, consumeData, ignore])
 
    return loading
+}
+
+export const useMutation = ({ query }) => {
+   const [loading, setLoading] = useState(false)
+
+   const mutation = useCallback(({ variables, consumeData }) => {
+      axios({
+         url: '/graphql',
+         method: 'post',
+         data: { query, variables },
+      }).then(response => {
+         setLoading(false)
+         if (consumeData) {
+            consumeData(response.data.data)
+         }
+      })
+   }, [query])
+
+   return [mutation, loading]
 }

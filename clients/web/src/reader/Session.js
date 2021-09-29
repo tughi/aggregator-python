@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { useQuery } from "../hooks/backend"
+import { useMutation, useQuery } from "../hooks/backend"
 
 const ENTRY_FIELDS = `{
    id
@@ -11,6 +11,7 @@ const ENTRY_FIELDS = `{
    author { name }
    publishText
    publishTime
+   keepTime
    readTime
    starTime
 }`
@@ -96,6 +97,38 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
       setTimestamp(new Date())
    }, [])
 
+   const [updateEntry] = useMutation({
+      query: `mutation($entryId: Int!, $keepTime: TimeStampAction, $readTime: TimeStampAction, $starTime: TimeStampAction) {
+         result: setEntryReadState(id: $entryId, keepTime: $keepTime, readTime: $readTime, starTime: $starTime) {
+            entry ${ENTRY_FIELDS}
+         }
+      }`
+   })
+
+   const markEntryAsDone = useCallback((entryId) => {
+      updateEntry({
+         variables: { entryId, keepTime: "CLEAR", readTime: "SET" },
+         consumeData: ({ result }) => {
+            const updatedEntry = result.entry
+            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
+            setUnreadEntries(unreadEntries => unreadEntries - 1)
+         }
+      })
+   }, [updateEntry])
+
+   const markEntryAsPinned = useCallback((entryId) => {
+      updateEntry({
+         variables: { entryId, keepTime: "SET", readTime: "CLEAR" },
+         consumeData: ({ result }) => {
+            const updatedEntry = result.entry
+            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries + 1 } : feed))
+            setUnreadEntries(unreadEntries => unreadEntries + 1)
+         }
+      })
+   }, [updateEntry])
+
    return {
       feedId,
       onlyUnread,
@@ -110,6 +143,8 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
       hasMoreEntries: entries.length < entryIds.length,
       loadMoreEntries,
       refresh,
+      markEntryAsDone,
+      markEntryAsPinned,
    }
 }
 

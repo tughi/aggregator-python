@@ -4,7 +4,7 @@ import { useSessionContext } from "./Session"
 const ControllerContext = React.createContext()
 
 export const Controller = ({ setShowSideNav, children }) => {
-   const { entries, refresh } = useSessionContext()
+   const { entries, refresh, markEntryAsDone, markEntryAsPinned } = useSessionContext()
    const entriesLength = entries.length
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
@@ -22,7 +22,12 @@ export const Controller = ({ setShowSideNav, children }) => {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
             setShowEntry(true)
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
-            // TODO: toggle read/pinned
+            const activeEntry = entries[activeEntryIndex]
+            if (activeEntry.keepTime) {
+               markEntryAsDone(activeEntry.id)
+            } else {
+               markEntryAsPinned(activeEntry.id)
+            }
          } else if (key === 78/*n*/ && entriesLength) {
             setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
          } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
@@ -41,7 +46,7 @@ export const Controller = ({ setShowSideNav, children }) => {
       return () => {
          window.removeEventListener('keydown', onKeyDown)
       }
-   }, [activeEntryIndex, entriesLength, refresh])
+   }, [activeEntryIndex, entries, entriesLength, refresh, markEntryAsDone, markEntryAsPinned])
 
    const onFeedClick = useCallback(() => {
       refresh()

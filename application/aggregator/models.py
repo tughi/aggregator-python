@@ -82,6 +82,7 @@ class Entry(db.Model):
     insert_time = Column(TimeStamp, nullable=False)
     update_time = Column(TimeStamp, nullable=False)
 
+    keep_time = Column(TimeStamp, nullable=True)
     read_time = Column(TimeStamp, nullable=True)
     star_time = Column(TimeStamp, nullable=True)
 
