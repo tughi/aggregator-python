@@ -86,9 +86,13 @@
 
             > .summary {
                color: $orange-300;
+            }
 
-               > .title {
-                  color: $orange-500;
+            &.unread {
+               > .summary {
+                  > .title {
+                     color: $orange-500;
+                  }
                }
             }
          }
