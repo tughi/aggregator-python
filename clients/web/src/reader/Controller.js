@@ -4,7 +4,7 @@ import { useSessionContext } from "./Session"
 const ControllerContext = React.createContext()
 
 export const Controller = ({ setShowSideNav, children }) => {
-   const { entries, refresh, markEntryAsDone, markEntryAsPinned } = useSessionContext()
+   const { entries, refresh, keepEntry, readEntry, starEntry, unstarEntry } = useSessionContext()
    const entriesLength = entries.length
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
@@ -24,9 +24,9 @@ export const Controller = ({ setShowSideNav, children }) => {
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
             const activeEntry = entries[activeEntryIndex]
             if (activeEntry.keepTime) {
-               markEntryAsDone(activeEntry.id)
+               readEntry(activeEntry)
             } else {
-               markEntryAsPinned(activeEntry.id)
+               keepEntry(activeEntry)
             }
          } else if (key === 78/*n*/ && entriesLength) {
             setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
@@ -37,7 +37,12 @@ export const Controller = ({ setShowSideNav, children }) => {
          } else if (key === 82/*r*/) {
             refresh()
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
-            // TODO: toggle star
+            const activeEntry = entries[activeEntryIndex]
+            if (activeEntry.starTime) {
+               unstarEntry(activeEntry)
+            } else {
+               starEntry(activeEntry)
+            }
          }
       }
 
@@ -46,7 +51,7 @@ export const Controller = ({ setShowSideNav, children }) => {
       return () => {
          window.removeEventListener('keydown', onKeyDown)
       }
-   }, [activeEntryIndex, entries, entriesLength, refresh, markEntryAsDone, markEntryAsPinned])
+   }, [activeEntryIndex, entries, entriesLength, refresh, keepEntry, readEntry, starEntry, unstarEntry])
 
    const onFeedClick = useCallback(() => {
       refresh()

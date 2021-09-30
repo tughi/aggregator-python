@@ -8,7 +8,7 @@ import { ActionBar } from "./ActionBar"
 import { useEffect } from "react"
 
 export const EntryPager = () => {
-   const { feedsById, entries, entryIds, markEntryAsDone, markEntryAsPinned } = useSessionContext()
+   const { feedsById, entries, entryIds, keepEntry, readEntry, starEntry, unstarEntry } = useSessionContext()
    const entriesLength = entries.length
 
    const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry } = useController()
@@ -16,18 +16,10 @@ export const EntryPager = () => {
    const activeEntry = entries[activeEntryIndex]
 
    useEffect(() => {
-      if (activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
-         markEntryAsDone(activeEntry.id)
+      if (showEntry && activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
+         readEntry(activeEntry)
       }
-   }, [activeEntry, markEntryAsDone])
-
-   const toggleEntryReadState = entry => {
-      if (entry.keepTime == null) {
-         markEntryAsPinned(entry.id)
-      } else {
-         markEntryAsDone(entry.id)
-      }
-   }
+   }, [showEntry, activeEntry, readEntry])
 
    return (
       <div className={classNames("EntryPager", "content", { active: showEntry })}>
@@ -39,8 +31,8 @@ export const EntryPager = () => {
                      <ActionBar.Title>
                         {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
                      </ActionBar.Title>
-                     <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} />
-                     <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => toggleEntryReadState(activeEntry)} />
+                     <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} onClick={() => activeEntry.starTime ? unstarEntry(activeEntry) : starEntry(activeEntry)} />
+                     <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => activeEntry.keepTime ? readEntry(activeEntry) : keepEntry(activeEntry)} />
                   </>
                )}
             </ActionBar>

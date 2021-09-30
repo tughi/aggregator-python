@@ -97,29 +97,22 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
       setTimestamp(new Date())
    }, [])
 
-   const [updateEntry] = useMutation({
-      query: `mutation($entryId: Int!, $keepTime: TimeStampAction, $readTime: TimeStampAction, $starTime: TimeStampAction) {
-         result: setEntryReadState(id: $entryId, keepTime: $keepTime, readTime: $readTime, starTime: $starTime) {
+   const [updateEntryState] = useMutation({
+      query: `mutation($entryId: Int!, $keepTime: DateTime, $readTime: DateTime, $starTime: DateTime) {
+         result: updateEntryState(id: $entryId, keepTime: $keepTime, readTime: $readTime, starTime: $starTime) {
             entry ${ENTRY_FIELDS}
          }
       }`
    })
 
-   const markEntryAsDone = useCallback((entryId) => {
-      updateEntry({
-         variables: { entryId, keepTime: "CLEAR", readTime: "SET" },
-         consumeData: ({ result }) => {
-            const updatedEntry = result.entry
-            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
-            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
-            setUnreadEntries(unreadEntries => unreadEntries - 1)
-         }
-      })
-   }, [updateEntry])
-
-   const markEntryAsPinned = useCallback((entryId) => {
-      updateEntry({
-         variables: { entryId, keepTime: "SET", readTime: "CLEAR" },
+   const keepEntry = useCallback(entry => {
+      updateEntryState({
+         variables: {
+            entryId: entry.id,
+            keepTime: createTime(),
+            readTime: null,
+            starTime: entry.starTime,
+         },
          consumeData: ({ result }) => {
             const updatedEntry = result.entry
             setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
@@ -127,7 +120,56 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
             setUnreadEntries(unreadEntries => unreadEntries + 1)
          }
       })
-   }, [updateEntry])
+   }, [updateEntryState])
+
+   const readEntry = useCallback(entry => {
+      updateEntryState({
+         variables: {
+            entryId: entry.id,
+            keepTime: null,
+            readTime: createTime(),
+            starTime: entry.starTime,
+         },
+         consumeData: ({ result }) => {
+            const updatedEntry = result.entry
+            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
+            setUnreadEntries(unreadEntries => unreadEntries - 1)
+         }
+      })
+   }, [updateEntryState])
+
+   const starEntry = useCallback(entry => {
+      updateEntryState({
+         variables: {
+            entryId: entry.id,
+            keepTime: entry.keepTime,
+            readTime: entry.readTime,
+            starTime: createTime(),
+         },
+         consumeData: ({ result }) => {
+            const updatedEntry = result.entry
+            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+            setStarredEntries(starredEntries => starredEntries + 1)
+         }
+      })
+   }, [updateEntryState])
+
+   const unstarEntry = useCallback(entry => {
+      updateEntryState({
+         variables: {
+            entryId: entry.id,
+            keepTime: entry.keepTime,
+            readTime: entry.readTime,
+            starTime: null,
+         },
+         consumeData: ({ result }) => {
+            const updatedEntry = result.entry
+            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+            setStarredEntries(starredEntries => starredEntries - 1)
+         }
+      })
+   }, [updateEntryState])
 
    return {
       feedId,
@@ -143,9 +185,17 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
       hasMoreEntries: entries.length < entryIds.length,
       loadMoreEntries,
       refresh,
-      markEntryAsDone,
-      markEntryAsPinned,
+      keepEntry,
+      readEntry,
+      starEntry,
+      unstarEntry,
    }
+}
+
+const createTime = () => {
+   const date = new Date()
+   date.setMilliseconds(0)
+   return date.toISOString()
 }
 
 const SessionContext = React.createContext()
