@@ -1,17 +1,15 @@
 import "./EntryPager.scss"
 
-import { formatFullEntryTime } from "../utils/date"
-import { useController } from "./Controller"
-import { useSessionContext } from "./Session"
 import classNames from "classnames"
-import { ActionBar } from "./ActionBar"
 import { useEffect } from "react"
+import { ActionBar } from "./ActionBar"
+import { useController } from "./Controller"
+import { formatFullEntryTime } from "../utils/date"
 
 export const EntryPager = () => {
-   const { feedsById, entries, entryIds, keepEntry, readEntry, starEntry, unstarEntry } = useSessionContext()
+   const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, session } = useController()
+   const { feedsById, entryIds, entries, keepEntry, readEntry, starEntry, unstarEntry } = session
    const entriesLength = entries.length
-
-   const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry } = useController()
 
    const activeEntry = entries[activeEntryIndex]
 

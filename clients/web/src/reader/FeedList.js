@@ -1,31 +1,56 @@
 import "./FeedList.scss"
 
 import classNames from "classnames"
-import { Link } from "react-router-dom"
 import { useController } from "./Controller"
-import { useSessionContext } from "./Session"
 
 export const FeedList = () => {
-   const session = useSessionContext()
-   const { onFeedClick } = useController()
+   const { session } = useController()
 
    return (
       <div className="FeedList">
-         <FeedItem title="All" count={session.unreadEntries} link="/reader/all" active={session.feedId == null && !session.onlyStarred} onClick={onFeedClick} />
-         <FeedItem title="Starred" count={session.starredEntries} link="/reader/starred" active={session.feedId == null && session.onlyStarred} onClick={onFeedClick} />
+         <FeedItem
+            link="/reader/all"
+            title="All"
+            count={session.unreadEntries}
+            active={session.feedId == null && !session.onlyStarred}
+            sessionParams={{ feedId: null, onlyUnread: true, onlyStarred: false }}
+         />
+         <FeedItem
+            link="/reader/starred"
+            title="Starred"
+            count={session.starredEntries}
+            active={session.feedId == null && session.onlyStarred}
+            sessionParams={{ feedId: null, onlyUnread: false, onlyStarred: true }}
+         />
          <hr />
          {session.feeds.map(feed => (
-            <FeedItem key={feed.id} title={feed.userTitle || feed.title} count={feed.unreadEntries} link={`/reader/feeds/${feed.id}`} active={session.feedId === feed.id} onClick={onFeedClick} />
+            <FeedItem
+               key={feed.id}
+               link={`/reader/feeds/${feed.id}`}
+               title={feed.userTitle || feed.title}
+               count={feed.unreadEntries}
+               active={session.feedId === feed.id}
+               sessionParams={{ feedId: feed.id, onlyUnread: true, onlyStarred: false }}
+            />
          ))}
       </div>
    )
 }
 
-const FeedItem = ({ title, count, active, link, onClick }) => (
-   <Link className={classNames("feed", { active, hidden: !count })} to={link} onClick={onClick}>
-      <span className="title">{title}</span>
-      {count > 0 && (
-         <span className="count">{count}</span>
-      )}
-   </Link>
-)
+const FeedItem = ({ link, title, count, active, sessionParams }) => {
+   const { openFeed } = useController()
+
+   const onClick = event => {
+      event.preventDefault()
+      openFeed(link, sessionParams)
+   }
+
+   return (
+      <a className={classNames("feed", { active, hidden: !count })} href={link} onClick={onClick}>
+         <span className="title">{title}</span>
+         {count > 0 && (
+            <span className="count">{count}</span>
+         )}
+      </a>
+   )
+}

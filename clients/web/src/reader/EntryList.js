@@ -2,16 +2,14 @@ import "./EntryList.scss"
 
 import classNames from "classnames"
 import React, { useCallback, useEffect, useRef } from "react"
-import { formatRelativeEntryTime } from "../utils/date"
-import { ENTRIES_LIMIT, useSessionContext } from "./Session"
-import { useController } from "./Controller"
 import { ActionBar } from "./ActionBar"
+import { useController } from "./Controller"
+import { ENTRIES_LIMIT } from "./Session"
+import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
-   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = useSessionContext()
-   const entriesLength = entries.length
-
-   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav } = useController()
+   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav, session } = useController()
+   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = session
 
    useEffect(() => {
       setActiveEntryIndex(-1)
@@ -24,7 +22,7 @@ export const EntryList = () => {
       }
    }, [])
 
-   const triggerEntryIndex = hasMoreEntries ? entriesLength - Math.round(ENTRIES_LIMIT / 3) : -1
+   const triggerEntryIndex = hasMoreEntries ? session.entries.length - Math.round(ENTRIES_LIMIT / 3) : -1
    const triggerEntryObserver = useRef(null)
    const triggerEntryCallback = useCallback(entryElement => {
       if (isLoading) {

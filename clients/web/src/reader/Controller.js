@@ -1,11 +1,31 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { useSessionContext } from "./Session"
+import { matchPath, useHistory, useLocation } from "react-router"
+import { useSession } from "./Session"
 
 const ControllerContext = React.createContext()
 
+const createSessionParams = location => {
+   let feedId = null
+   let onlyUnread = true
+   let onlyStarred = false
+   if (location.pathname === '/reader/starred') {
+      onlyUnread = false
+      onlyStarred = true
+   } else {
+      const match = matchPath(location.pathname, { path: '/reader/feeds/:feedId' })
+      if (match) {
+         feedId = parseInt(match.params.feedId)
+      }
+   }
+
+   return { revision: 1, feedId, onlyUnread, onlyStarred }
+}
+
 export const Controller = ({ setShowSideNav, children }) => {
-   const { entries, refresh, keepEntry, readEntry, starEntry, unstarEntry } = useSessionContext()
-   const entriesLength = entries.length
+   const location = useLocation()
+   const [sessionParams, setSessionParams] = useState(() => createSessionParams(location))
+
+   const session = useSession(sessionParams)
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [showEntry, setShowEntry] = useState(false)
@@ -15,33 +35,33 @@ export const Controller = ({ setShowSideNav, children }) => {
          const key = event.which
          if (key === 66/*b*/ && activeEntryIndex !== -1) {
             // TODO: toggle bliss
-         } else if (key === 74/*j*/ && entriesLength) {
-            setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
+         } else if (key === 74/*j*/ && session.entries.length) {
+            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
             setShowEntry(true)
-         } else if (key === 75/*k*/ && entriesLength) {
+         } else if (key === 75/*k*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
             setShowEntry(true)
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
-            const activeEntry = entries[activeEntryIndex]
+            const activeEntry = session.entries[activeEntryIndex]
             if (activeEntry.keepTime) {
-               readEntry(activeEntry)
+               session.readEntry(activeEntry)
             } else {
-               keepEntry(activeEntry)
+               session.keepEntry(activeEntry)
             }
-         } else if (key === 78/*n*/ && entriesLength) {
-            setActiveEntryIndex(Math.min(entriesLength - 1, activeEntryIndex + 1))
+         } else if (key === 78/*n*/ && session.entries.length) {
+            setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
          } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
             setShowEntry(showEntry => !showEntry)
-         } else if (key === 80/*p*/ && entriesLength) {
+         } else if (key === 80/*p*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
          } else if (key === 82/*r*/) {
-            refresh()
+            setSessionParams(params => ({ ...params, revision: params.revision + 1 }))
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
-            const activeEntry = entries[activeEntryIndex]
+            const activeEntry = session.entries[activeEntryIndex]
             if (activeEntry.starTime) {
-               unstarEntry(activeEntry)
+               session.unstarEntry(activeEntry)
             } else {
-               starEntry(activeEntry)
+               session.starEntry(activeEntry)
             }
          }
       }
@@ -51,14 +71,63 @@ export const Controller = ({ setShowSideNav, children }) => {
       return () => {
          window.removeEventListener('keydown', onKeyDown)
       }
-   }, [activeEntryIndex, entries, entriesLength, refresh, keepEntry, readEntry, starEntry, unstarEntry])
+   }, [activeEntryIndex, session])
 
-   const onFeedClick = useCallback(() => {
-      refresh()
-      setShowSideNav(false)
-   }, [refresh, setShowSideNav])
+   const history = useHistory()
 
-   const controller = useMemo(() => ({ activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, onFeedClick }), [activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, onFeedClick])
+   const openFeed = useCallback((link, sessionParams) => {
+      const location = history.location
+
+
+      const onPopState = () => {
+         if (link === '/reader/all') {
+            history.replace(link, { all: true })
+         } else {
+            history.push(link, { feed: true })
+         }
+
+         setSessionParams({ ...sessionParams, revision: session.revision + 1 })
+         setShowSideNav(false)
+
+         window.removeEventListener('popstate', onPopState)
+      }
+
+      if (location.state?.feed) {
+         history.go(-1)
+         window.addEventListener('popstate', onPopState)
+      } else {
+         onPopState()
+      }
+   }, [history, session, setSessionParams, setShowSideNav])
+
+   useEffect(() => {
+      const onPopState = () => {
+         setTimeout(() => {
+            const { feedId, onlyUnread, onlyStarred } = createSessionParams(history.location)
+            setSessionParams(params => {
+               if (feedId !== params.feedId || onlyUnread !== params.onlyUnread || onlyStarred !== params.onlyStarred) {
+                  return { revision: params.revision + 1, feedId, onlyUnread, onlyStarred }
+               }
+               return params
+            })
+         }, 0)
+      }
+
+      window.addEventListener('popstate', onPopState)
+
+      return () => {
+         window.removeEventListener('popstate', onPopState)
+      }
+   }, [history, setSessionParams])
+
+   const controller = useMemo(
+      () => ({
+         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session
+      }),
+      [
+         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session
+      ]
+   )
 
    return (
       <ControllerContext.Provider value={controller}>

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "../hooks/backend"
 
 const ENTRY_FIELDS = `{
@@ -38,8 +38,7 @@ const ENTRIES_QUERY = `query ($entryIds: [Int]!) {
 
 export const ENTRIES_LIMIT = 50
 
-export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
-   const [timestamp, setTimestamp] = useState(() => Date.now())
+export const useSession = ({ revision, feedId, onlyUnread, onlyStarred }) => {
    const [feeds, setFeeds] = useState([])
    const [feedsById, setFeedsById] = useState({})
    const [unreadEntries, setUnreadEntries] = useState(0)
@@ -50,10 +49,10 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
    const [entriesOffset, setEntriesOffset] = useState(0)
 
    const sessionQueryVariables = useMemo(() => {
-      if (timestamp) {
+      if (revision) {
          return { feedId, onlyUnread, onlyStarred, entriesLimit: ENTRIES_LIMIT }
       }
-   }, [timestamp, feedId, onlyUnread, onlyStarred])
+   }, [revision, feedId, onlyUnread, onlyStarred])
 
    useEffect(() => {
       setEntryIds([])
@@ -92,10 +91,6 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
    const loadMoreEntries = useCallback(() => {
       setEntriesOffset(entries.length)
    }, [entries])
-
-   const refresh = useCallback(() => {
-      setTimestamp(new Date())
-   }, [])
 
    const [updateEntryState] = useMutation({
       query: `mutation($entryId: Int!, $keepTime: DateTime, $readTime: DateTime, $starTime: DateTime) {
@@ -172,6 +167,7 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
    }, [updateEntryState])
 
    return {
+      revision,
       feedId,
       onlyUnread,
       onlyStarred,
@@ -184,7 +180,6 @@ export const useSession = ({ feedId, onlyUnread, onlyStarred }) => {
       starredEntries,
       hasMoreEntries: entries.length < entryIds.length,
       loadMoreEntries,
-      refresh,
       keepEntry,
       readEntry,
       starEntry,
@@ -197,17 +192,3 @@ const createTime = () => {
    date.setMilliseconds(0)
    return date.toISOString()
 }
-
-const SessionContext = React.createContext()
-
-export const Session = ({ params, children }) => {
-   const session = useSession(params)
-
-   return (
-      <SessionContext.Provider value={session}>
-         {children}
-      </SessionContext.Provider>
-   )
-}
-
-export const useSessionContext = () => useContext(SessionContext)
