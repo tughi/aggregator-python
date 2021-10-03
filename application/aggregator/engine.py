@@ -64,6 +64,7 @@ def update_feed(feed: Feed, forced: bool = False):
         feed.url,
         etag=None if forced else feed.http_etag,
         modified=None if forced else feed.http_last_modified,
+        resolve_relative_uris=False,
     )
 
     if not feed_data:
