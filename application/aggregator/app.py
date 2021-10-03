@@ -16,8 +16,8 @@ def create_app(config=Config()):
     app = Flask(__name__, static_folder='../reader')
     app.config.from_object(config)
 
-    if app.debug:
-        logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    if config.SQLALCHEMY_ENGINE_LOG_LEVEL:
+        logging.getLogger('sqlalchemy.engine').setLevel(config.SQLALCHEMY_ENGINE_LOG_LEVEL)
 
     db.init_app(app)
 
