@@ -8,8 +8,8 @@ import { ENTRIES_LIMIT } from "./Session"
 import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
-   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav, session } = useController()
-   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries, refresh } = session
+   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav, session, refresh } = useController()
+   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries } = session
 
    useEffect(() => {
       setActiveEntryIndex(-1)

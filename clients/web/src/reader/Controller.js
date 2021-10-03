@@ -30,6 +30,10 @@ export const Controller = ({ setShowSideNav, children }) => {
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [showEntry, setShowEntry] = useState(false)
 
+   const refresh = useCallback(() => {
+      setSessionParams(params => ({ ...params, revision: params.revision + 1 }))
+   }, [setSessionParams])
+
    useEffect(() => {
       const onKeyDown = event => {
          const key = event.which
@@ -55,7 +59,7 @@ export const Controller = ({ setShowSideNav, children }) => {
          } else if (key === 80/*p*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
          } else if (key === 82/*r*/) {
-            setSessionParams(params => ({ ...params, revision: params.revision + 1 }))
+            refresh()
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
             const activeEntry = session.entries[activeEntryIndex]
             if (activeEntry.starTime) {
@@ -71,7 +75,7 @@ export const Controller = ({ setShowSideNav, children }) => {
       return () => {
          window.removeEventListener('keydown', onKeyDown)
       }
-   }, [activeEntryIndex, session])
+   }, [activeEntryIndex, session, refresh])
 
    const history = useHistory()
 
@@ -122,10 +126,10 @@ export const Controller = ({ setShowSideNav, children }) => {
 
    const controller = useMemo(
       () => ({
-         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session
+         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session, refresh
       }),
       [
-         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session
+         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session, refresh
       ]
    )
 
