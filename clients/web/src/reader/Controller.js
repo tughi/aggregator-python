@@ -154,12 +154,16 @@ export const Controller = ({ setShowSideNav, children }) => {
       }
    }, [history, setSessionParams])
 
+   const toggleSortOrder = useCallback(() => {
+      setSessionParams(params => ({ ...params, latestFirst: !params.latestFirst }))
+   }, [])
+
    const controller = useMemo(
       () => ({
-         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder
       }),
       [
-         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder
       ]
    )
 

@@ -8,7 +8,7 @@ import { ENTRIES_LIMIT } from "./Session"
 import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
-   const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, session, refresh } = useController()
+   const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, refresh, session, toggleSortOrder } = useController()
    const { isLoading, feedId, onlyStarred, feedsById, entries, hasMoreEntries, loadMoreEntries } = session
 
    const activeEntryCallback = useCallback(entryElement => {
@@ -46,7 +46,8 @@ export const EntryList = () => {
                {feedId == null && onlyStarred && "Starred"}
                {feedId && feedsById[feedId]?.title}
             </ActionBar.Title>
-            <ActionBar.Action icon="refresh" onClick={() => refresh()} />
+            <ActionBar.Action icon="sort" onClick={toggleSortOrder} />
+            <ActionBar.Action icon="refresh" onClick={refresh} />
          </ActionBar>
          <div className="body">
             {entries.map((entry, entryIndex) => (
