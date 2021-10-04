@@ -1,4 +1,4 @@
-import "./EntryPager.scss"
+import "./EntryViewer.scss"
 
 import classNames from "classnames"
 import { useEffect } from "react"
@@ -6,24 +6,24 @@ import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
 import { formatFullEntryTime } from "../utils/date"
 
-export const EntryPager = () => {
-   const { activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, session } = useController()
+export const EntryViewer = () => {
+   const { activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, session } = useController()
    const { feedsById, entryIds, entries, keepEntry, readEntry, starEntry, unstarEntry } = session
    const entriesLength = entries.length
 
    const activeEntry = entries[activeEntryIndex]
 
    useEffect(() => {
-      if (showEntry && activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
+      if (isViewerVisible && activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
          readEntry(activeEntry)
       }
-   }, [showEntry, activeEntry, readEntry])
+   }, [isViewerVisible, activeEntry, readEntry])
 
    return (
-      <div className={classNames("EntryPager", "content", { active: showEntry })}>
+      <div className={classNames("EntryViewer", "content", { active: isViewerVisible })}>
          <div className="header">
             <ActionBar>
-               <ActionBar.Action icon="close" onClick={() => setShowEntry(false)} />
+               <ActionBar.Action icon="close" onClick={() => setIsViewerVisible(false)} />
                {activeEntry && (
                   <>
                      <ActionBar.Title>
@@ -36,7 +36,7 @@ export const EntryPager = () => {
             </ActionBar>
          </div>
          <div className="body">
-            {showEntry && activeEntry && (
+            {isViewerVisible && activeEntry && (
                <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
                   <div className="entry-toolbar">
                      <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>

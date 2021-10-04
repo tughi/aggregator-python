@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { matchPath, useHistory, useLocation } from "react-router"
+import { matchPath, useHistory } from "react-router"
 import { useSession } from "./Session"
 
 const ControllerContext = React.createContext()
@@ -22,17 +22,44 @@ const createSessionParams = location => {
 }
 
 export const Controller = ({ setShowSideNav, children }) => {
-   const location = useLocation()
-   const [sessionParams, setSessionParams] = useState(() => createSessionParams(location))
+   const history = useHistory()
+   const location = history.location
 
+   const [sessionParams, setSessionParams] = useState(() => createSessionParams(location))
    const session = useSession(sessionParams)
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
-   const [showEntry, setShowEntry] = useState(false)
+   const [isViewerVisible, setIsViewerVisible] = useState(false)
+
+   useEffect(() => {
+      const location = history.location
+      if (isViewerVisible) {
+         if (!location.state?.viewer) {
+            history.push(location.pathname, { ...location.state, viewer: true })
+         }
+      } else {
+         if (location.state?.viewer) {
+            history.go(-1)
+         }
+      }
+   }, [history, isViewerVisible])
+
+   useEffect(() => {
+      if (isViewerVisible) {
+         if (activeEntryIndex === -1) {
+            setIsViewerVisible(false)
+         }
+      }
+   }, [activeEntryIndex, isViewerVisible])
 
    const refresh = useCallback(() => {
       setSessionParams(params => ({ ...params, revision: params.revision + 1 }))
    }, [setSessionParams])
+
+   useEffect(() => {
+      setIsViewerVisible(false)
+      setActiveEntryIndex(-1)
+   }, [sessionParams])
 
    useEffect(() => {
       const onKeyDown = event => {
@@ -41,10 +68,10 @@ export const Controller = ({ setShowSideNav, children }) => {
             // TODO: toggle bliss
          } else if (key === 74/*j*/ && session.entries.length) {
             setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
-            setShowEntry(true)
+            setIsViewerVisible(true)
          } else if (key === 75/*k*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
-            setShowEntry(true)
+            setIsViewerVisible(true)
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
             const activeEntry = session.entries[activeEntryIndex]
             if (activeEntry.keepTime) {
@@ -55,7 +82,7 @@ export const Controller = ({ setShowSideNav, children }) => {
          } else if (key === 78/*n*/ && session.entries.length) {
             setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
          } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
-            setShowEntry(showEntry => !showEntry)
+            setIsViewerVisible(visible => !visible)
          } else if (key === 80/*p*/ && session.entries.length) {
             setActiveEntryIndex(Math.max(0, activeEntryIndex - 1))
          } else if (key === 82/*r*/) {
@@ -77,11 +104,8 @@ export const Controller = ({ setShowSideNav, children }) => {
       }
    }, [activeEntryIndex, session, refresh])
 
-   const history = useHistory()
-
    const openFeed = useCallback((link, sessionParams) => {
       const location = history.location
-
 
       const onPopState = () => {
          if (link === '/reader/all') {
@@ -96,7 +120,10 @@ export const Controller = ({ setShowSideNav, children }) => {
          window.removeEventListener('popstate', onPopState)
       }
 
-      if (location.state?.feed) {
+      if (location.state?.feed && location.state?.viewer) {
+         history.go(-2)
+         window.addEventListener('popstate', onPopState)
+      } else if (location.state?.feed) {
          history.go(-1)
          window.addEventListener('popstate', onPopState)
       } else {
@@ -107,13 +134,16 @@ export const Controller = ({ setShowSideNav, children }) => {
    useEffect(() => {
       const onPopState = () => {
          setTimeout(() => {
-            const { feedId, onlyUnread, onlyStarred } = createSessionParams(history.location)
+            const location = history.location
+            const { feedId, onlyUnread, onlyStarred } = createSessionParams(location)
             setSessionParams(params => {
                if (feedId !== params.feedId || onlyUnread !== params.onlyUnread || onlyStarred !== params.onlyStarred) {
                   return { revision: params.revision + 1, feedId, onlyUnread, onlyStarred }
                }
                return params
             })
+
+            setIsViewerVisible(!!location.state?.viewer)
          }, 0)
       }
 
@@ -126,10 +156,10 @@ export const Controller = ({ setShowSideNav, children }) => {
 
    const controller = useMemo(
       () => ({
-         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session, refresh
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh
       }),
       [
-         activeEntryIndex, setActiveEntryIndex, showEntry, setShowEntry, setShowSideNav, openFeed, session, refresh
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh
       ]
    )
 

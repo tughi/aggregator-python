@@ -1,20 +1,15 @@
 import "./EntryList.scss"
 
 import classNames from "classnames"
-import React, { useCallback, useEffect, useRef } from "react"
+import React, { useCallback, useRef } from "react"
 import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
 import { ENTRIES_LIMIT } from "./Session"
 import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
-   const { activeEntryIndex, setActiveEntryIndex, setShowEntry, setShowSideNav, session, refresh } = useController()
-   const { isLoading, feedId, onlyStarred, feedsById, entryIds, entries, hasMoreEntries, loadMoreEntries } = session
-
-   useEffect(() => {
-      setActiveEntryIndex(-1)
-      setShowEntry(false)
-   }, [entryIds, setActiveEntryIndex, setShowEntry])
+   const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, session, refresh } = useController()
+   const { isLoading, feedId, onlyStarred, feedsById, entries, hasMoreEntries, loadMoreEntries } = session
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
@@ -63,7 +58,7 @@ export const EntryList = () => {
                   isActive={entryIndex === activeEntryIndex}
                   onClick={() => {
                      setActiveEntryIndex(entryIndex)
-                     setShowEntry(true)
+                     setIsViewerVisible(true)
                   }}
                />
             ))}

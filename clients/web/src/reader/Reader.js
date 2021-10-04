@@ -4,7 +4,7 @@ import classNames from "classnames"
 import { useState } from "react"
 import { Controller } from "./Controller"
 import { EntryList } from "./EntryList"
-import { EntryPager } from "./EntryPager"
+import { EntryViewer } from "./EntryViewer"
 import { FeedList } from "./FeedList"
 
 export const Reader = () => {
@@ -18,7 +18,7 @@ export const Reader = () => {
             </div>
             <div className="main">
                <EntryList />
-               <EntryPager />
+               <EntryViewer />
             </div>
          </Controller>
       </div>
