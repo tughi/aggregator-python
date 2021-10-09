@@ -36,7 +36,7 @@ const ENTRIES_QUERY = `query ($entryIds: [Int]!) {
    entries(entryIds: $entryIds) ${ENTRY_FIELDS}
 }`.replace(/([\n\t ]+)/g, ' ')
 
-export const ENTRIES_LIMIT = 50
+const ENTRIES_LIMIT = 50
 
 export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFirst }) => {
    const [feeds, setFeeds] = useState([])
@@ -48,11 +48,9 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
 
    const [entriesOffset, setEntriesOffset] = useState(0)
 
-   const sessionQueryVariables = useMemo(() => {
-      if (revision) {
-         return { feedId, onlyUnread, onlyStarred, entriesLimit: ENTRIES_LIMIT, latestFirst }
-      }
-   }, [revision, feedId, onlyUnread, onlyStarred, latestFirst])
+   const sessionQueryVariables = useMemo(() => ({
+      revision, feedId, onlyUnread, onlyStarred, entriesLimit: ENTRIES_LIMIT, latestFirst
+   }), [revision, feedId, onlyUnread, onlyStarred, latestFirst])
 
    useEffect(() => {
       setEntryIds([])
@@ -167,10 +165,7 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
    }, [updateEntryState])
 
    return {
-      revision,
-      feedId,
-      onlyUnread,
-      onlyStarred,
+      ...sessionQueryVariables,
       isLoading: sessionIsLoading || entriesAreLoading,
       feeds,
       feedsById,

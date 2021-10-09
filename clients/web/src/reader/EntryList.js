@@ -4,12 +4,11 @@ import classNames from "classnames"
 import React, { useCallback, useRef } from "react"
 import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
-import { ENTRIES_LIMIT } from "./Session"
 import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
    const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, refresh, session, toggleSortOrder } = useController()
-   const { isLoading, feedId, onlyStarred, feedsById, entries, hasMoreEntries, loadMoreEntries } = session
+   const { isLoading, feedId, onlyStarred, latestFirst, feedsById, entries, entriesLimit, hasMoreEntries, loadMoreEntries } = session
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
@@ -17,7 +16,7 @@ export const EntryList = () => {
       }
    }, [])
 
-   const triggerEntryIndex = hasMoreEntries ? session.entries.length - Math.round(ENTRIES_LIMIT / 3) : -1
+   const triggerEntryIndex = hasMoreEntries ? entries.length - Math.round(entriesLimit / 3) : -1
    const triggerEntryObserver = useRef(null)
    const triggerEntryCallback = useCallback(entryElement => {
       if (isLoading) {
@@ -46,7 +45,7 @@ export const EntryList = () => {
                {feedId == null && onlyStarred && "Starred"}
                {feedId && feedsById[feedId]?.title}
             </ActionBar.Title>
-            <ActionBar.Action icon="sort" onClick={toggleSortOrder} />
+            <ActionBar.Action icon={latestFirst ? "sort-up" : "sort-down"} onClick={toggleSortOrder} />
             <ActionBar.Action icon="refresh" onClick={refresh} />
          </ActionBar>
          <div className="body">

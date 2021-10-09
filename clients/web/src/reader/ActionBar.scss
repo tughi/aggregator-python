@@ -84,8 +84,12 @@
             mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_refresh_24px.svg");
          }
 
-         &.sort::after {
-            mask-image: url("../../node_modules/material-design-icons/content/svg/production/ic_sort_24px.svg");
+         &.sort-down::after {
+            mask-image: url("../icons/actions/sort_down.svg");
+         }
+
+         &.sort-up::after {
+            mask-image: url("../icons/actions/sort_up.svg");
          }
 
          &.star-off::after {
