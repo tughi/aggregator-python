@@ -16,7 +16,7 @@
 
          border-bottom: 1px solid $gray-200;
 
-         --background-color: transparent;
+         --background-color: white;
          --summary-color: #{$text-secondary};
          --summary-height: 2rem;
          --unread-color: #{$text-body};
@@ -39,7 +39,7 @@
             cursor: pointer;
 
             &:hover {
-               background-color: $gray-100;
+               --background-color: #{$gray-100};
             }
 
             > a.favicon {
@@ -68,14 +68,24 @@
             > .title {
                flex-grow: 1;
                overflow: hidden;
-               text-overflow: ellipsis;
                white-space: nowrap;
+               position: relative;
+
+               &::before {
+                  content: '';
+                  display: block;
+                  position: absolute;
+                  right: 0;
+                  width: 3rem;
+                  height: var(--summary-height);
+                  background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--background-color));
+               }
             }
 
             > .state {
                display: flex;
                flex-shrink: 0;
-               padding: 0 1rem;
+               padding: 0 1rem 0 .5rem;
 
                > .pinned,
                > .starred {
@@ -116,7 +126,7 @@
 
          &.active {
             --background-color: #{$orange-100};
-            --summary-color: #{$orange-300};
+            --summary-color: #{$orange-200};
             --unread-color: #{$orange-500};
          }
 
