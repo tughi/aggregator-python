@@ -84,7 +84,15 @@ const EntryItem = React.forwardRef(({ entry, feed, isActive, onClick }, ref) => 
                <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
             </a>
             <div className="title">{entry.title}</div>
-            <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
+            <div className="state">
+               {entry.starTime && (
+                  <div className="starred" />
+               )}
+               {entry.keepTime && (
+                  <div className="pinned" />
+               )}
+               <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
+            </div>
          </div>
       </div>
    )

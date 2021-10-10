@@ -16,6 +16,10 @@
 
          border-bottom: 1px solid $gray-200;
 
+         --background-color: transparent;
+         --summary-color: #{$text-secondary};
+         --unread-color: #{$text-body};
+
          &:first-child {
             margin-top: 1rem;
          }
@@ -29,7 +33,8 @@
             display: flex;
             line-height: 2rem;
             min-height: 2rem;
-            color: $text-secondary;
+            background-color: var(--background-color);
+            color: var(--summary-color);
             cursor: pointer;
 
             &:hover {
@@ -66,35 +71,52 @@
                white-space: nowrap;
             }
 
-            > .date {
+            > .state {
+               display: flex;
                flex-shrink: 0;
-               white-space: nowrap;
                padding: 0 1rem;
+
+               > .pinned,
+               > .starred {
+                  &::after {
+                     content: '';
+                     display: block;
+                     width: 1.25rem;
+                     height: 2rem;
+                     background-color: var(--summary-color);
+                     mask-size: 1rem;
+                     mask-repeat: no-repeat;
+                     mask-position: center;
+                  }
+               }
+
+               > .pinned::after {
+                  mask-image: url("../icons/state/entry_pinned.svg");
+               }
+
+               > .starred::after {
+                  mask-image: url("../icons/state/entry_starred.svg");
+               }
+
+               > .date {
+                  flex-shrink: 0;
+                  white-space: nowrap;
+               }
             }
          }
 
          &.unread {
             > .summary {
                > .title {
-                  color: $text-body;
+                  color: var(--unread-color);
                }
             }
          }
 
          &.active {
-            background-color: $orange-100;
-
-            > .summary {
-               color: $orange-300;
-            }
-
-            &.unread {
-               > .summary {
-                  > .title {
-                     color: $orange-500;
-                  }
-               }
-            }
+            --background-color: #{$orange-100};
+            --summary-color: #{$orange-300};
+            --unread-color: #{$orange-500};
          }
       }
 
