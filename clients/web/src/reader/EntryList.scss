@@ -97,5 +97,19 @@
             }
          }
       }
+
+      > .loading.entry {
+         > .summary {
+            cursor: unset;
+
+            &:hover {
+               background: none;
+            }
+
+            > .title {
+               text-align: center;
+            }
+         }
+      }
    }
 }

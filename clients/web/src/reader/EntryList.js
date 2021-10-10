@@ -63,8 +63,12 @@ export const EntryList = () => {
                />
             ))}
             {isLoading && (
-               <div style={{ textAlign: 'center' }}>
-                  Loading...
+               <div className="loading entry">
+                  <div className="summary">
+                     <div className="title">
+                        Loading ...
+                     </div>
+                  </div>
                </div>
             )}
          </div>
