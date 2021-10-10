@@ -65,15 +65,15 @@
          }
 
          &.entry-done::after {
-            mask-image: url("../icons/actions/entry_done.svg");
+            mask-image: url("../icons/action/entry_done.svg");
          }
 
          &.entry-new::after {
-            mask-image: url("../icons/actions/entry_new.svg");
+            mask-image: url("../icons/action/entry_new.svg");
          }
 
          &.entry-pinned::after {
-            mask-image: url("../icons/actions/entry_pinned.svg");
+            mask-image: url("../icons/action/entry_pinned.svg");
          }
 
          &.menu::after {
@@ -85,11 +85,11 @@
          }
 
          &.sort-down::after {
-            mask-image: url("../icons/actions/sort_down.svg");
+            mask-image: url("../icons/action/sort_down.svg");
          }
 
          &.sort-up::after {
-            mask-image: url("../icons/actions/sort_up.svg");
+            mask-image: url("../icons/action/sort_up.svg");
          }
 
          &.star-off::after {
