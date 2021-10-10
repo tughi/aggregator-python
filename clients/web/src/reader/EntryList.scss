@@ -18,6 +18,7 @@
 
          --background-color: transparent;
          --summary-color: #{$text-secondary};
+         --summary-height: 2rem;
          --unread-color: #{$text-body};
 
          &:first-child {
@@ -31,8 +32,8 @@
 
          > .summary {
             display: flex;
-            line-height: 2rem;
-            min-height: 2rem;
+            line-height: var(--summary-height);
+            min-height: var(--summary-height);
             background-color: var(--background-color);
             color: var(--summary-color);
             cursor: pointer;
@@ -47,12 +48,12 @@
                align-items: center;
                justify-content: center;
                width: 3rem;
-               height: 2rem;
+               height: var(--summary-height);
 
                > .image {
                   display: block;
                   width: 2rem;
-                  height: 2rem;
+                  height: var(--summary-height);
                   background: transparent center no-repeat;
                   background-size: 1rem;
                }
@@ -82,7 +83,7 @@
                      content: '';
                      display: block;
                      width: 1.25rem;
-                     height: 2rem;
+                     height: var(--summary-height);
                      background-color: var(--summary-color);
                      mask-size: 1rem;
                      mask-repeat: no-repeat;
@@ -118,6 +119,10 @@
             --summary-color: #{$orange-300};
             --unread-color: #{$orange-500};
          }
+
+         @media (hover: none) and (pointer: coarse) {
+            --summary-height: 3rem;
+         }
       }
 
       > .loading.entry {
@@ -133,5 +138,6 @@
             }
          }
       }
+
    }
 }

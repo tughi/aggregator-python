@@ -6,12 +6,14 @@
    padding: 1rem 0;
 
    > a.feed {
+      --line-height: 2rem;
+
       display: flex;
       padding: 0 1rem;
       color: $gray-600;
       text-decoration: none;
       font-weight: normal;
-      line-height: 2rem;
+      line-height: var(--line-height);
 
       > .title {
          flex-grow: 1;
@@ -31,7 +33,7 @@
 
          > .count {
             color: $orange-300;
-         }   
+         }
       }
 
       &:hover {
@@ -46,5 +48,13 @@
    > hr {
       border: none;
       border-top: 1px solid $gray-400;
+   }
+
+   @media (hover: none) and (pointer: coarse) {
+      padding: 0;
+
+      > a.feed {
+         --line-height: 3rem;
+      }
    }
 }
