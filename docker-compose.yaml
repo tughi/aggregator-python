@@ -12,6 +12,12 @@ services:
       - ./application/config.json:/app/config.json:ro
       - ./application/dumps:/app/dumps:rw
     restart: unless-stopped
+  web:
+    build: ./clients/web
+    depends_on:
+      - app
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
   sync:
     build:
       context: ./application

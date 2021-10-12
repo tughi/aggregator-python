@@ -1,6 +1,5 @@
 import axios from "axios"
-import { useEffect, useState } from "react"
-import { useCallback } from "react/cjs/react.development"
+import { useCallback, useEffect, useState } from "react"
 
 export const useQuery = ({ query, variables, consumeData, ignore }) => {
    const [loading, setLoading] = useState(false)
