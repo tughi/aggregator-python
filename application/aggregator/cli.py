@@ -5,11 +5,17 @@ from flask import Blueprint
 
 from aggregator import content
 from aggregator import engine
+from aggregator.models import db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 blueprint = Blueprint('cli', __name__, cli_group=None)
+
+
+@blueprint.cli.command('create-database')
+def create_database():
+    db.create_all()
 
 
 @blueprint.cli.command('restore')

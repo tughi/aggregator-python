@@ -13,7 +13,7 @@ logging.basicConfig()
 
 
 def create_app(config=Config()):
-    app = Flask(__name__, static_folder='../reader')
+    app = Flask(__name__)
     app.config.from_object(config)
 
     if config.SQLALCHEMY_ENGINE_LOG_LEVEL:
@@ -21,12 +21,9 @@ def create_app(config=Config()):
 
     db.init_app(app)
 
-    app.add_url_rule('/', 'root', lambda: app.send_static_file('index.html'))
-    app.add_url_rule('/<path:path>', 'files', lambda path: app.send_static_file(path))
-
     app.register_blueprint(api.blueprint, url_prefix='/api')
     app.register_blueprint(cli.blueprint)
     app.register_blueprint(graphql.blueprint, url_prefix='/')
-    app.register_blueprint(reader.blueprint, url_prefix='/reader')
+    app.register_blueprint(reader.blueprint, url_prefix='/v1/reader/api')
 
     return app

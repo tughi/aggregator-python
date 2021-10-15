@@ -10,7 +10,6 @@ RUN pip install -U pip setuptools \
     && pip install -r requirements.txt
 
 COPY aggregator ./aggregator/
-COPY reader ./reader/
 COPY gunicorn.conf.py ./
 
 ENV FLASK_APP=aggregator.app

@@ -1,7 +1,7 @@
 {
   "name": "Aggregator",
   "short_name": "Aggregator",
-  "start_url": "/#read",
+  "start_url": "/v1/reader/#read",
   "display": "standalone",
   "background_color": "#fff",
   "theme_color": "#33b5e5",

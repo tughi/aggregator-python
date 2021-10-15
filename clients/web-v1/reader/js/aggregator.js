@@ -122,7 +122,7 @@ $(function () {
             var old_value = this.get(flag);
             var new_value = !old_value;
             $.ajax({
-                url: 'reader/entries/' + this.id,
+                url: 'api/entries/' + this.id,
                 method: 'PATCH',
                 data: {
                     [flag]: new_value
@@ -170,7 +170,7 @@ $(function () {
 
     var Entries = Backbone.Collection.extend({
         model: Entry,
-        url: 'reader/entries'
+        url: 'api/entries'
     });
 
     var EntryView = Backbone.View.extend({
@@ -225,7 +225,7 @@ $(function () {
     });
 
     var Session = Backbone.Model.extend({
-        url: 'reader/session'
+        url: 'api/session'
     });
 
     var ENTRIES_PER_PAGE = 50;
