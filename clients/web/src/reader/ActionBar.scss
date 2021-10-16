@@ -26,6 +26,14 @@
          padding: 0;
          cursor: pointer;
 
+         &:focus {
+            outline: none;
+
+            &::before {
+               outline: thin dotted !important;
+            }
+         }
+
          &::before,
          &::after {
             content: '';
@@ -39,6 +47,12 @@
 
          &::before {
             border-radius: .5rem;
+         }
+
+         &:focus {
+            &::before {
+               outline: red;
+            }
          }
 
          &::after {

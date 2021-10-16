@@ -58,6 +58,14 @@
                   background-size: 1rem;
                }
 
+               &:focus {
+                  outline: none;
+
+                  > .image {
+                     outline: thin dotted;
+                  }
+               }
+
                &:hover {
                   > .image {
                      background-color: $gray-200;

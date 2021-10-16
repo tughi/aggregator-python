@@ -7,3 +7,8 @@ body {
    color: $text-body;
    overscroll-behavior: contain;
 }
+
+a:focus,
+button:focus {
+   outline: thin dotted;
+}
