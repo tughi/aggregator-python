@@ -74,11 +74,7 @@ export const Controller = ({ setShowSideNav, children }) => {
             setIsViewerVisible(true)
          } else if (key === 77/*m*/ && activeEntryIndex !== -1) {
             const activeEntry = session.entries[activeEntryIndex]
-            if (activeEntry.keepTime) {
-               session.readEntry(activeEntry)
-            } else {
-               session.keepEntry(activeEntry)
-            }
+            session.toggleEntryReadState(activeEntry)
          } else if (key === 78/*n*/ && session.entries.length) {
             setActiveEntryIndex(Math.min(session.entries.length - 1, activeEntryIndex + 1))
          } else if (key === 79/*o*/ && activeEntryIndex !== -1) {
@@ -89,11 +85,7 @@ export const Controller = ({ setShowSideNav, children }) => {
             refresh()
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
             const activeEntry = session.entries[activeEntryIndex]
-            if (activeEntry.starTime) {
-               session.unstarEntry(activeEntry)
-            } else {
-               session.starEntry(activeEntry)
-            }
+            session.toggleEntryStarState(activeEntry)
          }
       }
 

@@ -12,6 +12,7 @@ export const EntryList = () => {
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
+         document.activeElement?.blur()
          entryElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
    }, [])
@@ -77,22 +78,21 @@ export const EntryList = () => {
 }
 
 const EntryItem = React.forwardRef(({ entry, feed, isActive, onClick }, ref) => {
+   const { session } = useController()
+   const { toggleEntryReadState } = session
+   const onStateClick = useCallback(event => {
+      event.stopPropagation()
+      toggleEntryReadState(entry)
+   }, [entry, toggleEntryReadState])
    return (
-      <div className={classNames("entry", { unread: !entry.readTime, active: isActive })} ref={ref}>
+      <div className={classNames("entry", { unread: !entry.readTime, active: isActive })} ref={ref} >
          <div className="summary" onClick={onClick}>
             <a className="favicon" onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noreferrer">
                <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
             </a>
             <div className="title">{entry.title}</div>
-            <div className="state">
-               {entry.starTime && (
-                  <div className="starred" />
-               )}
-               {entry.keepTime && (
-                  <div className="pinned" />
-               )}
-               <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
-            </div>
+            <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>
+            <button className={classNames("state", { pinned: entry.keepTime, done: entry.readTime })} onClick={onStateClick} />
          </div>
       </div>
    )

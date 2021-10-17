@@ -98,70 +98,70 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
       }`
    })
 
-   const keepEntry = useCallback(entry => {
-      updateEntryState({
-         variables: {
-            entryId: entry.id,
-            keepTime: createTime(),
-            readTime: null,
-            starTime: entry.starTime,
-         },
-         consumeData: ({ result }) => {
-            const updatedEntry = result.entry
-            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
-            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries + 1 } : feed))
-            setUnreadEntries(unreadEntries => unreadEntries + 1)
-         }
-      })
+   const toggleEntryReadState = useCallback(entry => {
+      if (entry.keepTime || !entry.readTime) {
+         updateEntryState({
+            variables: {
+               entryId: entry.id,
+               keepTime: null,
+               readTime: createTime(),
+               starTime: entry.starTime,
+            },
+            consumeData: ({ result }) => {
+               const updatedEntry = result.entry
+               setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+               setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
+               setUnreadEntries(unreadEntries => unreadEntries - 1)
+            }
+         })
+      } else {
+         updateEntryState({
+            variables: {
+               entryId: entry.id,
+               keepTime: createTime(),
+               readTime: null,
+               starTime: entry.starTime,
+            },
+            consumeData: ({ result }) => {
+               const updatedEntry = result.entry
+               setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+               setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries + 1 } : feed))
+               setUnreadEntries(unreadEntries => unreadEntries + 1)
+            }
+         })
+      }
    }, [updateEntryState])
 
-   const readEntry = useCallback(entry => {
-      updateEntryState({
-         variables: {
-            entryId: entry.id,
-            keepTime: null,
-            readTime: createTime(),
-            starTime: entry.starTime,
-         },
-         consumeData: ({ result }) => {
-            const updatedEntry = result.entry
-            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
-            setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
-            setUnreadEntries(unreadEntries => unreadEntries - 1)
-         }
-      })
-   }, [updateEntryState])
-
-   const starEntry = useCallback(entry => {
-      updateEntryState({
-         variables: {
-            entryId: entry.id,
-            keepTime: entry.keepTime,
-            readTime: entry.readTime,
-            starTime: createTime(),
-         },
-         consumeData: ({ result }) => {
-            const updatedEntry = result.entry
-            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
-            setStarredEntries(starredEntries => starredEntries + 1)
-         }
-      })
-   }, [updateEntryState])
-
-   const unstarEntry = useCallback(entry => {
-      updateEntryState({
-         variables: {
-            entryId: entry.id,
-            keepTime: entry.keepTime,
-            readTime: entry.readTime,
-            starTime: null,
-         },
-         consumeData: ({ result }) => {
-            const updatedEntry = result.entry
-            setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
-            setStarredEntries(starredEntries => starredEntries - 1)
-         }
-      })
+   const toggleEntryStarState = useCallback(entry => {
+      if (entry.starTime) {
+         updateEntryState({
+            variables: {
+               entryId: entry.id,
+               keepTime: entry.keepTime,
+               readTime: entry.readTime,
+               starTime: null,
+            },
+            consumeData: ({ result }) => {
+               const updatedEntry = result.entry
+               setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+               setStarredEntries(starredEntries => starredEntries - 1)
+            }
+         })
+      } else {
+         updateEntryState({
+            variables: {
+               entryId: entry.id,
+               keepTime: entry.keepTime,
+               readTime: entry.readTime,
+               starTime: createTime(),
+            },
+            consumeData: ({ result }) => {
+               const updatedEntry = result.entry
+               setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+               setStarredEntries(starredEntries => starredEntries + 1)
+            }
+         })
+      }
    }, [updateEntryState])
 
    return {
@@ -175,10 +175,8 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
       starredEntries,
       hasMoreEntries: entries.length < entryIds.length,
       loadMoreEntries,
-      keepEntry,
-      readEntry,
-      starEntry,
-      unstarEntry,
+      toggleEntryReadState,
+      toggleEntryStarState,
    }
 }
 

@@ -8,16 +8,16 @@ import { formatFullEntryTime } from "../utils/date"
 
 export const EntryViewer = () => {
    const { activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, session } = useController()
-   const { feedsById, entryIds, entries, keepEntry, readEntry, starEntry, unstarEntry } = session
+   const { feedsById, entryIds, entries, toggleEntryReadState, toggleEntryStarState } = session
    const entriesLength = entries.length
 
    const activeEntry = entries[activeEntryIndex]
 
    useEffect(() => {
       if (isViewerVisible && activeEntry && activeEntry.readTime == null && activeEntry.keepTime == null) {
-         readEntry(activeEntry)
+         toggleEntryReadState(activeEntry)
       }
-   }, [isViewerVisible, activeEntry, readEntry])
+   }, [isViewerVisible, activeEntry, toggleEntryReadState])
 
    return (
       <div className={classNames("EntryViewer", "content", { active: isViewerVisible })}>
@@ -29,8 +29,8 @@ export const EntryViewer = () => {
                      <ActionBar.Title>
                         {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
                      </ActionBar.Title>
-                     <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} onClick={() => activeEntry.starTime ? unstarEntry(activeEntry) : starEntry(activeEntry)} />
-                     <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => activeEntry.keepTime ? readEntry(activeEntry) : keepEntry(activeEntry)} />
+                     <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} onClick={() => toggleEntryStarState(activeEntry)} />
+                     <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => toggleEntryReadState(activeEntry)} />
                   </>
                )}
             </ActionBar>

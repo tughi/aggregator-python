@@ -71,6 +71,12 @@
                      background-color: $gray-200;
                   }
                }
+
+               &:active {
+                  > .image {
+                     background-color: $gray-300;
+                  }
+               }
             }
 
             > .title {
@@ -90,36 +96,75 @@
                }
             }
 
-            > .state {
-               display: flex;
+            > .date {
                flex-shrink: 0;
-               padding: 0 1rem 0 .5rem;
+               white-space: nowrap;
+               padding: 0 0 0 .5rem;
+            }
 
-               > .pinned,
-               > .starred {
+            > button.state {
+               flex-shrink: 0;
+               position: relative;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               width: 3rem;
+               height: var(--summary-height);
+               background: none;
+               border: none;
+               padding: 0;
+
+               &::after {
+                  content: '';
+                  width: 2rem;
+                  height: var(--summary-height);
+                  background-color: var(--summary-color);
+                  mask-position: center;
+                  mask-repeat: no-repeat;
+                  mask-size: 1.5rem;
+                  mask-image: url('../icons/action/entry_new.svg');
+               }
+
+               &.done {
                   &::after {
-                     content: '';
-                     display: block;
-                     width: 1.25rem;
-                     height: var(--summary-height);
-                     background-color: var(--summary-color);
-                     mask-size: 1rem;
-                     mask-repeat: no-repeat;
-                     mask-position: center;
+                     mask-image: url('../icons/action/entry_done.svg');
                   }
                }
 
-               > .pinned::after {
-                  mask-image: url("../icons/state/entry_pinned.svg");
+               &.pinned {
+                  &::after {
+                     mask-image: url('../icons/action/entry_pinned.svg');
+                  }
                }
 
-               > .starred::after {
-                  mask-image: url("../icons/state/entry_starred.svg");
+               &:focus {
+                  outline: none;
+
+                  &::before {
+                     content: '';
+                     display: block;
+                     position: absolute;
+                     width: 2rem;
+                     height: var(--summary-height);
+                     outline: thin dotted;
+                  }
                }
 
-               > .date {
-                  flex-shrink: 0;
-                  white-space: nowrap;
+               &:hover {
+                  &::before {
+                     content: '';
+                     display: block;
+                     position: absolute;
+                     width: 2rem;
+                     height: var(--summary-height);
+                     background-color: $gray-200;
+                  }
+               }
+
+               &:active {
+                  &::before {
+                     background-color: $gray-300;
+                  }
                }
             }
          }
