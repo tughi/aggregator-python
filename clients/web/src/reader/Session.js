@@ -16,8 +16,8 @@ const ENTRY_FIELDS = `{
    starTime
 }`
 
-const SESSION_QUERY = `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!, $latestFirst: Boolean) {
-   session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred, latestFirst: $latestFirst) {
+const SESSION_QUERY = `query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!, $latestFirst: Boolean, $maxAge: Int) {
+   session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred, latestFirst: $latestFirst, maxAge: $maxAge) {
       entries(limit: $entriesLimit) ${ENTRY_FIELDS}
       entryIds
       feeds {
@@ -38,7 +38,7 @@ const ENTRIES_QUERY = `query ($entryIds: [Int]!) {
 
 const ENTRIES_LIMIT = 50
 
-export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFirst }) => {
+export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFirst, maxAge }) => {
    const [feeds, setFeeds] = useState([])
    const [feedsById, setFeedsById] = useState({})
    const [unreadEntries, setUnreadEntries] = useState(0)
@@ -49,8 +49,8 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
    const [entriesOffset, setEntriesOffset] = useState(0)
 
    const sessionQueryVariables = useMemo(() => ({
-      revision, feedId, onlyUnread, onlyStarred, entriesLimit: ENTRIES_LIMIT, latestFirst
-   }), [revision, feedId, onlyUnread, onlyStarred, latestFirst])
+      revision, feedId, onlyUnread, onlyStarred, latestFirst, maxAge, entriesLimit: ENTRIES_LIMIT
+   }), [revision, feedId, onlyUnread, onlyStarred, latestFirst, maxAge])
 
    useEffect(() => {
       setEntryIds([])

@@ -7,8 +7,8 @@ import { useController } from "./Controller"
 import { formatRelativeEntryTime } from "../utils/date"
 
 export const EntryList = () => {
-   const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, refresh, session, toggleSortOrder } = useController()
-   const { isLoading, feedId, onlyStarred, latestFirst, feedsById, entries, entriesLimit, hasMoreEntries, loadMoreEntries } = session
+   const { activeEntryIndex, setActiveEntryIndex, setIsViewerVisible, setShowSideNav, refresh, session, toggleSortOrder, toggleMaxAge } = useController()
+   const { isLoading, feedId, onlyStarred, latestFirst, maxAge, feedsById, entries, entriesLimit, hasMoreEntries, loadMoreEntries } = session
 
    const activeEntryCallback = useCallback(entryElement => {
       if (entryElement) {
@@ -46,6 +46,7 @@ export const EntryList = () => {
                {feedId == null && onlyStarred && "Starred"}
                {feedId && feedsById[feedId]?.title}
             </ActionBar.Title>
+            <ActionBar.Action icon={maxAge == null ? "calendar" : maxAge === 1 ? "calendar-day" : "calendar-week"} onClick={toggleMaxAge} />
             <ActionBar.Action icon={latestFirst ? "sort-up" : "sort-down"} onClick={toggleSortOrder} />
             <ActionBar.Action icon="refresh" onClick={refresh} />
          </ActionBar>

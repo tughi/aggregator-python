@@ -1,6 +1,10 @@
 import json
 from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime
+from datetime import timedelta
+from typing import List
+from typing import Optional
 
 import graphene
 import graphene_sqlalchemy
@@ -79,6 +83,12 @@ class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):
     entries_deleted = graphene.Int()
 
 
+@dataclass
+class SessionData:
+    entry_ids: List[int]
+    publish_time: Optional[datetime]
+
+
 class SessionType(graphene.ObjectType):
     class Meta:
         name = 'Session'
@@ -90,28 +100,36 @@ class SessionType(graphene.ObjectType):
     starred_entries = graphene.Int()
 
     @staticmethod
-    def resolve_entries(session: dict, info, limit):
-        entry_ids = session.get('entry_ids', [])[:limit]
+    def resolve_entries(session: SessionData, info, limit):
+        entry_ids = session.entry_ids[:limit]
         entries = OrderedDict((entry_id, None) for entry_id in entry_ids)
         for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
             entries[entry.id] = entry
         return entries.values()
 
     @staticmethod
-    def resolve_feeds(session: dict, info):
+    def resolve_feeds(session: SessionData, info):
         feeds = OrderedDict((feed.id, feed) for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)))
         unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)
+        if session.publish_time:
+            unread_entries_query = unread_entries_query.filter(Entry.publish_time >= session.publish_time)
         for feed_id, unread_entries in unread_entries_query:
             feeds[feed_id].unread_entries = unread_entries
         return feeds.values()
 
     @staticmethod
-    def resolve_unread_entries(session: dict, info):
-        return db.session.query(Entry.id).filter(Entry.read_time.is_(None)).count()
+    def resolve_unread_entries(session: SessionData, info):
+        query = db.session.query(Entry.id).filter(Entry.read_time.is_(None))
+        if session.publish_time:
+            query = query.filter(Entry.publish_time >= session.publish_time)
+        return query.count()
 
     @staticmethod
-    def resolve_starred_entries(session: dict, info):
-        return db.session.query(Entry.id).filter(Entry.star_time.is_not(None)).count()
+    def resolve_starred_entries(session: SessionData, info):
+        query = db.session.query(Entry.id).filter(Entry.star_time.is_not(None))
+        if session.publish_time:
+            query = query.filter(Entry.publish_time >= session.publish_time)
+        return query.count()
 
 
 class UpdateFeedMutation(graphene.Mutation):
@@ -212,6 +230,7 @@ class Query(graphene.ObjectType):
         only_unread=graphene.Boolean(),
         only_starred=graphene.Boolean(),
         latest_first=graphene.Boolean(),
+        max_age=graphene.Int(),
     )
 
     @staticmethod
@@ -226,7 +245,7 @@ class Query(graphene.ObjectType):
         return Feed.query
 
     @staticmethod
-    def resolve_session(source, info, feed_id=None, only_unread=True, only_starred=False, latest_first=False):
+    def resolve_session(source, info, feed_id=None, only_unread=True, only_starred=False, latest_first=False, max_age=None):
         entry_ids = db.session.query(Entry.id)
         if feed_id:
             entry_ids = entry_ids.filter(Entry.feed_id == feed_id)
@@ -234,10 +253,16 @@ class Query(graphene.ObjectType):
             entry_ids = entry_ids.filter(Entry.read_time.is_(None))
         if only_starred:
             entry_ids = entry_ids.filter(Entry.star_time.is_not(None))
+        if isinstance(max_age, int):
+            publish_time = datetime.utcnow() - timedelta(days=max_age)
+            entry_ids = entry_ids.filter(Entry.publish_time >= publish_time)
+        else:
+            publish_time = None
         entry_ids = entry_ids.order_by(Entry.publish_time.desc() if latest_first else Entry.publish_time.asc())
 
-        return dict(
+        return SessionData(
             entry_ids=[entry_id for entry_id, in entry_ids],
+            publish_time=publish_time,
         )
 
 

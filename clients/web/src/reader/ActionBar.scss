@@ -74,6 +74,18 @@
             }
          }
 
+         &.calendar::after {
+            mask-image: url("../icons/action/calendar.svg");
+         }
+
+         &.calendar-day::after {
+            mask-image: url("../icons/action/calendar_day.svg");
+         }
+
+         &.calendar-week::after {
+            mask-image: url("../icons/action/calendar_week.svg");
+         }
+
          &.close::after {
             mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_close_24px.svg");
          }

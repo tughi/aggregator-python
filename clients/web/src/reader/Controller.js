@@ -106,7 +106,7 @@ export const Controller = ({ setShowSideNav, children }) => {
             history.push(link, { feed: true })
          }
 
-         setSessionParams({ ...sessionParams, revision: session.revision + 1 })
+         setSessionParams(params => ({ ...params, ...sessionParams, revision: session.revision + 1 }))
          setShowSideNav(false)
 
          window.removeEventListener('popstate', onPopState)
@@ -130,7 +130,7 @@ export const Controller = ({ setShowSideNav, children }) => {
             const { feedId, onlyUnread, onlyStarred } = createSessionParams(location)
             setSessionParams(params => {
                if (feedId !== params.feedId || onlyUnread !== params.onlyUnread || onlyStarred !== params.onlyStarred) {
-                  return { revision: params.revision + 1, feedId, onlyUnread, onlyStarred }
+                  return { ...params, revision: params.revision + 1, feedId, onlyUnread, onlyStarred }
                }
                return params
             })
@@ -150,12 +150,26 @@ export const Controller = ({ setShowSideNav, children }) => {
       setSessionParams(params => ({ ...params, latestFirst: !params.latestFirst }))
    }, [])
 
+   const toggleMaxAge = useCallback(() => {
+      setSessionParams(params => {
+         let { maxAge } = params
+         if (maxAge === 1) {
+            maxAge = 7
+         } else if (maxAge === 7) {
+            maxAge = null
+         } else {
+            maxAge = 1
+         }
+         return { ...params, maxAge }
+      })
+   }, [])
+
    const controller = useMemo(
       () => ({
-         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder, toggleMaxAge
       }),
       [
-         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder
+         activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, setShowSideNav, openFeed, session, refresh, toggleSortOrder, toggleMaxAge
       ]
    )
 
