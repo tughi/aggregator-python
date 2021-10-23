@@ -27,7 +27,7 @@ export const EntryViewer = () => {
                {activeEntry && (
                   <>
                      <ActionBar.Title>
-                        {activeEntryIndex + 1} / {entriesLength} / {entryIds.length}
+                        {activeEntryIndex + 1} / {entryIds.length}
                      </ActionBar.Title>
                      <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} onClick={() => toggleEntryStarState(activeEntry)} />
                      <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} onClick={() => toggleEntryReadState(activeEntry)} />
