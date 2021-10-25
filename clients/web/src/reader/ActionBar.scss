@@ -49,12 +49,6 @@
             border-radius: .5rem;
          }
 
-         &:focus {
-            &::before {
-               outline: red;
-            }
-         }
-
          &::after {
             background-color: $gray-600;
             mask-size: 1.5rem;
@@ -72,6 +66,10 @@
             &::before {
                background-color: $gray-200;
             }
+         }
+
+         &.active::after {
+            background-color: $orange-500;
          }
 
          &.calendar::after {

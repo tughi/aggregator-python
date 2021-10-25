@@ -10,8 +10,8 @@ export const ActionBar = ({ children }) => (
    </div>
 )
 
-const Action = ({ icon, onClick }) => (
-   <button className={classNames("action", icon)} onClick={onClick} />
+const Action = ({ icon, active, onClick }) => (
+   <button className={classNames("action", { active }, icon)} onClick={onClick} />
 )
 
 const Title = ({ children }) => (
