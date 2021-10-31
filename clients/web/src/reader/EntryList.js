@@ -46,6 +46,11 @@ export const EntryList = () => {
                {feedId == null && onlyStarred && "Starred"}
                {feedId && feedsById[feedId]?.title}
             </ActionBar.Title>
+            <ActionBar.Count>
+               {feedId == null && !onlyStarred && session.unreadEntries}
+               {feedId == null && onlyStarred && session.starredEntries}
+               {feedId && feedsById[feedId]?.unreadEntries}
+            </ActionBar.Count>
             <ActionBar.Action icon={maxAge == null ? "calendar" : maxAge === 1 ? "calendar-day" : "calendar-week"} active={!!maxAge} onClick={toggleMaxAge} />
             <ActionBar.Action icon={latestFirst ? "sort-up" : "sort-down"} onClick={toggleSortOrder} />
             <ActionBar.Action icon="refresh" onClick={refresh} />

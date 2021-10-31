@@ -14,6 +14,12 @@ const Action = ({ icon, active, onClick }) => (
    <button className={classNames("action", { active }, icon)} onClick={onClick} />
 )
 
+const Count = ({ children }) => (
+   <div className="count">
+      {children}
+   </div>
+)
+
 const Title = ({ children }) => (
    <div className="title">
       {children}
@@ -21,4 +27,5 @@ const Title = ({ children }) => (
 )
 
 Object.defineProperty(ActionBar, 'Action', { value: Action })
+Object.defineProperty(ActionBar, 'Count', { value: Count })
 Object.defineProperty(ActionBar, 'Title', { value: Title })
