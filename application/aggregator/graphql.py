@@ -59,11 +59,11 @@ class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
 
     @staticmethod
     def resolve_content(self: Entry, info):
-        return json.loads(self.content)
+        return self.sanitized_content
 
     @staticmethod
     def resolve_summary(self: Entry, info):
-        return json.loads(self.summary)
+        return self.sanitized_summary
 
 
 class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):

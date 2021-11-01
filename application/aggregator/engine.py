@@ -65,6 +65,7 @@ def update_feed(feed: Feed, forced: bool = False):
         etag=None if forced else feed.http_etag,
         modified=None if forced else feed.http_last_modified,
         resolve_relative_uris=False,
+        sanitize_html=False,
     )
 
     if not feed_data:
@@ -85,9 +86,36 @@ def update_feed(feed: Feed, forced: bool = False):
 
         logger.info(f"Feed moved to: {feed.url}")
 
+    entries_created, entries_updated = _save_entries(feed, feed_data, update_time)
+
+    schedule_next_update(feed, update_time)
+
+    logger.info(f"Next update time: {feed.next_update_time}")
+
+    feed.http_etag = feed_data.get('etag')
+    feed.http_last_modified = feed_data.get('modified')
+
+    db.session.commit()
+
+    feed.entries_created = entries_created
+    feed.entries_updated = entries_updated
+
+    return dict(
+        id=feed.id,
+        title=feed.user_title,
+        url=feed.url,
+        next_update=feed.next_update_time,
+        entries=dict(
+            created=entries_created,
+            updated=entries_updated,
+        ),
+    )
+
+
+def _save_entries(feed: Feed, feed_data, update_time: datetime):
     entries_total = len(feed_data.entries)
-    entries_updated = 0
     entries_created = 0
+    entries_updated = 0
 
     for entry_data in feed_data.entries:
         entry_link = entry_data.get('link')
@@ -114,28 +142,7 @@ def update_feed(feed: Feed, forced: bool = False):
 
     logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
 
-    schedule_next_update(feed, update_time)
-
-    logger.info(f"Next update time: {feed.next_update_time}")
-
-    feed.http_etag = feed_data.get('etag')
-    feed.http_last_modified = feed_data.get('modified')
-
-    db.session.commit()
-
-    feed.entries_created = entries_created
-    feed.entries_updated = entries_updated
-
-    return dict(
-        id=feed.id,
-        title=feed.user_title,
-        url=feed.url,
-        next_update=feed.next_update_time,
-        entries=dict(
-            created=entries_created,
-            updated=entries_updated,
-        ),
-    )
+    return entries_created, entries_updated
 
 
 def _as_content(content_data):

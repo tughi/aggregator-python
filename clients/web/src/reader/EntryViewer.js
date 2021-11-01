@@ -53,7 +53,7 @@ export const EntryViewer = () => {
 }
 
 const Entry = ({ entry, feed, children }) => (
-   <div className="entry">
+   <div key={entry.id} className="entry">
       {entry && (
          <div className="content">
             <div className="header">

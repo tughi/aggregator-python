@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from datetime import timezone
 
@@ -11,6 +12,8 @@ from sqlalchemy import TypeDecorator
 from sqlalchemy import Unicode
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
+
+from aggregator.sanitizer import sanitize_entry_content
 
 db = SQLAlchemy()
 
@@ -85,6 +88,18 @@ class Entry(db.Model):
     keep_time = Column(TimeStamp, nullable=True)
     read_time = Column(TimeStamp, nullable=True)
     star_time = Column(TimeStamp, nullable=True)
+
+    @property
+    def sanitized_summary(self):
+        summary = json.loads(self.summary)
+        sanitized_summary = sanitize_entry_content(summary, base_url=self.link)
+        return sanitized_summary
+
+    @property
+    def sanitized_content(self):
+        content = json.loads(self.content)
+        sanitized_content = [sanitize_entry_content(_, base_url=self.link) for _ in content]
+        return sanitized_content
 
 
 Entry.feed = relationship(Feed)
