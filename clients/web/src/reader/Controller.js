@@ -86,6 +86,9 @@ export const Controller = ({ setShowSideNav, children }) => {
          } else if (key === 83/*s*/ && activeEntryIndex !== -1) {
             const activeEntry = session.entries[activeEntryIndex]
             session.toggleEntryStarState(activeEntry)
+         } else if (key === 86/*v*/ && activeEntryIndex !== -1) {
+            const activeEntry = session.entries[activeEntryIndex]
+            window.open(activeEntry.link)
          }
       }
 
