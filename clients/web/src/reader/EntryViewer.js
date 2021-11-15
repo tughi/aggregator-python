@@ -1,7 +1,7 @@
 import "./EntryViewer.scss"
 
 import classNames from "classnames"
-import { useEffect } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
 import { formatFullEntryTime } from "../utils/date"
@@ -52,27 +52,50 @@ export const EntryViewer = () => {
    )
 }
 
-const Entry = ({ entry, feed, children }) => (
-   <div key={entry.id} className="entry">
-      {entry && (
-         <div className="content">
-            <div className="header">
-               <div className="source">
-                  <span className="feed">{feed.userTitle || feed.title}</span>
-                  {entry.author && (
-                     <span className="author">{entry.author.name}</span>
-                  )}
+const onLinkClick = event => {
+   const element = event.target.closest('a')
+   if (element) {
+      event.preventDefault()
+      const href = element.getAttribute('href')
+      if (href) {
+         window.open(href, '_blank', 'noopener noreferrer')
+      }
+   }
+}
+
+const Entry = ({ entry, feed, children }) => {
+   const contentRef = useRef(null)
+   const onContentRef = useCallback(node => {
+      if (node) {
+         node.addEventListener('click', onLinkClick)
+      } else if (contentRef.current) {
+         contentRef.current.removeEventListener('click', onLinkClick)
+      }
+      contentRef.current = node
+   }, [])
+
+   return (
+      <div key={entry.id} className="entry">
+         {entry && (
+            <div ref={onContentRef} className="content">
+               <div className="header">
+                  <div className="source">
+                     <span className="feed">{feed.userTitle || feed.title}</span>
+                     {entry.author && (
+                        <span className="author">{entry.author.name}</span>
+                     )}
+                  </div>
+                  <h2><a className="title" href={entry.link}>{entry.title}</a></h2>
+                  <div>
+                     <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
+                  </div>
                </div>
-               <h2><a className="title" href={entry.link} target="_blank" rel="noreferrer">{entry.title}</a></h2>
-               <div>
-                  <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
-               </div>
+               {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
+                  <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
+               ))}
             </div>
-            {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
-               <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
-            ))}
-         </div>
-      )}
-      {children}
-   </div>
-)
+         )}
+         {children}
+      </div>
+   )
+}
