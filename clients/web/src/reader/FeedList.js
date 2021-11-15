@@ -46,7 +46,7 @@ const FeedItem = ({ link, title, count, active, sessionParams }) => {
    }
 
    return (
-      <a className={classNames("feed", { active, hidden: !count })} href={link} onClick={onClick}>
+      <a className={classNames("feed", { active, hidden: !count && !active })} href={link} onClick={onClick}>
          <span className="title">{title}</span>
          {count > 0 && (
             <span className="count">{count}</span>
