@@ -1,15 +1,18 @@
 @import "../colors.scss";
 
+
 @mixin custom-scrollbar($thumb-color, $track-color) {
+   $scrollbar-width: 12px;
+
    scrollbar-color: $thumb-color $track-color;
-   scrollbar-width: 12px;
+   scrollbar-width: $scrollbar-width;
    &::-webkit-scrollbar {
-      width: 12px;
+      width: $scrollbar-width;
    }
    &::-webkit-scrollbar-thumb {
       background-clip: padding-box;
       background-color: $thumb-color;
-      border-radius: 12px;
+      border-radius: $scrollbar-width;
       border: 3px solid $track-color;
       &:hover {
          background-color: darken($thumb-color, 10%);
