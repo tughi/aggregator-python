@@ -10,8 +10,8 @@ export const ActionBar = ({ children }) => (
    </div>
 )
 
-const Action = ({ icon, active, onClick }) => (
-   <button className={classNames("action", { active }, icon)} onClick={onClick} />
+const Action = ({ icon, active, onClick, disabled }) => (
+   <button className={classNames("action", { active }, icon)} onClick={onClick} disabled={disabled} />
 )
 
 const Count = ({ children }) => (

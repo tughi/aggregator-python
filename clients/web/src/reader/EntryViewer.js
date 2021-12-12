@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react"
 import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
 import { formatFullEntryTime } from "../utils/date"
+import { range } from "../utils/array"
 
 export const EntryViewer = () => {
    const { activeEntryIndex, setActiveEntryIndex, isViewerVisible, setIsViewerVisible, session } = useController()
@@ -29,6 +30,8 @@ export const EntryViewer = () => {
                      <ActionBar.Title>
                         {activeEntryIndex + 1} / {entryIds.length}
                      </ActionBar.Title>
+                     <ActionBar.Action icon="arrow-back" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0} />
+                     <ActionBar.Action icon="arrow-forward" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1} />
                      <ActionBar.Action icon={activeEntry.starTime ? "star-on" : "star-off"} onClick={() => toggleEntryStarState(activeEntry)} />
                      <ActionBar.Action icon={activeEntry.keepTime ? "entry-pinned" : activeEntry.readTime ? "entry-done" : "entry-new"} active={!!activeEntry.keepTime} onClick={() => toggleEntryReadState(activeEntry)} />
                   </>
@@ -36,17 +39,18 @@ export const EntryViewer = () => {
             </ActionBar>
          </div>
          <div className="body">
-            {isViewerVisible && activeEntry && (
-               <Entry entry={activeEntry} feed={feedsById[activeEntry.feedId]}>
-                  <div className="entry-toolbar">
-                     <button className="prev" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.max(activeEntryIndex - 1, 0))} disabled={activeEntryIndex <= 0}>
-                     </button>
-
-                     <button className="next" onClick={() => setActiveEntryIndex(activeEntryIndex => Math.min(activeEntryIndex + 1, entriesLength - 1))} disabled={activeEntryIndex >= entriesLength - 1}>
-                     </button>
-                  </div>
-               </Entry>
-            )}
+            {isViewerVisible && range(Math.max(0, activeEntryIndex - 2), Math.min(activeEntryIndex + 3, entriesLength)).map(entryIndex => {
+               const entry = entries[entryIndex]
+               let className = null
+               if (activeEntryIndex > entryIndex) {
+                  className = `prev-${activeEntryIndex - entryIndex}`
+               } else if (activeEntryIndex < entryIndex) {
+                  className = `next-${entryIndex - activeEntryIndex}`
+               }
+               return (
+                  <Entry key={entry.id} className={className} entry={entry} feed={feedsById[entry.feedId]} />
+               )
+            })}
          </div>
       </div>
    )
@@ -63,7 +67,7 @@ const onLinkClick = event => {
    }
 }
 
-const Entry = ({ entry, feed, children }) => {
+const Entry = ({ className, entry, feed }) => {
    const contentRef = useRef(null)
    const onContentRef = useCallback(node => {
       if (node) {
@@ -75,7 +79,7 @@ const Entry = ({ entry, feed, children }) => {
    }, [])
 
    return (
-      <div key={entry.id} className="entry">
+      <div key={entry.id} className={classNames("entry", className)}>
          {entry && (
             <div ref={onContentRef} className="content">
                <div className="header">
@@ -95,7 +99,6 @@ const Entry = ({ entry, feed, children }) => {
                ))}
             </div>
          )}
-         {children}
       </div>
    )
 }

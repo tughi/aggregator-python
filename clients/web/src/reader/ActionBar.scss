@@ -80,6 +80,33 @@
             background-color: $orange-500;
          }
 
+         &:disabled {
+            opacity: .5;
+            cursor: default;
+
+            &:hover {
+               &::before {
+                  background: none;
+               }
+            }
+         }
+
+         &.arrow-back::after {
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_back.svg");
+         }
+
+         &.arrow-downward::after {
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_downward.svg");
+         }
+
+         &.arrow-forward::after {
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_forward.svg");
+         }
+
+         &.arrow-upward::after {
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_upward.svg");
+         }
+
          &.calendar::after {
             mask-image: url("../icons/action/calendar.svg");
          }
@@ -93,7 +120,7 @@
          }
 
          &.close::after {
-            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_close_24px.svg");
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/close.svg");
          }
 
          &.entry-done::after {
@@ -109,11 +136,11 @@
          }
 
          &.menu::after {
-            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_menu_24px.svg");
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/menu.svg");
          }
 
          &.refresh::after {
-            mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_refresh_24px.svg");
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/refresh.svg");
          }
 
          &.sort-down::after {
@@ -125,11 +152,11 @@
          }
 
          &.star-off::after {
-            mask-image: url("../../node_modules/material-design-icons/toggle/svg/production/ic_star_border_24px.svg");
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/star_border.svg");
          }
 
          &.star-on::after {
-            mask-image: url("../../node_modules/material-design-icons/toggle/svg/production/ic_star_24px.svg");
+            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/star.svg");
          }
       }
    }

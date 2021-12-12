@@ -1,143 +1,107 @@
 @import "./utils.scss";
 
+$shadow-size: 1rem;
+
 .EntryViewer {
-   top: 100%;
-   opacity: 0;
-   transition:
-      top .25s linear,
-      opacity .25s linear;
+   display: flex;
+   flex-direction: column;
+   top: calc(100% + #{$shadow-size});
+   box-shadow: 0 0 $shadow-size $gray-300;
+   transition: top .25s ease-in-out;
 
    &.active {
-      top: 0%;
-      opacity: 1;
+      top: 0;
    }
 
    background-color: white;
 
-   > .body > .entry {
-      position: absolute;
+   > .header {
+      background-color: white;
+      z-index: 1;
+   }
+
+   > .body {
+      position: relative;
       width: 100%;
-      height: calc(100% - 3rem);
+      height: 100%;
 
-      overflow: hidden scroll;
-      @include custom-scrollbar($gray-500, $gray-200);
+       > .entry {
+         $transition: top;
 
-      > .content {
-         max-width: 50rem;
-         min-height: calc(100vh - 5.5rem);
-         margin: 0 auto;
-         padding: 1rem 0 5rem 0;
-         box-sizing: border-box;
-         line-height: 1.5;
+         position: absolute;
+         width: 100%;
+         height: 100%;
+         background-color: white;
+         box-shadow: 0 0 $shadow-size $gray-300;
+         #{$transition}: 0;
+         transition: #{$transition} .25s ease-in-out;
 
-         > div {
-            padding: 1rem;
-            border-bottom: 1px solid $orange-500;
-
-            &:last-child {
-               border-bottom: none;
-            }
+         &.next-1,
+         &.next-2 {
+            #{$transition}: calc(100% + #{$shadow-size});
          }
 
-         > .header {
-            > .source {
-               > .author {
-                  color: $text-secondary;
+         overflow: hidden scroll;
+         @include custom-scrollbar($gray-500, $gray-200);
 
-                  &::before {
-                     content: ' :: ';
+         > .content {
+            max-width: 50rem;
+            min-height: 100%;
+            margin: 0 auto;
+            padding: 1rem 0 5rem 0;
+            box-sizing: border-box;
+            line-height: 1.5;
+
+            > div {
+               padding: 1rem;
+               border-bottom: 1px solid $orange-500;
+
+               &:last-child {
+                  border-bottom: none;
+               }
+            }
+
+            > .header {
+               > .source {
+                  > .author {
+                     color: $text-secondary;
+
+                     &::before {
+                        content: ' :: ';
+                     }
                   }
                }
             }
-         }
 
-         p {
-            margin: 1em 0 0;
-         }
-
-         img {
-            max-width: 100%;
-            height: auto;
-         }
-
-         a {
-            color: $text-primary;
-            text-decoration: inherit;
-         }
-
-         blockquote {
-            position: relative;
-            background: $orange-100;
-            margin: 1rem 0 0;
-            padding: 1rem 1rem 1rem 2.25rem;
-            border-left: .25rem solid $orange-500;
-
-            &::before {
-               content: '”';
-               position: absolute;
-               left: .5rem;
-               top: -2rem;
-               color: $orange-500;
-               font-size: 4rem;
-            }
-         }
-      }
-
-      > .entry-toolbar {
-         position: sticky;
-         bottom: 5rem;
-         left: 0;
-         right: 0;
-         height: 2.5rem;
-
-         display: flex;
-         flex-direction: row;
-         justify-content: space-between;
-
-         button {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            background-color: $gray-100;
-            border: 1px solid $gray-200;
-            box-sizing: border-box;
-
-            &::after {
-               content: '';
-               display: block;
-               width: 2rem;
-               height: 2rem;
-               background-color: $gray-500;
-               mask-position: center;
-               mask-repeat: no-repeat;
+            p {
+               margin: 1em 0 0;
             }
 
-            &:hover {
-               background-color: $gray-200;
+            img {
+               max-width: 100%;
+               height: auto;
             }
 
-            &:active {
-               background-color: $gray-300;
+            a {
+               color: $text-primary;
+               text-decoration: inherit;
             }
-         }
 
-         > button.prev {
-            border-radius: 0 1rem 1rem 0;
-            border-left: none;
-            padding: 0 .75rem 0 .5rem;
+            blockquote {
+               position: relative;
+               background: $orange-100;
+               margin: 1rem 0 0;
+               padding: 1rem 1rem 1rem 2.25rem;
+               border-left: .25rem solid $orange-500;
 
-            &::after {
-               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_arrow_back_24px.svg");
-            }
-         }
-
-         > button.next {
-            border-radius: 1rem 0 0 1rem;
-            border-right: none;
-            padding: 0 .5rem 0 .75rem;
-
-            &::after {
-               mask-image: url("../../node_modules/material-design-icons/navigation/svg/production/ic_arrow_forward_24px.svg");
+               &::before {
+                  content: '”';
+                  position: absolute;
+                  left: .5rem;
+                  top: -2rem;
+                  color: $orange-500;
+                  font-size: 4rem;
+               }
             }
          }
       }
