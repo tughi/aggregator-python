@@ -26,20 +26,11 @@ $shadow-size: 1rem;
       height: 100%;
 
        > .entry {
-         $transition: top;
-
          position: absolute;
          width: 100%;
          height: 100%;
          background-color: white;
          box-shadow: 0 0 $shadow-size $gray-300;
-         #{$transition}: 0;
-         transition: #{$transition} .25s ease-in-out;
-
-         &.next-1,
-         &.next-2 {
-            #{$transition}: calc(100% + #{$shadow-size});
-         }
 
          overflow: hidden scroll;
          @include custom-scrollbar($gray-500, $gray-200);
@@ -105,5 +96,25 @@ $shadow-size: 1rem;
             }
          }
       }
+   }
+}
+
+.click-mode .EntryViewer > .body > .entry {
+   top: 0;
+   transition: top .25s ease-in-out;
+
+   &.next-1,
+   &.next-2 {
+      top: calc(100% + #{$shadow-size});
+   }
+}
+
+.touch-mode .EntryViewer > .body > .entry {
+   left: 0;
+   transition: left .25s ease-in-out;
+
+   &.next-1,
+   &.next-2 {
+      left: calc(100% + #{$shadow-size});
    }
 }
