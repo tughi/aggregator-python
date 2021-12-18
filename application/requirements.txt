@@ -5,9 +5,9 @@ flask-sqlalchemy==2.5.1
 graphene==2.1.9
 graphene-sqlalchemy==2.3.0
 gunicorn==20.1.0
-lxml==4.6.3
+lxml==4.7.1
 opml==0.5
-psycopg2-binary==2.9.1
-python-dotenv==0.19.1
+psycopg2-binary==2.9.2
+python-dotenv==0.19.2
 requests==2.26.0
-sqlalchemy==1.4.26
+sqlalchemy==1.4.28

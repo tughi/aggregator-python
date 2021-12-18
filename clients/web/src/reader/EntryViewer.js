@@ -132,8 +132,6 @@ export const EntryViewer = () => {
          body.removeEventListener('touchstart', touchStartListener)
          body.removeEventListener('touchmove', touchMoveListener)
          body.removeEventListener('touchend', touchEndListener)
-
-         console.log('DUCK!')
       }
    }, [entriesLength, setActiveEntryIndex])
 
