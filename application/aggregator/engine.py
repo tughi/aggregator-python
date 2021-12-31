@@ -102,7 +102,8 @@ def update_feed(feed: Feed, forced: bool = False):
 
     return dict(
         id=feed.id,
-        title=feed.user_title,
+        title=feed.title,
+        user_title=feed.user_title,
         url=feed.url,
         next_update=feed.next_update_time,
         entries=dict(
