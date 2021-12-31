@@ -44,7 +44,7 @@ export const EntryList = () => {
             <ActionBar.Title>
                {feedId == null && !onlyStarred && "All"}
                {feedId == null && onlyStarred && "Starred"}
-               {feedId && feedsById[feedId]?.title}
+               {feedId && (feedsById[feedId]?.userTitle || feedsById[feedId]?.title)}
             </ActionBar.Title>
             <ActionBar.Count>
                {feedId == null && !onlyStarred && session.unreadEntries}
