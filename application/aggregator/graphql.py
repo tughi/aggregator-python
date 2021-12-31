@@ -146,16 +146,17 @@ class SessionType(graphene.ObjectType):
 class CreateFeedMutation(graphene.Mutation):
     class Arguments:
         feed_url = graphene.String(name='url', required=True)
+        feed_user_title = graphene.String(name='userTitle')
 
     ok = graphene.Boolean()
     feed = graphene.Field(FeedType)
     feed_id = graphene.Int()
 
     @staticmethod
-    def mutate(source, info, feed_url: str):
+    def mutate(source, info, feed_url: str, feed_user_title: str = None):
         feed_url = feed_url.strip()
 
-        result = engine.add_feed(feed_url)
+        result = engine.add_feed(feed_url, feed_user_title=feed_user_title)
 
         return dict(ok=True, feed_id=result['id'])
 
