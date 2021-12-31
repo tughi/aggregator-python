@@ -82,6 +82,14 @@ class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):
     entries_updated = graphene.Int()
     entries_deleted = graphene.Int()
 
+    @staticmethod
+    def resolve_unread_entries(feed: Feed, info):
+        try:
+            unread_entries = feed.unread_entries
+        except AttributeError:
+            unread_entries = Entry.query.filter(Entry.feed_id == feed.id, Entry.read_time.is_(None)).count()
+        return unread_entries
+
 
 @dataclass
 class SessionData:
@@ -109,7 +117,10 @@ class SessionType(graphene.ObjectType):
 
     @staticmethod
     def resolve_feeds(session: SessionData, info):
-        feeds = OrderedDict((feed.id, feed) for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)))
+        feeds = OrderedDict()
+        for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)):
+            feed.unread_entries = 0
+            feeds[feed.id] = feed
         unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)
         if session.publish_time:
             unread_entries_query = unread_entries_query.filter(Entry.publish_time >= session.publish_time)
@@ -130,6 +141,27 @@ class SessionType(graphene.ObjectType):
         if session.publish_time:
             query = query.filter(Entry.publish_time >= session.publish_time)
         return query.count()
+
+
+class CreateFeedMutation(graphene.Mutation):
+    class Arguments:
+        feed_url = graphene.String(name='url', required=True)
+
+    ok = graphene.Boolean()
+    feed = graphene.Field(FeedType)
+    feed_id = graphene.Int()
+
+    @staticmethod
+    def mutate(source, info, feed_url: str):
+        feed_url = feed_url.strip()
+
+        result = engine.add_feed(feed_url)
+
+        return dict(ok=True, feed_id=result['id'])
+
+    @staticmethod
+    def resolve_feed(result, info):
+        return Feed.query.get(result['feed_id'])
 
 
 class UpdateFeedMutation(graphene.Mutation):
@@ -269,6 +301,7 @@ class Query(graphene.ObjectType):
 class Mutations(graphene.ObjectType):
     refresh_feed = RefreshFeedMutation.Field()
     refresh_feed_favicon = RefreshFeedFaviconMutation.Field()
+    create_feed = CreateFeedMutation.Field()
     update_feed = UpdateFeedMutation.Field()
     update_entry_state = UpdateEntryState.Field()
 
