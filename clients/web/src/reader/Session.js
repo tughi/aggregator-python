@@ -58,9 +58,12 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
       setEntriesOffset(0)
    }, [sessionQueryVariables])
 
+   useEffect(() => {
+      setFeedsById((feeds || []).reduce((feedsById, feed) => ({ ...feedsById, [feed.id]: feed }), {}))
+   }, [feeds])
+
    const consumeSessionData = useCallback(({ session }) => {
       setFeeds(session.feeds)
-      setFeedsById(session.feeds.reduce((feedsById, feed) => ({ ...feedsById, [feed.id]: feed })))
       setUnreadEntries(session.unreadEntries)
       setStarredEntries(session.starredEntries)
       setEntryIds(session.entryIds)
