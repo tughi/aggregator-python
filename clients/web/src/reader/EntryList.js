@@ -94,7 +94,11 @@ const EntryItem = React.forwardRef(({ entry, feed, isActive, onClick }, ref) => 
       <div className={classNames("entry", { unread: !entry.readTime, active: isActive })} ref={ref} >
          <div className="summary" onClick={onClick}>
             <a className="favicon" onClick={event => event.stopPropagation()} href={entry.link} target="_blank" rel="noopener noreferrer">
-               <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
+               {feed.faviconUrl ? (
+                  <span className="image" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
+               ) : (
+                  <span className={`image rss-icon-${feed.id % 10/*sass:length($colors)*/ + 1}`} />
+               )}
             </a>
             <div className="title">{entry.title}</div>
             <div className="date">{formatRelativeEntryTime(entry.publishTime)}</div>

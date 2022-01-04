@@ -56,6 +56,18 @@
                   height: var(--summary-height);
                   background: transparent center no-repeat;
                   background-size: 1rem;
+
+                  $colors: $red $pink $purple $indigo $blue $cyan $teal $green $yellow $orange;
+                  @each $color in $colors {
+                     &.rss-icon-#{index($colors, $color)}::after {
+                        content: '';
+                        display: block;
+                        height: var(--summary-height);
+                        background-color: $color;
+                        mask: url('../icons/favicon/rss.svg') center no-repeat;
+                        mask-size: 1rem;
+                     }
+                  }
                }
 
                &:focus {
