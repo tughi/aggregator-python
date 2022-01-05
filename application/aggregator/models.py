@@ -91,12 +91,14 @@ class Entry(db.Model):
 
     @property
     def sanitized_summary(self):
+        # TODO: Sanitize at aggregation time or leave it to the client. This operation has a big impact on performance.
         summary = json.loads(self.summary)
         sanitized_summary = sanitize_entry_content(summary, base_url=self.link)
         return sanitized_summary
 
     @property
     def sanitized_content(self):
+        # TODO: Sanitize at aggregation time or leave it to the client. This operation has a big impact on performance.
         content = json.loads(self.content)
         sanitized_content = [sanitize_entry_content(_, base_url=self.link) for _ in content]
         return sanitized_content
