@@ -11,15 +11,15 @@
       @include custom-scrollbar($gray-500, $gray-200);
 
       > .entry {
+         --entry-background-color: transparent;
+         --entry-summary-color: #{$text-secondary};
+         --entry-summary-height: 2rem;
+         --entry-unread-color: #{$text-body};
+
          margin: 0 auto;
          max-width: 50rem;
 
          border-bottom: 1px solid $gray-200;
-
-         --background-color: white;
-         --summary-color: #{$text-secondary};
-         --summary-height: 2rem;
-         --unread-color: #{$text-body};
 
          &:first-child {
             margin-top: 1rem;
@@ -32,14 +32,14 @@
 
          > .summary {
             display: flex;
-            line-height: var(--summary-height);
-            min-height: var(--summary-height);
-            background-color: var(--background-color);
-            color: var(--summary-color);
+            line-height: var(--entry-summary-height);
+            min-height: var(--entry-summary-height);
+            background-color: var(--entry-background-color);
+            color: var(--entry-summary-color);
             cursor: pointer;
 
             &:hover {
-               --background-color: #{$gray-100};
+               --entry-background-color: #{$gray-100};
             }
 
             > a.favicon {
@@ -48,12 +48,12 @@
                align-items: center;
                justify-content: center;
                width: 3rem;
-               height: var(--summary-height);
+               height: var(--entry-summary-height);
 
                > .image {
                   display: block;
                   width: 2rem;
-                  height: var(--summary-height);
+                  height: var(--entry-summary-height);
                   background: transparent center no-repeat;
                   background-size: 1rem;
 
@@ -62,7 +62,7 @@
                      &.rss-icon-#{index($colors, $color)}::after {
                         content: '';
                         display: block;
-                        height: var(--summary-height);
+                        height: var(--entry-summary-height);
                         background-color: $color;
                         mask: url('../icons/favicon/rss.svg') center no-repeat;
                         mask-size: 1rem;
@@ -103,8 +103,8 @@
                   position: absolute;
                   right: 0;
                   width: 3rem;
-                  height: var(--summary-height);
-                  background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--background-color));
+                  height: var(--entry-summary-height);
+                  background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--entry-background-color));
                }
             }
 
@@ -121,7 +121,7 @@
                align-items: center;
                justify-content: center;
                width: 3rem;
-               height: var(--summary-height);
+               height: var(--entry-summary-height);
                background: none;
                border: none;
                padding: 0;
@@ -129,8 +129,8 @@
                &::after {
                   content: '';
                   width: 2rem;
-                  height: var(--summary-height);
-                  background-color: var(--summary-color);
+                  height: var(--entry-summary-height);
+                  background-color: var(--entry-summary-color);
                   mask-position: center;
                   mask-repeat: no-repeat;
                   mask-size: 1.5rem;
@@ -157,7 +157,7 @@
                      display: block;
                      position: absolute;
                      width: 2rem;
-                     height: var(--summary-height);
+                     height: var(--entry-summary-height);
                      outline: thin dotted;
                   }
                }
@@ -168,7 +168,7 @@
                      display: block;
                      position: absolute;
                      width: 2rem;
-                     height: var(--summary-height);
+                     height: var(--entry-summary-height);
                      background-color: $gray-200;
                   }
                }
@@ -184,19 +184,19 @@
          &.unread {
             > .summary {
                > .title {
-                  color: var(--unread-color);
+                  color: var(--entry-unread-color);
                }
             }
          }
 
          &.active {
-            --background-color: #{$orange-100};
-            --summary-color: #{$orange-200};
-            --unread-color: #{$orange-500};
+            --entry-background-color: #{$orange-100};
+            --entry-summary-color: #{$orange-200};
+            --entry-unread-color: #{$orange-500};
          }
 
          @media (hover: none) and (pointer: coarse) {
-            --summary-height: 3rem;
+            --entry-summary-height: 3rem;
          }
       }
 
