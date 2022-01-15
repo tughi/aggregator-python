@@ -16,8 +16,19 @@
          --entry-summary-height: 2rem;
          --entry-unread-color: #{$text-body};
 
+         @media (hover: none) and (pointer: coarse) {
+            --entry-summary-height: 3rem;
+         }
+
          margin: 0 auto;
          max-width: 50rem;
+
+         display: flex;
+         line-height: var(--entry-summary-height);
+         min-height: var(--entry-summary-height);
+         background-color: var(--entry-background-color);
+         color: var(--entry-summary-color);
+         cursor: pointer;
 
          border-bottom: 1px solid $gray-200;
 
@@ -30,163 +41,8 @@
             border-bottom: none;
          }
 
-         > .summary {
-            display: flex;
-            line-height: var(--entry-summary-height);
-            min-height: var(--entry-summary-height);
-            background-color: var(--entry-background-color);
-            color: var(--entry-summary-color);
-            cursor: pointer;
-
-            &:hover {
-               --entry-background-color: #{$gray-100};
-            }
-
-            > a.favicon {
-               flex-shrink: 0;
-               display: flex;
-               align-items: center;
-               justify-content: center;
-               width: 3rem;
-               height: var(--entry-summary-height);
-
-               > .image {
-                  display: block;
-                  width: 2rem;
-                  height: var(--entry-summary-height);
-                  background: transparent center no-repeat;
-                  background-size: 1rem;
-
-                  $colors: $red $pink $purple $indigo $blue $cyan $teal $green $yellow $orange;
-                  @each $color in $colors {
-                     &.rss-icon-#{index($colors, $color)}::after {
-                        content: '';
-                        display: block;
-                        height: var(--entry-summary-height);
-                        background-color: $color;
-                        mask: url('../icons/favicon/rss.svg') center no-repeat;
-                        mask-size: 1rem;
-                     }
-                  }
-               }
-
-               &:focus {
-                  outline: none;
-
-                  > .image {
-                     outline: thin dotted;
-                  }
-               }
-
-               &:hover {
-                  > .image {
-                     background-color: $gray-200;
-                  }
-               }
-
-               &:active {
-                  > .image {
-                     background-color: $gray-300;
-                  }
-               }
-            }
-
-            > .title {
-               flex-grow: 1;
-               overflow: hidden;
-               white-space: nowrap;
-               position: relative;
-
-               &::before {
-                  content: '';
-                  display: block;
-                  position: absolute;
-                  right: 0;
-                  width: 3rem;
-                  height: var(--entry-summary-height);
-                  background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--entry-background-color));
-               }
-            }
-
-            > .date {
-               flex-shrink: 0;
-               white-space: nowrap;
-               padding: 0 0 0 .5rem;
-            }
-
-            > button.state {
-               flex-shrink: 0;
-               position: relative;
-               display: flex;
-               align-items: center;
-               justify-content: center;
-               width: 3rem;
-               height: var(--entry-summary-height);
-               background: none;
-               border: none;
-               padding: 0;
-
-               &::after {
-                  content: '';
-                  width: 2rem;
-                  height: var(--entry-summary-height);
-                  background-color: var(--entry-summary-color);
-                  mask-position: center;
-                  mask-repeat: no-repeat;
-                  mask-size: 1.5rem;
-                  mask-image: url('../icons/action/entry_new.svg');
-               }
-
-               &.done {
-                  &::after {
-                     mask-image: url('../icons/action/entry_done.svg');
-                  }
-               }
-
-               &.pinned {
-                  &::after {
-                     mask-image: url('../icons/action/entry_pinned.svg');
-                  }
-               }
-
-               &:focus {
-                  outline: none;
-
-                  &::before {
-                     content: '';
-                     display: block;
-                     position: absolute;
-                     width: 2rem;
-                     height: var(--entry-summary-height);
-                     outline: thin dotted;
-                  }
-               }
-
-               &:hover {
-                  &::before {
-                     content: '';
-                     display: block;
-                     position: absolute;
-                     width: 2rem;
-                     height: var(--entry-summary-height);
-                     background-color: $gray-200;
-                  }
-               }
-
-               &:active {
-                  &::before {
-                     background-color: $gray-300;
-                  }
-               }
-            }
-         }
-
-         &.unread {
-            > .summary {
-               > .title {
-                  color: var(--entry-unread-color);
-               }
-            }
+         &:hover {
+            --entry-background-color: #{$gray-100};
          }
 
          &.active {
@@ -195,22 +51,160 @@
             --entry-unread-color: #{$orange-500};
          }
 
-         @media (hover: none) and (pointer: coarse) {
-            --entry-summary-height: 3rem;
+         > a.favicon {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: var(--entry-summary-height);
+
+            > .image {
+               display: block;
+               width: 2rem;
+               height: var(--entry-summary-height);
+               background: transparent center no-repeat;
+               background-size: 1rem;
+
+               $colors: $red $pink $purple $indigo $blue $cyan $teal $green $yellow $orange;
+               @each $color in $colors {
+                  &.rss-icon-#{index($colors, $color)}::after {
+                     content: '';
+                     display: block;
+                     height: var(--entry-summary-height);
+                     background-color: $color;
+                     mask: url('../icons/favicon/rss.svg') center no-repeat;
+                     mask-size: 1rem;
+                  }
+               }
+            }
+
+            &:focus {
+               outline: none;
+
+               > .image {
+                  outline: thin dotted;
+               }
+            }
+
+            &:hover {
+               > .image {
+                  background-color: $gray-200;
+               }
+            }
+
+            &:active {
+               > .image {
+                  background-color: $gray-300;
+               }
+            }
+         }
+
+         > .title {
+            flex-grow: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+
+            &::before {
+               content: '';
+               display: block;
+               position: absolute;
+               right: 0;
+               width: 3rem;
+               height: var(--entry-summary-height);
+               background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--entry-background-color));
+            }
+         }
+
+         &.unread {
+            > .title {
+               color: var(--entry-unread-color);
+            }
+         }
+
+         > .date {
+            flex-shrink: 0;
+            white-space: nowrap;
+            padding: 0 0 0 .5rem;
+         }
+
+         > button.state {
+            flex-shrink: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: var(--entry-summary-height);
+            background: none;
+            border: none;
+            padding: 0;
+
+            &::after {
+               content: '';
+               width: 2rem;
+               height: var(--entry-summary-height);
+               background-color: var(--entry-summary-color);
+               mask-position: center;
+               mask-repeat: no-repeat;
+               mask-size: 1.5rem;
+               mask-image: url('../icons/action/entry_new.svg');
+            }
+
+            &.done {
+               &::after {
+                  mask-image: url('../icons/action/entry_done.svg');
+               }
+            }
+
+            &.pinned {
+               &::after {
+                  mask-image: url('../icons/action/entry_pinned.svg');
+               }
+            }
+
+            &:focus {
+               outline: none;
+
+               &::before {
+                  content: '';
+                  display: block;
+                  position: absolute;
+                  width: 2rem;
+                  height: var(--entry-summary-height);
+                  outline: thin dotted;
+               }
+            }
+
+            &:hover {
+               &::before {
+                  content: '';
+                  display: block;
+                  position: absolute;
+                  width: 2rem;
+                  height: var(--entry-summary-height);
+                  background-color: $gray-200;
+               }
+            }
+
+            &:active {
+               &::before {
+                  background-color: $gray-300;
+               }
+            }
          }
       }
 
       > .loading.entry {
-         > .summary {
-            cursor: unset;
+         cursor: unset;
 
-            &:hover {
-               background: none;
-            }
+         &:hover {
+            background: none;
+         }
 
-            > .title {
-               text-align: center;
-            }
+         > .title {
+            text-align: center;
          }
       }
 
