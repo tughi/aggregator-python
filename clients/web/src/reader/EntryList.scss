@@ -8,13 +8,13 @@
       flex-grow: 1;
 
       overflow: hidden scroll;
-      @include custom-scrollbar($gray-500, $gray-200);
+      @include custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
 
       > .entry {
          --entry-background-color: transparent;
-         --entry-summary-color: #{$text-secondary};
+         --entry-summary-color: var(--primary-color-4);
          --entry-summary-height: 2rem;
-         --entry-unread-color: #{$text-body};
+         --entry-unread-color: var(--primary-color-9);
 
          @media (hover: none) and (pointer: coarse) {
             --entry-summary-height: 3rem;
@@ -30,7 +30,7 @@
          color: var(--entry-summary-color);
          cursor: pointer;
 
-         border-bottom: 1px solid $gray-200;
+         border-bottom: 1px solid var(--primary-color-2);
 
          &:first-child {
             margin-top: 1rem;
@@ -42,13 +42,13 @@
          }
 
          &:hover {
-            --entry-background-color: #{$gray-100};
+            --entry-background-color: var(--primary-color-1);
          }
 
          &.active {
-            --entry-background-color: #{$orange-100};
-            --entry-summary-color: #{$orange-200};
-            --entry-unread-color: #{$orange-500};
+            --entry-background-color: var(--secondary-color-1);
+            --entry-summary-color: var(--secondary-color-3);
+            --entry-unread-color: var(--secondary-color-5);
          }
 
          > a.favicon {
@@ -66,7 +66,7 @@
                background: transparent center no-repeat;
                background-size: 1rem;
 
-               $colors: $red $pink $purple $indigo $blue $cyan $teal $green $yellow $orange;
+               $colors: var(--red) var(--pink) var(--purple) var(--indigo) var(--blue) var(--cyan) var(--teal) var(--green) var(--yellow) var(--orange);
                @each $color in $colors {
                   &.rss-icon-#{index($colors, $color)}::after {
                      content: '';
@@ -89,13 +89,13 @@
 
             &:hover {
                > .image {
-                  background-color: $gray-200;
+                  background-color: var(--primary-color-2);
                }
             }
 
             &:active {
                > .image {
-                  background-color: $gray-300;
+                  background-color: var(--primary-color-3);
                }
             }
          }
@@ -184,13 +184,13 @@
                   position: absolute;
                   width: 2rem;
                   height: var(--entry-summary-height);
-                  background-color: $gray-200;
+                  background-color: var(--primary-color-2);
                }
             }
 
             &:active {
                &::before {
-                  background-color: $gray-300;
+                  background-color: var(--primary-color-3);
                }
             }
          }

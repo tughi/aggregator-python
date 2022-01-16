@@ -1,10 +1,72 @@
 @import "normalize.css";
 
-@import "./colors.scss";
+:root {
+   --background: hsl(0, 0%, 100%);
+
+   // https://mdigi.tools/color-shades/#7b8184
+   --primary-color-1: #f0f1f1;
+   --primary-color-2: #d3d5d6;
+   --primary-color-3: #b6b9bb;
+   --primary-color-4: #989d9f;
+   --primary-color-5: #7b8184;
+   --primary-color-6: #606467;
+   --primary-color-7: #444749;
+   --primary-color-8: #292b2c;
+   --primary-color-9: #0e0e0f;
+
+   // https://mdigi.tools/color-shades/#f1560e
+   --secondary-color-1: #fdece4;
+   --secondary-color-2: #fac7af;
+   --secondary-color-3: #f7a179;
+   --secondary-color-4: #f47c44;
+   --secondary-color-5: #f1560e;
+   --secondary-color-6: #bb430b;
+   --secondary-color-7: #863008;
+   --secondary-color-8: #501d05;
+   --secondary-color-9: #1b0a02;
+
+   --red: #d92637;
+   --pink: #d42b7f;
+   --purple: #6d3fc0;
+   --indigo: #640df2;
+   --blue: #0267fd;
+   --cyan: #0dccf2;
+   --teal: #23dca5;
+   --green: #28d786;
+   --yellow: #ffbf00;
+   --orange: #f1560e;
+}
+
+@media (prefers-color-scheme: dark) {
+   :root {
+      --background: hsl(0, 0%, 5%);
+
+      --primary-color-1: #0e0e0f;
+      --primary-color-2: #292b2c;
+      --primary-color-3: #444749;
+      --primary-color-4: #606467;
+      --primary-color-5: #7b8184;
+      --primary-color-6: #989d9f;
+      --primary-color-7: #b6b9bb;
+      --primary-color-8: #d3d5d6;
+      --primary-color-9: #f0f1f1;
+
+      --secondary-color-1: #1b0a02;
+      --secondary-color-2: #501d05;
+      --secondary-color-3: #863008;
+      --secondary-color-4: #bb430b;
+      --secondary-color-5: #f1560e;
+      --secondary-color-6: #f47c44;
+      --secondary-color-7: #f7a179;
+      --secondary-color-8: #fac7af;
+      --secondary-color-9: #fdece4;
+      }
+}
 
 body {
    font-family: sans-serif;
-   color: $text-body;
+   background-color: var(--background);
+   color: var(--primary-color-9);
    overscroll-behavior: contain;
 }
 

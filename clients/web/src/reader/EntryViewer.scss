@@ -6,17 +6,17 @@ $shadow-size: 1rem;
    display: flex;
    flex-direction: column;
    top: calc(100% + #{$shadow-size});
-   box-shadow: 0 0 $shadow-size $gray-300;
+   box-shadow: 0 0 $shadow-size var(--primary-color-3);
    transition: top .25s ease-in-out;
 
    &.active {
       top: 0;
    }
 
-   background-color: white;
+   background-color: var(--background);
 
    > .header {
-      background-color: white;
+      background-color: var(--background);
       z-index: 1;
    }
 
@@ -29,11 +29,11 @@ $shadow-size: 1rem;
          position: absolute;
          width: 100%;
          height: 100%;
-         background-color: white;
-         box-shadow: 0 0 $shadow-size $gray-300;
+         background-color: var(--background);
+         box-shadow: 0 0 $shadow-size var(--primary-color-3);
 
          overflow: hidden scroll;
-         @include custom-scrollbar($gray-500, $gray-200);
+         @include custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
 
          > .content {
             max-width: 50rem;
@@ -45,7 +45,7 @@ $shadow-size: 1rem;
 
             > div {
                padding: 1rem;
-               border-bottom: 1px solid $orange-500;
+               border-bottom: 1px solid var(--secondary-color-5);
 
                &:last-child {
                   border-bottom: none;
@@ -55,7 +55,7 @@ $shadow-size: 1rem;
             > .header {
                > .source {
                   > .author {
-                     color: $text-secondary;
+                     color: var(--primary-color-5);
 
                      &::before {
                         content: ' :: ';
@@ -75,23 +75,23 @@ $shadow-size: 1rem;
             }
 
             a {
-               color: $text-primary;
+               color: var(--secondary-color-5);
                text-decoration: inherit;
             }
 
             blockquote {
                position: relative;
-               background: $orange-100;
+               background: var(--secondary-color-1);
                margin: 1rem 0 0;
                padding: 1rem 1rem 1rem 2.25rem;
-               border-left: .25rem solid $orange-500;
+               border-left: .25rem solid var(--secondary-color-5);
 
                &::before {
                   content: '”';
                   position: absolute;
                   left: .5rem;
                   top: -2rem;
-                  color: $orange-500;
+                  color: var(--secondary-color-5);
                   font-size: 4rem;
                }
             }

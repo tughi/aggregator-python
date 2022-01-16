@@ -1,9 +1,6 @@
-@import "../colors.scss";
-
-
 .ActionBar {
    height: 3rem;
-   border-bottom: 1px solid $gray-300;
+   border-bottom: 1px solid var(--primary-color-3);
    padding-right: 12px;
 
    > .bar {
@@ -58,7 +55,7 @@
          }
 
          &::after {
-            background-color: $gray-600;
+            background-color: var(--primary-color-6);
             mask-size: 1.5rem;
             mask-repeat: no-repeat;
             mask-position: center;
@@ -66,18 +63,18 @@
 
          &:hover {
             &::before {
-               background-color: $gray-100;
+               background-color: var(--primary-color-1);
             }
          }
 
          &:active {
             &::before {
-               background-color: $gray-200;
+               background-color: var(--primary-color-2);
             }
          }
 
          &.active::after {
-            background-color: $orange-500;
+            background-color: var(--secondary-color-5);
          }
 
          &:disabled {

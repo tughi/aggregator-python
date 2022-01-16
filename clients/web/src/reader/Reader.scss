@@ -30,8 +30,9 @@
             left: 0;
             right: 0;
             pointer-events: none;
-            background-color: transparent;
-            transition: background-color .25s linear;
+            background-color: var(--background);
+            opacity: 0;
+            transition: opacity .25s linear;
          }
 
          > .feed-view {
@@ -49,7 +50,7 @@
             pointer-events: none;
 
             &::after {
-               background-color: rgba(white, .75);
+               opacity: .75;
             }
          }
       }
@@ -77,10 +78,10 @@
       width: 20rem;
 
       overflow: hidden auto;
-      @include custom-scrollbar($gray-500, $gray-200);
+      @include custom-scrollbar(var(--primary-color-4), var(--primary-color-2));
 
-      background-color: $gray-100;
-      border-left: 1px solid $gray-400;
+      background-color: var(--primary-color-1);
+      border-left: 1px solid var(--primary-color-3);
       box-sizing: border-box;
    }
 
