@@ -11,7 +11,7 @@
       @include custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
 
       > .entry {
-         --entry-background-color: transparent;
+         --entry-background-color: var(--background);
          --entry-summary-color: var(--primary-color-4);
          --entry-summary-height: 2rem;
          --entry-unread-color: var(--primary-color-9);
@@ -41,14 +41,14 @@
             border-bottom: none;
          }
 
-         &:hover {
-            --entry-background-color: var(--primary-color-1);
-         }
-
          &.active {
             --entry-background-color: var(--secondary-color-1);
             --entry-summary-color: var(--secondary-color-3);
             --entry-unread-color: var(--secondary-color-5);
+         }
+
+         &:hover {
+            --entry-background-color: var(--primary-color-1);
          }
 
          > a.favicon {
@@ -113,7 +113,7 @@
                right: 0;
                width: 3rem;
                height: var(--entry-summary-height);
-               background-image: linear-gradient(to right, rgba(255, 255, 255, 0), var(--entry-background-color));
+               background-image: linear-gradient(to right, transparent, var(--entry-background-color));
             }
          }
 

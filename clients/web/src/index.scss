@@ -1,29 +1,27 @@
 @import "normalize.css";
 
 :root {
-   --background: hsl(0, 0%, 100%);
+   --background: hsl(200, 15%, 95%);
 
-   // https://mdigi.tools/color-shades/#7b8184
-   --primary-color-1: #f0f1f1;
-   --primary-color-2: #d3d5d6;
-   --primary-color-3: #b6b9bb;
-   --primary-color-4: #989d9f;
-   --primary-color-5: #7b8184;
-   --primary-color-6: #606467;
-   --primary-color-7: #444749;
-   --primary-color-8: #292b2c;
-   --primary-color-9: #0e0e0f;
+   --primary-color-1: hsl(200, 15%, 92%);
+   --primary-color-2: hsl(200, 15%, 88%);
+   --primary-color-3: hsl(200, 15%, 82%);
+   --primary-color-4: hsl(200, 15%, 75%);
+   --primary-color-5: hsl(200, 15%, 65%);
+   --primary-color-6: hsl(200, 15%, 50%);
+   --primary-color-7: hsl(200, 15%, 40%);
+   --primary-color-8: hsl(200, 15%, 30%);
+   --primary-color-9: hsl(200, 15%, 20%);
 
-   // https://mdigi.tools/color-shades/#f1560e
-   --secondary-color-1: #fdece4;
-   --secondary-color-2: #fac7af;
-   --secondary-color-3: #f7a179;
-   --secondary-color-4: #f47c44;
-   --secondary-color-5: #f1560e;
-   --secondary-color-6: #bb430b;
-   --secondary-color-7: #863008;
-   --secondary-color-8: #501d05;
-   --secondary-color-9: #1b0a02;
+   --secondary-color-1: hsl(15, 15%, 94%);
+   --secondary-color-2: hsl(15, 30%, 80%);
+   --secondary-color-3: hsl(15, 30%, 70%);
+   --secondary-color-4: hsl(15, 60%, 60%);
+   --secondary-color-5: hsl(15, 90%, 40%);
+   --secondary-color-6: hsl(15, 90%, 35%);
+   --secondary-color-7: hsl(15, 90%, 30%);
+   --secondary-color-8: hsl(15, 90%, 25%);
+   --secondary-color-9: hsl(15, 90%, 20%);
 
    --red: #d92637;
    --pink: #d42b7f;
@@ -39,27 +37,27 @@
 
 @media (prefers-color-scheme: dark) {
    :root {
-      --background: hsl(0, 0%, 5%);
+      --background: hsl(200, 15%, 10%);
 
-      --primary-color-1: #0e0e0f;
-      --primary-color-2: #292b2c;
-      --primary-color-3: #444749;
-      --primary-color-4: #606467;
-      --primary-color-5: #7b8184;
-      --primary-color-6: #989d9f;
-      --primary-color-7: #b6b9bb;
-      --primary-color-8: #d3d5d6;
-      --primary-color-9: #f0f1f1;
+      --primary-color-1: hsl(200, 15%, 15%);
+      --primary-color-2: hsl(200, 15%, 20%);
+      --primary-color-3: hsl(200, 15%, 30%);
+      --primary-color-4: hsl(200, 15%, 40%);
+      --primary-color-5: hsl(200, 15%, 50%);
+      --primary-color-6: hsl(200, 15%, 60%);
+      --primary-color-7: hsl(200, 15%, 70%);
+      --primary-color-8: hsl(200, 15%, 75%);
+      --primary-color-9: hsl(200, 15%, 80%);
 
-      --secondary-color-1: #1b0a02;
-      --secondary-color-2: #501d05;
-      --secondary-color-3: #863008;
-      --secondary-color-4: #bb430b;
-      --secondary-color-5: #f1560e;
-      --secondary-color-6: #f47c44;
-      --secondary-color-7: #f7a179;
-      --secondary-color-8: #fac7af;
-      --secondary-color-9: #fdece4;
+      --secondary-color-1:  hsl(20, 05%, 15%);
+      --secondary-color-2:  hsl(20, 50%, 20%);
+      --secondary-color-3:  hsl(20, 50%, 30%);
+      --secondary-color-4:  hsl(20, 50%, 40%);
+      --secondary-color-5:  hsl(20, 50%, 50%);
+      --secondary-color-6:  hsl(20, 50%, 60%);
+      --secondary-color-7:  hsl(20, 50%, 70%);
+      --secondary-color-8:  hsl(20, 50%, 75%);
+      --secondary-color-9:  hsl(20, 50%, 80%);
       }
 }
 
