@@ -3,8 +3,8 @@
    "version": "0.1.0",
    "private": true,
    "dependencies": {
-      "@material-design-icons/svg": "^0.10.6",
-      "axios": "^0.24.0",
+      "@material-design-icons/svg": "^0.10.8",
+      "axios": "^0.26.1",
       "classnames": "^2.3.1",
       "node-sass": "^7.0.1",
       "normalize.css": "^8.0.1",
@@ -14,7 +14,7 @@
       "react-scripts": "^5.0.0"
    },
    "devDependencies": {
-      "http-proxy-middleware": "^2.0.1"
+      "http-proxy-middleware": "^2.0.4"
    },
    "scripts": {
       "start": "react-scripts start",
