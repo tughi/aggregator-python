@@ -1,10 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react"
-import { matchPath, useHistory } from "react-router"
 import { useSession } from "./Session"
 
 const ControllerContext = React.createContext()
 
-const createSessionParams = location => {
+const PATH_PATTERN__FEED = new RegExp('/reader/feeds/(\\d+)')
+
+const createSessionParams = (location) => {
    let feedId = null
    let onlyUnread = true
    let onlyStarred = false
@@ -12,37 +13,39 @@ const createSessionParams = location => {
       onlyUnread = false
       onlyStarred = true
    } else {
-      const match = matchPath(location.pathname, { path: '/reader/feeds/:feedId' })
+      const match = location.pathname.match(PATH_PATTERN__FEED)
       if (match) {
-         feedId = parseInt(match.params.feedId)
+         feedId = parseInt(match[1])
       }
    }
 
    return { revision: 1, feedId, onlyUnread, onlyStarred }
 }
 
-export const Controller = ({ setShowSideNav, children }) => {
-   const history = useHistory()
-   const location = history.location
+const currentLocation = () => ({
+   pathname: window.location.pathname,
+   state: window.history.state,
+})
 
-   const [sessionParams, setSessionParams] = useState(() => createSessionParams(location))
+export const Controller = ({ setShowSideNav, children }) => {
+   const [sessionParams, setSessionParams] = useState(() => createSessionParams(currentLocation()))
    const session = useSession(sessionParams)
 
    const [activeEntryIndex, setActiveEntryIndex] = useState(-1)
    const [isViewerVisible, setIsViewerVisible] = useState(false)
 
    useEffect(() => {
-      const location = history.location
+      const location = currentLocation()
       if (isViewerVisible) {
          if (!location.state?.viewer) {
-            history.push(location.pathname, { ...location.state, viewer: true })
+            window.history.pushState({ ...location.state, viewer: true }, '', location.pathname)
          }
       } else {
          if (location.state?.viewer) {
-            history.go(-1)
+            window.history.go(-1)
          }
       }
-   }, [history, isViewerVisible])
+   }, [isViewerVisible])
 
    useEffect(() => {
       if (isViewerVisible) {
@@ -101,13 +104,12 @@ export const Controller = ({ setShowSideNav, children }) => {
    }, [activeEntryIndex, session, refresh])
 
    const openFeed = useCallback((link, sessionParams) => {
-      const location = history.location
-
+      const location = currentLocation()
       const onPopState = () => {
          if (link === '/reader/all') {
-            history.replace(link, { all: true })
+            window.history.replaceState({ all: true }, '', link)
          } else {
-            history.push(link, { feed: true })
+            window.history.pushState({ feed: true }, '', link)
          }
 
          setSessionParams(params => ({ ...params, ...sessionParams, revision: session.revision + 1 }))
@@ -117,20 +119,20 @@ export const Controller = ({ setShowSideNav, children }) => {
       }
 
       if (location.state?.feed && location.state?.viewer) {
-         history.go(-2)
+         window.history.go(-2)
          window.addEventListener('popstate', onPopState)
       } else if (location.state?.feed) {
-         history.go(-1)
+         window.history.go(-1)
          window.addEventListener('popstate', onPopState)
       } else {
          onPopState()
       }
-   }, [history, session, setSessionParams, setShowSideNav])
+   }, [session, setSessionParams, setShowSideNav])
 
    useEffect(() => {
       const onPopState = () => {
          setTimeout(() => {
-            const location = history.location
+            const location = currentLocation()
             const { feedId, onlyUnread, onlyStarred } = createSessionParams(location)
             setSessionParams(params => {
                if (feedId !== params.feedId || onlyUnread !== params.onlyUnread || onlyStarred !== params.onlyStarred) {
@@ -148,7 +150,7 @@ export const Controller = ({ setShowSideNav, children }) => {
       return () => {
          window.removeEventListener('popstate', onPopState)
       }
-   }, [history, setSessionParams])
+   }, [setSessionParams])
 
    const toggleSortOrder = useCallback(() => {
       setSessionParams(params => ({ ...params, latestFirst: !params.latestFirst }))
