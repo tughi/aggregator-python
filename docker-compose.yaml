@@ -29,12 +29,12 @@ services:
     user: root
     restart: unless-stopped
   database:
-    image: bitnami/postgresql:13.4.0
+    image: bitnami/postgresql:13
     environment:
       POSTGRES_PASSWORD: $DATABASE_PASSWORD
     restart: unless-stopped
   nginx:
-    image: nginx:1.21-alpine
+    image: nginx:stable-alpine
     depends_on:
       - app
       - web
