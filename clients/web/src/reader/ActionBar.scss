@@ -3,25 +3,25 @@
    border-bottom: 1px solid var(--primary-color-3);
    padding-right: 12px;
 
-   > .bar {
+   >.bar {
       margin: 0 auto;
       max-width: 50rem;
       line-height: 3rem;
       display: flex;
 
-      > .title {
+      >.title {
          flex-grow: 1;
          overflow: hidden;
          text-overflow: ellipsis;
          white-space: nowrap;
       }
 
-      > .count {
+      >.count {
          font-weight: bold;
          margin: 0 .5rem;
       }
 
-      > .action {
+      >.action {
          flex-shrink: 0;
          position: relative;
          width: 3rem;
@@ -89,19 +89,19 @@
          }
 
          &.arrow-back::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_back.svg");
+            mask-image: url("@material-design-icons/svg/outlined/arrow_back.svg");
          }
 
          &.arrow-downward::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_downward.svg");
+            mask-image: url("@material-design-icons/svg/outlined/arrow_downward.svg");
          }
 
          &.arrow-forward::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_forward.svg");
+            mask-image: url("@material-design-icons/svg/outlined/arrow_forward.svg");
          }
 
          &.arrow-upward::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/arrow_upward.svg");
+            mask-image: url("@material-design-icons/svg/outlined/arrow_upward.svg");
          }
 
          &.calendar::after {
@@ -117,7 +117,7 @@
          }
 
          &.close::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/close.svg");
+            mask-image: url("@material-design-icons/svg/outlined/close.svg");
          }
 
          &.entry-done::after {
@@ -133,11 +133,11 @@
          }
 
          &.menu::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/menu.svg");
+            mask-image: url("@material-design-icons/svg/outlined/menu.svg");
          }
 
          &.refresh::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/refresh.svg");
+            mask-image: url("@material-design-icons/svg/outlined/refresh.svg");
          }
 
          &.sort-down::after {
@@ -149,13 +149,12 @@
          }
 
          &.star-off::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/star_border.svg");
+            mask-image: url("@material-design-icons/svg/outlined/star_border.svg");
          }
 
          &.star-on::after {
-            mask-image: url("../../node_modules/@material-design-icons/svg/outlined/star.svg");
+            mask-image: url("@material-design-icons/svg/outlined/star.svg");
          }
       }
    }
 }
-
