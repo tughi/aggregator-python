@@ -1,7 +1,7 @@
 feedparser==6.0.10
 flask==2.3.2
 flask-graphql==2.0.1
-flask-sqlalchemy==3.0.3
+flask-sqlalchemy==3.0.5
 graphene==2.1.9
 graphene-sqlalchemy==2.3.0
 gunicorn==20.1.0

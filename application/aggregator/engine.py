@@ -157,7 +157,11 @@ def _as_content(content_data):
 def _as_datetime(parsed_time):
     if parsed_time:
         timestamp = calendar.timegm(parsed_time)
-        result = datetime.fromtimestamp(timestamp)
+        try:
+            result = datetime.fromtimestamp(timestamp)
+        except ValueError:
+            logger.warning(f"Cannot convert {parsed_time} to datetime")
+            result = None
         return result
     return None
 
