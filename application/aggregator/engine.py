@@ -1,4 +1,5 @@
 import calendar
+import http.client
 import json
 import logging
 from collections import OrderedDict
@@ -60,13 +61,24 @@ def update_feed(feed: Feed, forced: bool = False):
     update_time = datetime.now(tz=timezone.utc)
     feed.last_update_time = update_time
 
-    feed_data = feedparser.parse(
-        feed.url,
-        etag=None if forced else feed.http_etag,
-        modified=None if forced else feed.http_last_modified,
-        resolve_relative_uris=False,
-        sanitize_html=False,
-    )
+    feed.last_update_message = None
+
+    try:
+        feed_data = feedparser.parse(
+            feed.url,
+            etag=None if forced else feed.http_etag,
+            modified=None if forced else feed.http_last_modified,
+            resolve_relative_uris=False,
+            sanitize_html=False,
+        )
+    except ConnectionError as error:
+        logger.warning("Failed to fetch feed", exc_info=True)
+
+        feed.last_update_message = str(error)
+        feed.next_update_retry += 1
+        db.session.commit()
+
+        return
 
     if not feed_data:
         logger.warning(f"Failed to parse feed")
