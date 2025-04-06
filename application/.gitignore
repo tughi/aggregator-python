@@ -13,6 +13,7 @@
 /docker-compose.override.yaml
 
 # virtualenv
+/.venv
 /.virtualenv
 
 # pycharm files

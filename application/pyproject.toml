@@ -1,0 +1,19 @@
+[project]
+name = "application"
+version = "0.0.0"
+requires-python = ">=3.13"
+dependencies = [
+    "feedparser",
+    "flask",
+    "flask-graphql",
+    "flask-sqlalchemy",
+    "graphene",
+    "graphene-sqlalchemy",
+    "gunicorn",
+    "lxml-html-clean",
+    "opml",
+    "psycopg2-binary",
+    "python-dotenv",
+    "requests",
+    "sqlalchemy",
+]
