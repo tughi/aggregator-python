@@ -134,3 +134,51 @@ def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expect
 
     entry = Entry.query.filter(Entry.feed_id == feed.id).one()
     assert entry.publish_time == expected_publish_time
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("https://example.com/post", "https://example.com/post"),
+        ("http://example.com/post", "http://example.com/post"),
+        ("HTTPS://example.com/post", "HTTPS://example.com/post"),
+        (None, None),
+        ("", None),
+        ("javascript:alert(1)", None),
+        ("JavaScript:alert(1)", None),
+        ("java\tscript:alert(1)", None),
+        (" javascript:alert(1)", None),
+        ("\x01javascript:alert(1)", None),
+        ("data:text/html,<script>alert(1)</script>", None),
+        ("file:///etc/passwd", None),
+        ("/relative/post", None),
+    ],
+)
+def test_web_url(url, expected):
+    assert engine._web_url(url) == expected
+
+
+JAVASCRIPT_LINKS_XML = """<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>Fetched Title</title>
+    <link>javascript:alert(1)</link>
+    <item>
+      <title>Malicious post</title>
+      <link>javascript:alert(document.domain)</link>
+      <description>Hello</description>
+    </item>
+  </channel>
+</rss>"""
+
+
+def test_update_feed_drops_links_that_are_not_web_urls(app, fetch):
+    feed = create_feed("https://example.com/feed")
+    fetch("https://example.com/feed", xml=JAVASCRIPT_LINKS_XML)
+
+    engine.update_feed(feed)
+
+    entry = Entry.query.filter(Entry.feed_id == feed.id).one()
+    assert feed.link is None
+    assert entry.link is None
+    assert entry.uid == "javascript:alert(document.domain)"

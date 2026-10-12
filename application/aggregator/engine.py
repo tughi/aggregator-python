@@ -99,7 +99,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     feed.title = feed_data.feed.get("title") or feed.title
 
-    feed.link = feed_data.feed.get("link")
+    feed.link = _web_url(feed_data.feed.get("link"))
     status = feed_data.get("status", 0)
 
     if status == 301:
@@ -152,7 +152,7 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
             entries_updated += 1
 
         entry.title = entry_data.get("title")
-        entry.link = entry_link
+        entry.link = _web_url(entry_link)
         entry.author = json.dumps(entry_data.get("author_detail"))
         entry.summary = json.dumps(_as_content(entry_data.get("summary_detail")))
         entry.content = json.dumps([_as_content(content_data) for content_data in entry_data.get("content", [])])
@@ -165,6 +165,13 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
     logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
 
     return entries_created, entries_updated
+
+
+def _web_url(url: str | None) -> str | None:
+    """Returns `url` if it is an http(s) URL, so links from feeds can't be `javascript:` or `file:` URLs."""
+    if url and urlparse(url).scheme in ("http", "https"):
+        return url
+    return None
 
 
 def _same_site(url_a: str, url_b: str) -> bool:
