@@ -5,7 +5,8 @@ from aggregator import engine
 from aggregator.app import create_app
 from aggregator.models import db
 
-FEED_XML = '''<?xml version="1.0"?>
+FEED_XML = """
+<?xml version="1.0"?>
 <rss version="2.0">
   <channel>
     <title>Fetched Title</title>
@@ -18,11 +19,12 @@ FEED_XML = '''<?xml version="1.0"?>
       <pubDate>Mon, 12 Oct 2026 10:00:00 GMT</pubDate>
     </item>
   </channel>
-</rss>'''
+</rss>
+"""
 
 
 class TestConfig(object):
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_LOG_LEVEL = None
 
@@ -52,11 +54,11 @@ def fetch(monkeypatch):
     def fetch(href, status=200, xml=FEED_XML):
         def parse(url, **kwargs):
             feed_data = parse_feed_xml(xml)
-            feed_data['href'] = href
-            feed_data['status'] = status
+            feed_data["href"] = href
+            feed_data["status"] = status
             return feed_data
 
-        monkeypatch.setattr(engine.feedparser, 'parse', parse)
+        monkeypatch.setattr(engine.feedparser, "parse", parse)
 
     return fetch
 
@@ -65,4 +67,4 @@ def fetch(monkeypatch):
 def no_favicons(monkeypatch):
     """Skips favicon discovery, which would otherwise make real HTTP requests."""
 
-    monkeypatch.setattr(engine, 'update_favicon', lambda feed: None)
+    monkeypatch.setattr(engine, "update_favicon", lambda feed: None)

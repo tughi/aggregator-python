@@ -100,7 +100,7 @@ class SessionData:
 
 class SessionType(graphene.ObjectType):
     class Meta:
-        name = 'Session'
+        name = "Session"
 
     entries = graphene.List(EntryType, limit=graphene.Int(required=True))
     entry_ids = graphene.List(graphene.Int)
@@ -146,8 +146,8 @@ class SessionType(graphene.ObjectType):
 
 class CreateFeedMutation(graphene.Mutation):
     class Arguments:
-        feed_url = graphene.String(name='url', required=True)
-        feed_user_title = graphene.String(name='userTitle')
+        feed_url = graphene.String(name="url", required=True)
+        feed_user_title = graphene.String(name="userTitle")
 
     ok = graphene.Boolean()
     feed = graphene.Field(FeedType)
@@ -159,18 +159,18 @@ class CreateFeedMutation(graphene.Mutation):
 
         result = engine.add_feed(feed_url, feed_user_title=feed_user_title)
 
-        return dict(ok=True, feed_id=result['id'])
+        return dict(ok=True, feed_id=result["id"])
 
     @staticmethod
     def resolve_feed(result, info):
-        return db.session.get(Feed, result['feed_id'])
+        return db.session.get(Feed, result["feed_id"])
 
 
 class UpdateFeedMutation(graphene.Mutation):
     class Arguments:
-        feed_id = graphene.Int(name='id', required=True)
-        feed_url = graphene.String(name='url')
-        feed_user_title = graphene.String(name='userTitle')
+        feed_id = graphene.Int(name="id", required=True)
+        feed_url = graphene.String(name="url")
+        feed_user_title = graphene.String(name="userTitle")
 
     ok = graphene.Boolean()
     feed = graphene.Field(FeedType)
@@ -198,7 +198,7 @@ class UpdateFeedMutation(graphene.Mutation):
 
 class RefreshFeedMutation(graphene.Mutation):
     class Arguments:
-        feed_id = graphene.Int(name='id', required=True)
+        feed_id = graphene.Int(name="id", required=True)
         forced = graphene.Boolean()
 
     feed = graphene.Field(FeedType)
@@ -216,7 +216,7 @@ class RefreshFeedMutation(graphene.Mutation):
 
 class RefreshFeedFaviconMutation(graphene.Mutation):
     class Arguments:
-        feed_id = graphene.Int(name='id', required=True)
+        feed_id = graphene.Int(name="id", required=True)
 
     feed = graphene.Field(FeedType)
 
@@ -233,7 +233,7 @@ class RefreshFeedFaviconMutation(graphene.Mutation):
 
 class UpdateEntryState(graphene.Mutation):
     class Arguments:
-        entry_id = graphene.Int(name='id', required=True)
+        entry_id = graphene.Int(name="id", required=True)
         keep_time = graphene.DateTime()
         read_time = graphene.DateTime()
         star_time = graphene.DateTime()
@@ -295,7 +295,7 @@ class Query(graphene.ObjectType):
         entry_ids = entry_ids.order_by(Entry.publish_time.desc() if latest_first else Entry.publish_time.asc())
 
         return SessionData(
-            entry_ids=[entry_id for entry_id, in entry_ids],
+            entry_ids=[entry_id for (entry_id,) in entry_ids],
             publish_time=publish_time,
         )
 
@@ -310,5 +310,5 @@ class Mutations(graphene.ObjectType):
 
 schema = graphene.Schema(query=Query, mutation=Mutations)
 
-blueprint = Blueprint('graphql', __name__)
-blueprint.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, graphiql=True))
+blueprint = Blueprint("graphql", __name__)
+blueprint.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql", schema=schema, graphiql=True))

@@ -10,7 +10,7 @@ from aggregator.models import db
 
 
 def create_feed(url):
-    feed = Feed(url=url, title='Original Title')
+    feed = Feed(url=url, title="Original Title")
     db.session.add(feed)
     db.session.flush()
     return feed
@@ -20,74 +20,78 @@ def count_entries(feed):
     return Entry.query.filter(Entry.feed_id == feed.id).count()
 
 
-@pytest.mark.parametrize('url_a, url_b, expected', [
-    ('https://example.com/feed', 'https://example.com/rss', True),
-    ('http://example.com/feed', 'https://example.com/feed', True),
-    ('https://www.example.com/feed', 'https://example.com/feed', True),
-    ('https://EXAMPLE.com/feed', 'https://example.com/feed', True),
-    ('https://example.com/feed', 'https://spam.example.net/feed', False),
-    ('https://blog.example.com/feed', 'https://example.com/feed', False),
-])
+@pytest.mark.parametrize(
+    "url_a, url_b, expected",
+    [
+        ("https://example.com/feed", "https://example.com/rss", True),
+        ("http://example.com/feed", "https://example.com/feed", True),
+        ("https://www.example.com/feed", "https://example.com/feed", True),
+        ("https://EXAMPLE.com/feed", "https://example.com/feed", True),
+        ("https://example.com/feed", "https://spam.example.net/feed", False),
+        ("https://blog.example.com/feed", "https://example.com/feed", False),
+    ],
+)
 def test_same_site(url_a, url_b, expected):
     assert engine._same_site(url_a, url_b) is expected
 
 
 def test_update_feed_ignores_redirect_to_different_site(app, fetch):
-    feed = create_feed('https://example.com/feed')
-    fetch('https://spam.example.net/feed', status=301)
+    feed = create_feed("https://example.com/feed")
+    fetch("https://spam.example.net/feed", status=301)
 
     engine.update_feed(feed)
 
-    assert feed.url == 'https://example.com/feed'
-    assert feed.title == 'Original Title'
+    assert feed.url == "https://example.com/feed"
+    assert feed.title == "Original Title"
     assert count_entries(feed) == 0
-    assert 'https://spam.example.net/feed' in feed.last_update_message
+    assert "https://spam.example.net/feed" in feed.last_update_message
     assert feed.next_update_retry == 1
     assert feed.next_update_time > datetime.now(tz=timezone.utc)
 
 
 def test_update_feed_ignores_temporary_redirect_to_different_site(app, fetch):
-    feed = create_feed('https://example.com/feed')
-    fetch('https://spam.example.net/feed', status=302)
+    feed = create_feed("https://example.com/feed")
+    fetch("https://spam.example.net/feed", status=302)
 
     engine.update_feed(feed)
 
-    assert feed.url == 'https://example.com/feed'
+    assert feed.url == "https://example.com/feed"
     assert count_entries(feed) == 0
 
 
 def test_update_feed_follows_permanent_redirect_on_same_site(app, fetch):
-    feed = create_feed('http://www.example.com/feed')
-    fetch('https://example.com/feed', status=301)
+    feed = create_feed("http://www.example.com/feed")
+    fetch("https://example.com/feed", status=301)
 
     engine.update_feed(feed)
 
-    assert feed.url == 'https://example.com/feed'
-    assert feed.title == 'Fetched Title'
+    assert feed.url == "https://example.com/feed"
+    assert feed.title == "Fetched Title"
     assert feed.last_update_message is None
     assert count_entries(feed) == 1
 
 
 def test_update_feed_without_redirect(app, fetch):
-    feed = create_feed('https://example.com/feed')
-    fetch('https://example.com/feed')
+    feed = create_feed("https://example.com/feed")
+    fetch("https://example.com/feed")
 
     engine.update_feed(feed)
 
-    assert feed.url == 'https://example.com/feed'
+    assert feed.url == "https://example.com/feed"
     assert count_entries(feed) == 1
 
 
 def test_add_feed_follows_redirect_to_different_site(app, fetch, no_favicons):
-    fetch('https://feeds.example.net/feed', status=301)
+    fetch("https://feeds.example.net/feed", status=301)
 
-    result = engine.add_feed('https://example.com/feed')
+    result = engine.add_feed("https://example.com/feed")
 
-    assert result['url'] == 'https://feeds.example.net/feed'
-    assert result['entries']['created'] == 1
+    assert result["url"] == "https://feeds.example.net/feed"
+    assert result["entries"]["created"] == 1
 
 
-RSS_WITH_PUBLISHED_AND_UPDATED_XML = '''<?xml version="1.0"?>
+RSS_WITH_PUBLISHED_AND_UPDATED_XML = """
+<?xml version="1.0"?>
 <rss version="2.0" xmlns:dcterms="http://purl.org/dc/terms/">
   <channel>
     <title>Fetched Title</title>
@@ -98,9 +102,11 @@ RSS_WITH_PUBLISHED_AND_UPDATED_XML = '''<?xml version="1.0"?>
       <dcterms:modified>2026-10-14T10:00:00Z</dcterms:modified>
     </item>
   </channel>
-</rss>'''
+</rss>
+"""
 
-ATOM_WITH_ONLY_UPDATED_XML = '''<?xml version="1.0"?>
+ATOM_WITH_ONLY_UPDATED_XML = """
+<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Fetched Title</title>
   <entry>
@@ -108,20 +114,21 @@ ATOM_WITH_ONLY_UPDATED_XML = '''<?xml version="1.0"?>
     <id>https://example.com/atom-post</id>
     <updated>2026-10-13T10:00:00Z</updated>
   </entry>
-</feed>'''
+</feed>
+"""
 
 
 @pytest.mark.parametrize(
-    'xml, expected_publish_time',
+    "xml, expected_publish_time",
     [
         (RSS_WITH_PUBLISHED_AND_UPDATED_XML, datetime(2026, 10, 12, 10, 0, tzinfo=timezone.utc)),
         (ATOM_WITH_ONLY_UPDATED_XML, datetime(2026, 10, 13, 10, 0, tzinfo=timezone.utc)),
     ],
-    ids=['rss-with-published-and-updated', 'atom-with-only-updated'],
+    ids=["rss-with-published-and-updated", "atom-with-only-updated"],
 )
 def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expected_publish_time):
-    feed = create_feed('https://example.com/feed')
-    fetch('https://example.com/feed', xml=xml)
+    feed = create_feed("https://example.com/feed")
+    fetch("https://example.com/feed", xml=xml)
 
     engine.update_feed(feed)
 
