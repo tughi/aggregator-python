@@ -7,14 +7,10 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:$DATABASE_PASSWORD@database
     volumes:
-      - ./application/config.json:/app/config.json:ro
       - ./application/dumps:/app/dumps:rw
     restart: unless-stopped
   web:
     build: ./clients/web
-    restart: unless-stopped
-  web-v1:
-    build: ./clients/web-v1
     restart: unless-stopped
   sync:
     build:
@@ -36,7 +32,6 @@ services:
     depends_on:
       - app
       - web
-      - web-v1
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
