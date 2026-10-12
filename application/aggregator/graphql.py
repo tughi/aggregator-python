@@ -10,6 +10,7 @@ from typing import Optional
 import graphene
 import graphene_sqlalchemy
 from flask import Blueprint
+from flask import request
 from flask_graphql import GraphQLView
 from graphql import GraphQLError
 from sqlalchemy.sql.functions import coalesce
@@ -311,4 +312,23 @@ class Mutations(graphene.ObjectType):
 schema = graphene.Schema(query=Query, mutation=Mutations)
 
 blueprint = Blueprint("graphql", __name__)
+
+
+@blueprint.before_request
+def reject_cross_site_requests():
+    """Protects mutations against CSRF.
+
+    Browsers let any site submit a form to this endpoint, with the user's credentials attached. Requiring a JSON body
+    forces cross-site requests through a CORS preflight, which fails because the app doesn't allow other origins.
+    Sec-Fetch-Site additionally rejects requests the browser marks as coming from another site.
+    """
+    if request.method != "POST":
+        return None
+    if request.mimetype != "application/json":
+        return dict(errors=[dict(message="Content-Type must be application/json")]), 415
+    if request.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
+        return dict(errors=[dict(message="Cross-site requests are not allowed")]), 403
+    return None
+
+
 blueprint.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql", schema=schema, graphiql=True))
