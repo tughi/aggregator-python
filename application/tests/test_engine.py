@@ -85,3 +85,45 @@ def test_add_feed_follows_redirect_to_different_site(app, fetch, no_favicons):
 
     assert result['url'] == 'https://feeds.example.net/feed'
     assert result['entries']['created'] == 1
+
+
+RSS_WITH_PUBLISHED_AND_UPDATED_XML = '''<?xml version="1.0"?>
+<rss version="2.0" xmlns:dcterms="http://purl.org/dc/terms/">
+  <channel>
+    <title>Fetched Title</title>
+    <item>
+      <title>Edited post</title>
+      <guid>https://example.com/edited-post</guid>
+      <pubDate>Mon, 12 Oct 2026 10:00:00 GMT</pubDate>
+      <dcterms:modified>2026-10-14T10:00:00Z</dcterms:modified>
+    </item>
+  </channel>
+</rss>'''
+
+ATOM_WITH_ONLY_UPDATED_XML = '''<?xml version="1.0"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Fetched Title</title>
+  <entry>
+    <title>Atom post</title>
+    <id>https://example.com/atom-post</id>
+    <updated>2026-10-13T10:00:00Z</updated>
+  </entry>
+</feed>'''
+
+
+@pytest.mark.parametrize(
+    'xml, expected_publish_time',
+    [
+        (RSS_WITH_PUBLISHED_AND_UPDATED_XML, datetime(2026, 10, 12, 10, 0, tzinfo=timezone.utc)),
+        (ATOM_WITH_ONLY_UPDATED_XML, datetime(2026, 10, 13, 10, 0, tzinfo=timezone.utc)),
+    ],
+    ids=['rss-with-published-and-updated', 'atom-with-only-updated'],
+)
+def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expected_publish_time):
+    feed = create_feed('https://example.com/feed')
+    fetch('https://example.com/feed', xml=xml)
+
+    engine.update_feed(feed)
+
+    entry = Entry.query.filter(Entry.feed_id == feed.id).one()
+    assert entry.publish_time == expected_publish_time

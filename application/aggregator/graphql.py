@@ -3,6 +3,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
+from datetime import timezone
 from typing import List
 from typing import Optional
 
@@ -162,7 +163,7 @@ class CreateFeedMutation(graphene.Mutation):
 
     @staticmethod
     def resolve_feed(result, info):
-        return Feed.query.get(result['feed_id'])
+        return db.session.get(Feed, result['feed_id'])
 
 
 class UpdateFeedMutation(graphene.Mutation):
@@ -176,14 +177,14 @@ class UpdateFeedMutation(graphene.Mutation):
 
     @staticmethod
     def mutate(source, info, feed_id: int, feed_url: str = None, feed_user_title: str = None):
-        feed = Feed.query.get(feed_id)
+        feed = db.session.get(Feed, feed_id)
         if not feed:
             return GraphQLError("No such feed")
 
         feed_url = feed_url.strip() if feed_url else None
         if feed_url:
             if feed_url != feed.url:
-                feed.next_update_time = datetime.utcnow()
+                feed.next_update_time = datetime.now(tz=timezone.utc)
             feed.url = feed_url
 
         feed_user_title = feed_user_title.strip() if feed_user_title else None
@@ -204,7 +205,7 @@ class RefreshFeedMutation(graphene.Mutation):
 
     @staticmethod
     def mutate(source, info, feed_id: int, forced: bool = False):
-        feed = Feed.query.get(feed_id)
+        feed = db.session.get(Feed, feed_id)
         if not feed:
             return GraphQLError("No such feed")
 
@@ -221,7 +222,7 @@ class RefreshFeedFaviconMutation(graphene.Mutation):
 
     @staticmethod
     def mutate(source, info, feed_id: int):
-        feed = Feed.query.get(feed_id)
+        feed = db.session.get(Feed, feed_id)
         if not feed:
             return GraphQLError("No such feed")
 
@@ -241,7 +242,7 @@ class UpdateEntryState(graphene.Mutation):
 
     @staticmethod
     def mutate(source, info, entry_id: int, keep_time: datetime = None, read_time: datetime = None, star_time: datetime = None):
-        entry = Entry.query.get(entry_id)
+        entry = db.session.get(Entry, entry_id)
         if not entry:
             return GraphQLError("No such entry")
 
@@ -287,7 +288,7 @@ class Query(graphene.ObjectType):
         if only_starred:
             entry_ids = entry_ids.filter(Entry.star_time.is_not(None))
         if isinstance(max_age, int):
-            publish_time = datetime.utcnow() - timedelta(days=max_age)
+            publish_time = datetime.now(tz=timezone.utc) - timedelta(days=max_age)
             entry_ids = entry_ids.filter(Entry.publish_time >= publish_time)
         else:
             publish_time = None

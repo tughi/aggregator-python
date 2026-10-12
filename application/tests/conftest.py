@@ -34,6 +34,8 @@ def app():
     with app.app_context():
         db.create_all()
         yield app
+        db.session.remove()
+        db.engine.dispose()
 
 
 @pytest.fixture
@@ -43,13 +45,13 @@ def client(app):
 
 @pytest.fixture
 def fetch(monkeypatch):
-    """Makes every feed fetch return FEED_XML, ending up at `href` (after redirects) with the given HTTP `status`."""
+    """Makes every feed fetch return `xml`, ending up at `href` (after redirects) with the given HTTP `status`."""
 
     parse_feed_xml = feedparser.parse
 
-    def fetch(href, status=200):
+    def fetch(href, status=200, xml=FEED_XML):
         def parse(url, **kwargs):
-            feed_data = parse_feed_xml(FEED_XML)
+            feed_data = parse_feed_xml(xml)
             feed_data['href'] = href
             feed_data['status'] = status
             return feed_data

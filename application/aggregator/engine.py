@@ -36,7 +36,7 @@ def add_feed(feed_url: str, feed_user_title: str = None):
 
 
 def delete_feed(feed_id: int):
-    feed = Feed.query.get(feed_id)
+    feed = db.session.get(Feed, feed_id)
 
     logger.info(f"Deleting feed: {feed.url}")
 
@@ -159,7 +159,7 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
         entry.summary = json.dumps(_as_content(entry_data.get('summary_detail')))
         entry.content = json.dumps([_as_content(content_data) for content_data in entry_data.get('content', [])])
         entry.publish_text = entry_data.get('published')
-        entry.publish_time = _as_datetime(entry_data.get('updated_parsed') or entry_data.get('published_parsed')) or entry.publish_time or update_time
+        entry.publish_time = _as_datetime(entry_data.get('published_parsed') or entry_data.get('updated_parsed')) or entry.publish_time or update_time
 
         db.session.add(entry)
         db.session.commit()

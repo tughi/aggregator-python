@@ -1,6 +1,7 @@
 import json
 from collections import OrderedDict
 from datetime import datetime
+from datetime import timezone
 
 import sqlalchemy
 from flask import Blueprint
@@ -92,18 +93,18 @@ def get_entries():
 
 @blueprint.patch('/entries/<int:entry_id>')
 def update_entry(entry_id):
-    entry = Entry.query.get(entry_id)
+    entry = db.session.get(Entry, entry_id)
 
     if entry:
         read_flag = request.form.get('read_flag')
         if read_flag == 'true':
-            entry.read_time = entry.read_time or datetime.utcnow()
+            entry.read_time = entry.read_time or datetime.now(tz=timezone.utc)
         elif read_flag == 'false':
             entry.read_time = None
 
         star_flag = request.form.get('star_flag')
         if star_flag == 'true':
-            entry.star_time = entry.star_time or datetime.utcnow()
+            entry.star_time = entry.star_time or datetime.now(tz=timezone.utc)
         elif star_flag == 'false':
             entry.star_time = None
 
