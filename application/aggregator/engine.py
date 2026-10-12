@@ -48,9 +48,7 @@ def delete_feed(feed_id: int):
 def update_feeds():
     status = []
     for feed in Feed.query.filter(Feed.next_update_time <= datetime.now(tz=timezone.utc)):
-        status.append(
-            update_feed(feed)
-        )
+        status.append(update_feed(feed))
     logger.info(f"Updated {len(status)} feed{'s' if len(status) != 1 else ''}")
     return status
 
@@ -88,7 +86,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
         return
 
-    feed_data_url = feed_data.get('href') or feed.url
+    feed_data_url = feed_data.get("href") or feed.url
     if not allow_site_change and not _same_site(feed.url, feed_data_url):
         logger.warning(f"Feed redirected to a different site: {feed_data_url}")
 
@@ -99,13 +97,13 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
         return
 
-    feed.title = feed_data.feed.get('title') or feed.title
+    feed.title = feed_data.feed.get("title") or feed.title
 
-    feed.link = feed_data.feed.get('link')
-    status = feed_data.get('status', 0)
+    feed.link = feed_data.feed.get("link")
+    status = feed_data.get("status", 0)
 
     if status == 301:
-        feed.url = feed_data.get('href')
+        feed.url = feed_data.get("href")
 
         logger.info(f"Feed moved to: {feed.url}")
 
@@ -115,8 +113,8 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     logger.info(f"Next update time: {feed.next_update_time}")
 
-    feed.http_etag = feed_data.get('etag')
-    feed.http_last_modified = feed_data.get('modified')
+    feed.http_etag = feed_data.get("etag")
+    feed.http_last_modified = feed_data.get("modified")
 
     db.session.commit()
 
@@ -142,8 +140,8 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
     entries_updated = 0
 
     for entry_data in feed_data.entries:
-        entry_link = entry_data.get('link')
-        entry_uid = entry_data.get('id') or entry_link
+        entry_link = entry_data.get("link")
+        entry_uid = entry_data.get("id") or entry_link
 
         entry = Entry.query.filter(Entry.feed_id == feed.id, Entry.uid == entry_uid).one_or_none()
         if entry is None:
@@ -153,13 +151,13 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
             entry.update_time = update_time
             entries_updated += 1
 
-        entry.title = entry_data.get('title')
+        entry.title = entry_data.get("title")
         entry.link = entry_link
-        entry.author = json.dumps(entry_data.get('author_detail'))
-        entry.summary = json.dumps(_as_content(entry_data.get('summary_detail')))
-        entry.content = json.dumps([_as_content(content_data) for content_data in entry_data.get('content', [])])
-        entry.publish_text = entry_data.get('published')
-        entry.publish_time = _as_datetime(entry_data.get('published_parsed') or entry_data.get('updated_parsed')) or entry.publish_time or update_time
+        entry.author = json.dumps(entry_data.get("author_detail"))
+        entry.summary = json.dumps(_as_content(entry_data.get("summary_detail")))
+        entry.content = json.dumps([_as_content(content_data) for content_data in entry_data.get("content", [])])
+        entry.publish_text = entry_data.get("published")
+        entry.publish_time = _as_datetime(entry_data.get("published_parsed") or entry_data.get("updated_parsed")) or entry.publish_time or update_time
 
         db.session.add(entry)
         db.session.commit()
@@ -171,17 +169,23 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
 
 def _same_site(url_a: str, url_b: str) -> bool:
     def site(url):
-        return (urlparse(url).hostname or '').removeprefix('www.')
+        return (urlparse(url).hostname or "").removeprefix("www.")
 
     return site(url_a) == site(url_b)
 
 
 def _as_content(content_data):
-    return OrderedDict([
-        ('type', content_data.type),
-        ('language', content_data.language),
-        ('value', content_data.value),
-    ]) if content_data else None
+    return (
+        OrderedDict(
+            [
+                ("type", content_data.type),
+                ("language", content_data.language),
+                ("value", content_data.value),
+            ]
+        )
+        if content_data
+        else None
+    )
 
 
 def _as_datetime(parsed_time):
@@ -204,23 +208,23 @@ def schedule_next_update(feed: Feed, update_time: datetime):
 
     if poll_rate < 1800:
         # schedule new poll in 15 minutes
-        feed.update_mode = 'EVERY_15_MINUTES'
+        feed.update_mode = "EVERY_15_MINUTES"
         feed.next_update_time = update_time + timedelta(minutes=15)
     elif poll_rate < 3600:
         # schedule new poll in 30 minutes
-        feed.update_mode = 'EVERY_30_MINUTES'
+        feed.update_mode = "EVERY_30_MINUTES"
         feed.next_update_time = update_time + timedelta(minutes=30)
     elif poll_rate < 10800:
         # schedule new poll in 1 hour
-        feed.update_mode = 'EVERY_HOUR'
+        feed.update_mode = "EVERY_HOUR"
         feed.next_update_time = update_time + timedelta(hours=1)
     elif poll_rate < 21600:
         # schedule new poll in 3 hours
-        feed.update_mode = 'EVERY_3_HOURS'
+        feed.update_mode = "EVERY_3_HOURS"
         feed.next_update_time = update_time + timedelta(hours=3)
     else:
         # schedule new poll in 6 hours
-        feed.update_mode = 'EVERY_6_HOURS'
+        feed.update_mode = "EVERY_6_HOURS"
         feed.next_update_time = update_time + timedelta(hours=6)
 
     feed.next_update_time = feed.next_update_time.replace(microsecond=0)
@@ -233,7 +237,7 @@ def update_favicons():
 
 
 def update_favicon(feed: Feed):
-    feed_link = feed.link or '{0}://{1}'.format(*urlparse(feed.url))
+    feed_link = feed.link or "{0}://{1}".format(*urlparse(feed.url))
 
     logger.info(f"Updating feed favicon - {feed.user_title or feed.title} ({feed_link})")
 
@@ -241,18 +245,18 @@ def update_favicon(feed: Feed):
 
     data = feedparser.parse(feed_link)
     if data:
-        for link in data.feed.get('links', []):
-            if link.rel == 'shortcut icon':
+        for link in data.feed.get("links", []):
+            if link.rel == "shortcut icon":
                 feed_favicon_url = link.href
                 break
         if not feed_favicon_url:
-            for link in data.feed.get('links', []):
-                if link.rel == 'icon':
+            for link in data.feed.get("links", []):
+                if link.rel == "icon":
                     feed_favicon_url = link.href
                     break
 
     if not feed_favicon_url:
-        feed_favicon_url = '{0}://{1}/favicon.ico'.format(*urlparse(feed_link))
+        feed_favicon_url = "{0}://{1}/favicon.ico".format(*urlparse(feed_link))
         if requests.head(feed_favicon_url).status_code != 200:
             feed_favicon_url = None
 
@@ -267,10 +271,8 @@ def import_opml(opml_source):
 
     def import_outline(outline):
         try:
-            if outline.type == 'rss':
-                result.append(
-                    add_feed(outline.xmlUrl, outline.title)
-                )
+            if outline.type == "rss":
+                result.append(add_feed(outline.xmlUrl, outline.title))
         except AttributeError:
             if len(outline):
                 for o in outline:

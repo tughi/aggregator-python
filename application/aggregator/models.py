@@ -44,7 +44,7 @@ class TimeStamp(TypeDecorator):
 
 
 class Feed(db.Model):
-    __tablename__ = 'feeds'
+    __tablename__ = "feeds"
 
     id = Column(Integer, primary_key=True, nullable=False)
 
@@ -57,7 +57,7 @@ class Feed(db.Model):
     http_etag = Column(String, nullable=True)
     http_last_modified = Column(String, nullable=True)
 
-    update_mode = Column(String, nullable=False, default='AUTO')
+    update_mode = Column(String, nullable=False, default="AUTO")
     last_update_time = Column(TimeStamp, nullable=False, default=epoch_datetime)
     last_update_message = Column(String, nullable=True)
     next_update_time = Column(TimeStamp, nullable=False, default=epoch_datetime)
@@ -65,13 +65,11 @@ class Feed(db.Model):
 
 
 class Entry(db.Model):
-    __tablename__ = 'entries'
-    __table_args__ = (
-        UniqueConstraint('feed_id', 'uid'),
-    )
+    __tablename__ = "entries"
+    __table_args__ = (UniqueConstraint("feed_id", "uid"),)
 
     id = Column(Integer, primary_key=True, nullable=False)
-    feed_id = Column(Integer, ForeignKey(Feed.id, ondelete='CASCADE'), nullable=False)
+    feed_id = Column(Integer, ForeignKey(Feed.id, ondelete="CASCADE"), nullable=False)
 
     uid = Column(String, nullable=False)
     link = Column(String, nullable=True)
