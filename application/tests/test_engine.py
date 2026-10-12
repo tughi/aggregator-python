@@ -1,46 +1,12 @@
 from datetime import datetime
 from datetime import timezone
 
-import feedparser
 import pytest
 
 from aggregator import engine
 from aggregator.models import Entry
 from aggregator.models import Feed
 from aggregator.models import db
-
-FEED_XML = '''<?xml version="1.0"?>
-<rss version="2.0">
-  <channel>
-    <title>Fetched Title</title>
-    <link>https://example.com/</link>
-    <item>
-      <title>First post</title>
-      <link>https://example.com/first-post</link>
-      <guid>https://example.com/first-post</guid>
-      <description>Hello</description>
-      <pubDate>Mon, 12 Oct 2026 10:00:00 GMT</pubDate>
-    </item>
-  </channel>
-</rss>'''
-
-
-@pytest.fixture
-def fetch(monkeypatch):
-    """Makes every feed fetch end up at `href` (after redirects) with the given HTTP `status`."""
-
-    parse_feed_xml = feedparser.parse
-
-    def fetch(href, status=200):
-        def parse(url, **kwargs):
-            feed_data = parse_feed_xml(FEED_XML)
-            feed_data['href'] = href
-            feed_data['status'] = status
-            return feed_data
-
-        monkeypatch.setattr(engine.feedparser, 'parse', parse)
-
-    return fetch
 
 
 def create_feed(url):
@@ -112,8 +78,7 @@ def test_update_feed_without_redirect(app, fetch):
     assert count_entries(feed) == 1
 
 
-def test_add_feed_follows_redirect_to_different_site(app, fetch, monkeypatch):
-    monkeypatch.setattr(engine, 'update_favicon', lambda feed: None)
+def test_add_feed_follows_redirect_to_different_site(app, fetch, no_favicons):
     fetch('https://feeds.example.net/feed', status=301)
 
     result = engine.add_feed('https://example.com/feed')
