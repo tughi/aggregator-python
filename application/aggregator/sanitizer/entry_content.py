@@ -7,7 +7,7 @@ from lxml.html.clean import Cleaner
 
 class Sanitizer(Cleaner):
     def __init__(self, base_url=None):
-        super().__init__(remove_tags=["a", "img"], style=True)
+        super().__init__(remove_tags=["a", "img"], kill_tags=["base"], style=True)
 
         self.base_url = base_url
 
