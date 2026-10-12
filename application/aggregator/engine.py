@@ -28,7 +28,7 @@ def add_feed(feed_url: str, feed_user_title: str = None):
     db.session.add(feed)
     db.session.flush()
 
-    result = update_feed(feed)
+    result = update_feed(feed, allow_site_change=True)
 
     update_favicon(feed)
 
@@ -55,7 +55,7 @@ def update_feeds():
     return status
 
 
-def update_feed(feed: Feed, forced: bool = False):
+def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = False):
     logger.info(f"Updating feed - {feed.user_title or feed.title} ({feed.url})")
 
     update_time = datetime.now(tz=timezone.utc)
@@ -84,6 +84,17 @@ def update_feed(feed: Feed, forced: bool = False):
         logger.warning(f"Failed to parse feed")
 
         feed.next_update_retry += 1
+        db.session.commit()
+
+        return
+
+    feed_data_url = feed_data.get('href') or feed.url
+    if not allow_site_change and not _same_site(feed.url, feed_data_url):
+        logger.warning(f"Feed redirected to a different site: {feed_data_url}")
+
+        feed.last_update_message = f"Redirected to {feed_data_url}, which is on a different site."
+        feed.next_update_retry += 1
+        schedule_next_update(feed, update_time)
         db.session.commit()
 
         return
@@ -156,6 +167,13 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
     logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
 
     return entries_created, entries_updated
+
+
+def _same_site(url_a: str, url_b: str) -> bool:
+    def site(url):
+        return (urlparse(url).hostname or '').removeprefix('www.')
+
+    return site(url_a) == site(url_b)
 
 
 def _as_content(content_data):
