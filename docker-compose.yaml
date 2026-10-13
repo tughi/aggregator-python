@@ -3,7 +3,7 @@ services:
     build:
       context: ./application
     environment:
-      DATABASE_URL: $DATABASE_URL
+      - DATABASE_URL
     volumes:
       - ./application/dumps:/app/dumps:rw
     restart: unless-stopped
@@ -14,7 +14,7 @@ services:
     build:
       context: ./application
     environment:
-      DATABASE_URL: $DATABASE_URL
+      - DATABASE_URL
     command: crond -f
     user: root
     restart: unless-stopped
