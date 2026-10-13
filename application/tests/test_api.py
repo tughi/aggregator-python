@@ -85,3 +85,11 @@ def test_import_opml(app):
     assert Feed.query.count() == 43
     assert Feed.query.filter(Feed.url == "http://xkcd.com/atom.xml").one().user_title == "xkcd.com"
     assert Feed.query.filter(Feed.url == "http://www.autoblog.com/category/paris-motor-show/rss.xml").one().user_title == "paris motor show"
+
+
+def test_add_feed_rejects_urls_that_are_not_web_urls(client):
+    response = client.post("/api/feeds", data=dict(url="file:///etc/passwd"))
+
+    assert response.status_code == 400
+    assert response.get_json() == dict(error=engine.NOT_A_WEB_URL_MESSAGE)
+    assert Feed.query.count() == 0

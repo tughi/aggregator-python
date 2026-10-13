@@ -1,6 +1,8 @@
 import pytest
 
+from aggregator import engine
 from aggregator.models import Feed
+from aggregator.models import db
 
 FEEDS_QUERY = "{ feeds { id url } }"
 CREATE_FEED_MUTATION = 'mutation { createFeed(url: "https://attacker.example/feed.xml") { ok } }'
@@ -61,3 +63,20 @@ def test_rejects_mutations_over_get(client):
 
     assert response.status_code == 405
     assert Feed.query.count() == 0
+
+
+def test_create_feed_rejects_urls_that_are_not_web_urls(client):
+    response = client.post("/graphql", json=dict(query='mutation { createFeed(url: "file:///etc/passwd") { ok } }'))
+
+    assert [error["message"] for error in response.get_json()["errors"]] == [engine.NOT_A_WEB_URL_MESSAGE]
+    assert Feed.query.count() == 0
+
+
+def test_update_feed_rejects_urls_that_are_not_web_urls(client):
+    client.post("/graphql", json=dict(query=CREATE_FEED_MUTATION))
+    feed = Feed.query.one()
+
+    response = client.post("/graphql", json=dict(query='mutation { updateFeed(id: %d, url: "file:///etc/passwd") { ok } }' % feed.id))
+
+    assert [error["message"] for error in response.get_json()["errors"]] == [engine.NOT_A_WEB_URL_MESSAGE]
+    assert db.session.get(Feed, feed.id).url == "https://attacker.example/feed.xml"

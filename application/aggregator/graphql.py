@@ -183,6 +183,8 @@ class UpdateFeedMutation(graphene.Mutation):
             return GraphQLError("No such feed")
 
         feed_url = feed_url.strip() if feed_url else None
+        if feed_url and not engine.web_url_or_none(feed_url):
+            return GraphQLError(engine.NOT_A_WEB_URL_MESSAGE)
         if feed_url:
             if feed_url != feed.url:
                 feed.next_update_time = datetime.now(tz=timezone.utc)

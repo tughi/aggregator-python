@@ -43,7 +43,10 @@ def add_feed():
 
     feed_title = request.form.get("title")
 
-    return jsonify(engine.add_feed(feed_url, feed_user_title=feed_title))
+    try:
+        return jsonify(engine.add_feed(feed_url, feed_user_title=feed_title))
+    except ValueError as error:
+        raise ApiException(400, str(error))
 
 
 @blueprint.get("/update/feeds")

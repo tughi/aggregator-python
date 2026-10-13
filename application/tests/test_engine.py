@@ -155,7 +155,7 @@ def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expect
     ],
 )
 def test_web_url(url, expected):
-    assert engine._web_url(url) == expected
+    assert engine.web_url_or_none(url) == expected
 
 
 JAVASCRIPT_LINKS_XML = """<?xml version="1.0"?>
@@ -182,3 +182,40 @@ def test_update_feed_drops_links_that_are_not_web_urls(app, fetch):
     assert feed.link is None
     assert entry.link is None
     assert entry.uid == "javascript:alert(document.domain)"
+
+
+NOT_WEB_FEED_URLS = pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "/etc/passwd",
+        "ftp://example.com/feed.xml",
+        "feed://example.com/feed.xml",
+        '<rss version="2.0"><channel><title>Injected</title></channel></rss>',
+    ],
+    ids=["file-url", "local-path", "ftp-url", "feed-url", "inline-feed"],
+)
+
+
+@NOT_WEB_FEED_URLS
+def test_update_feed_does_not_fetch_urls_that_are_not_web_urls(app, monkeypatch, url):
+    def parse(*args, **kwargs):
+        raise AssertionError("feedparser.parse should not be called")
+
+    monkeypatch.setattr(engine.feedparser, "parse", parse)
+    feed = create_feed(url)
+
+    engine.update_feed(feed)
+
+    assert feed.last_update_message == engine.NOT_A_WEB_URL_MESSAGE
+    assert feed.next_update_retry == 1
+    assert feed.next_update_time > datetime.now(tz=timezone.utc)
+    assert count_entries(feed) == 0
+
+
+@NOT_WEB_FEED_URLS
+def test_add_feed_rejects_urls_that_are_not_web_urls(app, fetch, no_favicons, url):
+    with pytest.raises(ValueError, match=engine.NOT_A_WEB_URL_MESSAGE):
+        engine.add_feed(url)
+
+    assert Feed.query.count() == 0
