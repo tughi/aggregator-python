@@ -20,7 +20,13 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
+NOT_A_WEB_URL_MESSAGE = "The feed URL must be an http or https URL."
+
+
 def add_feed(feed_url: str, feed_user_title: str = None):
+    if not web_url_or_none(feed_url):
+        raise ValueError(NOT_A_WEB_URL_MESSAGE)
+
     logger.info(f"Adding feed: {feed_url}")
 
     feed = Feed(url=feed_url, title="New Feed", user_title=feed_user_title)
@@ -61,6 +67,17 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     feed.last_update_message = None
 
+    if not web_url_or_none(feed.url):
+        # feedparser would otherwise read file:// URLs and local paths, or parse the URL itself as a feed
+        logger.warning(f"Not fetching feed with a non-web URL: {feed.url}")
+
+        feed.last_update_message = NOT_A_WEB_URL_MESSAGE
+        feed.next_update_retry += 1
+        schedule_next_update(feed, update_time)
+        db.session.commit()
+
+        return
+
     try:
         feed_data = feedparser.parse(
             feed.url,
@@ -99,7 +116,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     feed.title = feed_data.feed.get("title") or feed.title
 
-    feed.link = _web_url(feed_data.feed.get("link"))
+    feed.link = web_url_or_none(feed_data.feed.get("link"))
     status = feed_data.get("status", 0)
 
     if status == 301:
@@ -152,7 +169,7 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
             entries_updated += 1
 
         entry.title = entry_data.get("title")
-        entry.link = _web_url(entry_link)
+        entry.link = web_url_or_none(entry_link)
         entry.author = json.dumps(entry_data.get("author_detail"))
         entry.summary = json.dumps(_as_content(entry_data.get("summary_detail")))
         entry.content = json.dumps([_as_content(content_data) for content_data in entry_data.get("content", [])])
@@ -167,7 +184,7 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
     return entries_created, entries_updated
 
 
-def _web_url(url: str | None) -> str | None:
+def web_url_or_none(url: str | None) -> str | None:
     """Returns `url` if it is an http(s) URL, so links from feeds can't be `javascript:` or `file:` URLs."""
     if url and urlparse(url).scheme in ("http", "https"):
         return url
