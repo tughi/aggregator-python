@@ -2,16 +2,16 @@ FROM node:alpine as build
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 
-RUN yarn
+RUN npm ci
 
 COPY index.html ./
 COPY public ./public/
 COPY src ./src/
 COPY vite.config.js ./
 
-RUN yarn build
+RUN npm run build
 
 FROM nginx:stable-alpine
 
