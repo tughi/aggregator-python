@@ -18,6 +18,25 @@ The easiest way to launch Aggregator is to use docker-compose together with eith
 
 	docker-compose up --build
 
+The database is configured through `DATABASE_URL` in an `.env` file.
+
+Ports and a PostgreSQL container can be added in a `docker-compose.override.yaml`:
+
+	services:
+	  nginx:
+	    ports:
+	      - 8080:8080
+	  database:
+	    image: postgres:18
+	    environment:
+	      POSTGRES_PASSWORD: secret
+	    volumes:
+	      - database:/var/lib/postgresql
+	volumes:
+	  database:
+
+and use `DATABASE_URL=postgresql://postgres:secret@database`.
+
 ### Web Client Screenshots
 
 ![Feeds](screenshots/web-feeds.png)
