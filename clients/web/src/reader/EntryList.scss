@@ -1,4 +1,5 @@
-@import "./utils.scss";
+@use "sass:list";
+@use "./utils";
 
 .EntryList {
    display: flex;
@@ -8,7 +9,7 @@
       flex-grow: 1;
 
       overflow: hidden scroll;
-      @include custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
+      @include utils.custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
 
       > .entry {
          --entry-background-color: var(--background);
@@ -68,7 +69,7 @@
 
                $colors: var(--red) var(--pink) var(--purple) var(--indigo) var(--blue) var(--cyan) var(--teal) var(--green) var(--yellow) var(--orange);
                @each $color in $colors {
-                  &.rss-icon-#{index($colors, $color)}::after {
+                  &.rss-icon-#{list.index($colors, $color)}::after {
                      content: '';
                      display: block;
                      height: var(--entry-summary-height);

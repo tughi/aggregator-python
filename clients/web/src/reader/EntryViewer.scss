@@ -1,4 +1,4 @@
-@import "./utils.scss";
+@use "./utils";
 
 $shadow-size: 1rem;
 
@@ -33,7 +33,7 @@ $shadow-size: 1rem;
          box-shadow: 0 0 $shadow-size var(--primary-color-3);
 
          overflow: hidden scroll;
-         @include custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
+         @include utils.custom-scrollbar(var(--primary-color-5), var(--primary-color-2));
 
          > .content {
             max-width: 50rem;

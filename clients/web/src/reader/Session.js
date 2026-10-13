@@ -40,7 +40,6 @@ const ENTRIES_LIMIT = 50
 
 export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFirst, maxAge }) => {
    const [feeds, setFeeds] = useState([])
-   const [feedsById, setFeedsById] = useState({})
    const [unreadEntries, setUnreadEntries] = useState(0)
    const [starredEntries, setStarredEntries] = useState(0)
    const [entryIds, setEntryIds] = useState([])
@@ -58,9 +57,7 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
       setEntriesOffset(0)
    }, [sessionQueryVariables])
 
-   useEffect(() => {
-      setFeedsById((feeds || []).reduce((feedsById, feed) => ({ ...feedsById, [feed.id]: feed }), {}))
-   }, [feeds])
+   const feedsById = useMemo(() => (feeds || []).reduce((feedsById, feed) => ({ ...feedsById, [feed.id]: feed }), {}), [feeds])
 
    const consumeSessionData = useCallback(({ session }) => {
       setFeeds(session.feeds)

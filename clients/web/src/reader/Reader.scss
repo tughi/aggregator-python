@@ -1,4 +1,4 @@
-@import "./utils.scss";
+@use "./utils";
 
 .Reader {
    display: flex;
@@ -78,7 +78,7 @@
       width: 20rem;
 
       overflow: hidden auto;
-      @include custom-scrollbar(var(--primary-color-4), var(--primary-color-2));
+      @include utils.custom-scrollbar(var(--primary-color-4), var(--primary-color-2));
 
       background-color: var(--primary-color-1);
       border-left: 1px solid var(--primary-color-3);
