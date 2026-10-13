@@ -12,7 +12,7 @@ dependencies = [
     "gunicorn",
     "lxml-html-clean",
     "opml",
-    "psycopg2-binary",
+    "psycopg[binary]",
     "python-dotenv",
     "requests",
     "sqlalchemy",
