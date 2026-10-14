@@ -333,3 +333,50 @@ def test_refresh_feed_favicon(client, data, monkeypatch):
     result = graphql(client, "mutation { refreshFeedFavicon(id: 1) { feed { id faviconUrl } } }")
 
     assert result["refreshFeedFavicon"] == dict(feed=dict(id=1, faviconUrl="https://a.example/new-favicon.ico"))
+
+
+def feed_entry_ids(client, arguments):
+    return [entry["id"] for entry in graphql(client, "{ feedEntries(%s) { id } }" % arguments)["feedEntries"]]
+
+
+def test_feed_entries_newest_first_including_read_entries(client, data):
+    assert feed_entry_ids(client, "feedId: 1") == [2, 1]
+    assert feed_entry_ids(client, "feedId: 2") == [3, 4]
+
+
+def test_feed_entries_by_read_state(client, data):
+    assert feed_entry_ids(client, "feedId: 1, read: true") == [2]
+    assert feed_entry_ids(client, "feedId: 1, read: false") == [1]
+
+
+def test_feed_entries_paging(client, data):
+    assert feed_entry_ids(client, "feedId: 2, limit: 1") == [3]
+    assert feed_entry_ids(client, "feedId: 2, limit: 1, offset: 1") == [4]
+
+
+def test_feed_entries_return_full_entries(client, data):
+    entries = graphql(client, "{ feedEntries(feedId: 1, read: true) %s }" % ENTRY_FIELDS)["feedEntries"]
+
+    assert entries == [expected_entry(2, data, read_time=data["read"])]
+
+
+def test_feed_entries_for_unknown_feed(client, data):
+    response = client.post("/graphql", json=dict(query="{ feedEntries(feedId: 999) { id } }"))
+
+    assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
+
+
+def test_delete_feed_removes_the_feed_and_its_entries(client, data):
+    result = graphql(client, "mutation { deleteFeed(id: 1) { ok } }")
+
+    assert result["deleteFeed"] == dict(ok=True)
+    assert [feed.id for feed in Feed.query] == [2]
+    assert Entry.query.filter(Entry.feed_id == 1).count() == 0
+    assert Entry.query.filter(Entry.feed_id == 2).count() == 2
+
+
+def test_delete_feed_for_unknown_feed(client, data):
+    response = client.post("/graphql", json=dict(query="mutation { deleteFeed(id: 999) { ok } }"))
+
+    assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
+    assert Feed.query.count() == 2

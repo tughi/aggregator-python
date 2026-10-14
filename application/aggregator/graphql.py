@@ -220,6 +220,11 @@ class UpdateEntryStateResult:
     entry: Entry
 
 
+@strawberry.type
+class DeleteFeedResult:
+    ok: bool
+
+
 def get_feed(id: int) -> models.Feed:
     feed = db.session.get(models.Feed, id)
     if not feed:
@@ -229,6 +234,14 @@ def get_feed(id: int) -> models.Feed:
 
 @strawberry.type
 class Mutations:
+    @strawberry.mutation(description="Deletes a feed together with all its entries.")
+    def delete_feed(self, id: int) -> DeleteFeedResult | None:
+        get_feed(id)
+
+        engine.delete_feed(id)
+
+        return DeleteFeedResult(ok=True)
+
     @strawberry.mutation
     def refresh_feed(self, id: int, forced: bool = False) -> RefreshFeedResult | None:
         feed = get_feed(id)
@@ -302,6 +315,19 @@ class Query:
     @strawberry.field
     def feeds(self) -> list[Feed]:
         return [Feed.from_model(feed) for feed in models.Feed.query]
+
+    @strawberry.field(description="A feed's entries, newest first. `read` limits them to read (true) or unread (false) entries.")
+    def feed_entries(self, feed_id: int, read: bool | None = None, limit: int = 50, offset: int = 0) -> list[Entry]:
+        get_feed(feed_id)
+
+        entries = models.Entry.query.filter(models.Entry.feed_id == feed_id)
+        if read is True:
+            entries = entries.filter(models.Entry.read_time.is_not(None))
+        elif read is False:
+            entries = entries.filter(models.Entry.read_time.is_(None))
+        entries = entries.order_by(models.Entry.publish_time.desc(), models.Entry.id.desc()).offset(offset).limit(limit)
+
+        return [Entry.from_model(entry) for entry in entries]
 
     @strawberry.field
     def session(
