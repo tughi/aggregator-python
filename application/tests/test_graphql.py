@@ -61,7 +61,8 @@ def test_accepts_requests_from_same_origin(client, sec_fetch_site):
 def test_rejects_mutations_over_get(client):
     response = client.get("/graphql", query_string=dict(query=CREATE_FEED_MUTATION))
 
-    assert response.status_code == 405
+    assert response.status_code == 400
+    assert response.get_data(as_text=True) == "mutations are not allowed when using GET"
     assert Feed.query.count() == 0
 
 

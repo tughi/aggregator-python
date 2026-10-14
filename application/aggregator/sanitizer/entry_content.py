@@ -1,8 +1,15 @@
+from typing import TypedDict
 from urllib.parse import urljoin
 from urllib.parse import urlparse
 
 from lxml import html
 from lxml.html.clean import Cleaner
+
+
+class ContentData(TypedDict):
+    type: str
+    language: str | None
+    value: str
 
 
 class Sanitizer(Cleaner):
@@ -33,7 +40,7 @@ class Sanitizer(Cleaner):
         return super().clean_html(content_html)
 
 
-def sanitize_entry_content(content, base_url):
+def sanitize_entry_content(content: ContentData | None, base_url: str | None) -> ContentData | None:
     if content is None:
         return None
 
@@ -45,7 +52,7 @@ def sanitize_entry_content(content, base_url):
     sanitized_content_html = sanitizer.clean_html(content_html)
     sanitized_content_value = html.tostring(sanitized_content_html, encoding="unicode")
 
-    return dict(
+    return ContentData(
         type=content["type"],
         language=content["language"],
         value=sanitized_content_value,

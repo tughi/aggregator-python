@@ -1,253 +1,288 @@
+from __future__ import annotations
+
 import json
-from collections import OrderedDict
-from dataclasses import dataclass
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
-from typing import List
-from typing import Optional
+from typing import TypedDict
 
-import graphene
-import graphene_sqlalchemy
+import strawberry
 from flask import Blueprint
 from flask import request
-from flask_graphql import GraphQLView
 from graphql import GraphQLError
 from sqlalchemy.sql.functions import coalesce
 from sqlalchemy.sql.functions import count
+from strawberry.flask.views import GraphQLView
 
 from aggregator import engine
-from aggregator.models import Entry
-from aggregator.models import Feed
+from aggregator import models
 from aggregator.models import db
+from aggregator.sanitizer import ContentData
 
 
-class AuthorType(graphene.ObjectType):
-    name = graphene.String()
-    href = graphene.String()
-    email = graphene.String()
+class AuthorData(TypedDict, total=False):
+    name: str
+    href: str
+    email: str
 
 
-class ContentType(graphene.ObjectType):
-    value = graphene.String()
-    type = graphene.String()
-    language = graphene.String()
-    base = graphene.String()
+@strawberry.type
+class Author:
+    name: str | None = None
+    href: str | None = None
+    email: str | None = None
+
+    @classmethod
+    def from_author(cls, author: AuthorData) -> Author:
+        return cls(name=author.get("name"), href=author.get("href"), email=author.get("email"))
 
 
-class EntryType(graphene_sqlalchemy.SQLAlchemyObjectType):
-    class Meta:
-        name = Entry.__name__
-        model = Entry
+@strawberry.type
+class Content:
+    value: str
+    type: str
+    language: str | None
 
-    id = graphene.Int()
-
-    summary = graphene.Field(ContentType)
-    content = graphene.List(ContentType)
-    author = graphene.Field(AuthorType)
-
-    publish_time = graphene.DateTime()
-
-    insert_time = graphene.DateTime()
-    update_time = graphene.DateTime()
-
-    keep_time = graphene.DateTime()
-    read_time = graphene.DateTime()
-    star_time = graphene.DateTime()
-
-    @staticmethod
-    def resolve_author(self: Entry, info):
-        return json.loads(self.author)
-
-    @staticmethod
-    def resolve_content(self: Entry, info):
-        return self.sanitized_content
-
-    @staticmethod
-    def resolve_summary(self: Entry, info):
-        return self.sanitized_summary
+    @classmethod
+    def from_content(cls, content: ContentData) -> Content:
+        return cls(value=content["value"], type=content["type"], language=content["language"])
 
 
-class FeedType(graphene_sqlalchemy.SQLAlchemyObjectType):
-    class Meta:
-        name = Feed.__name__
-        model = Feed
+@strawberry.type
+class Entry:
+    id: int
+    feed_id: int
+    uid: str
+    link: str | None
+    title: str | None
+    publish_text: str | None
+    publish_time: datetime | None
+    insert_time: datetime
+    update_time: datetime
+    keep_time: datetime | None
+    read_time: datetime | None
+    star_time: datetime | None
+    model: strawberry.Private[models.Entry]
 
-    id = graphene.Int()
-    update_time = graphene.DateTime()
-    last_update_time = graphene.DateTime()
-    next_update_time = graphene.DateTime()
+    @classmethod
+    def from_model(cls, entry: models.Entry) -> Entry:
+        return cls(
+            id=entry.id,
+            feed_id=entry.feed_id,
+            uid=entry.uid,
+            link=entry.link,
+            title=entry.title,
+            publish_text=entry.publish_text,
+            publish_time=entry.publish_time,
+            insert_time=entry.insert_time,
+            update_time=entry.update_time,
+            keep_time=entry.keep_time,
+            read_time=entry.read_time,
+            star_time=entry.star_time,
+            model=entry,
+        )
 
-    unread_entries = graphene.Int()
+    @strawberry.field
+    def summary(self) -> Content | None:
+        summary = self.model.sanitized_summary
+        return Content.from_content(summary) if summary else None
 
-    entries_created = graphene.Int()
-    entries_updated = graphene.Int()
-    entries_deleted = graphene.Int()
+    @strawberry.field
+    def content(self) -> list[Content]:
+        return [Content.from_content(content) for content in self.model.sanitized_content]
 
-    @staticmethod
-    def resolve_unread_entries(feed: Feed, info):
-        try:
-            unread_entries = feed.unread_entries
-        except AttributeError:
-            unread_entries = Entry.query.filter(Entry.feed_id == feed.id, Entry.read_time.is_(None)).count()
-        return unread_entries
+    @strawberry.field
+    def author(self) -> Author | None:
+        author = json.loads(self.model.author)
+        return Author.from_author(author) if author else None
 
-
-@dataclass
-class SessionData:
-    entry_ids: List[int]
-    publish_time: Optional[datetime]
+    @strawberry.field
+    def feed(self) -> Feed:
+        return Feed.from_model(self.model.feed)
 
 
-class SessionType(graphene.ObjectType):
-    class Meta:
-        name = "Session"
+@strawberry.type
+class Feed:
+    id: int
+    url: str
+    title: str
+    user_title: str | None
+    link: str | None
+    favicon_url: str | None
+    http_etag: str | None
+    http_last_modified: str | None
+    update_mode: str
+    last_update_time: datetime
+    last_update_message: str | None
+    next_update_time: datetime
+    next_update_retry: int
+    entries_created: int | None = None
+    entries_updated: int | None = None
+    known_unread_entries: strawberry.Private[int | None] = None
 
-    entries = graphene.List(EntryType, limit=graphene.Int(required=True))
-    entry_ids = graphene.List(graphene.Int)
-    feeds = graphene.List(FeedType)
-    unread_entries = graphene.Int()
-    starred_entries = graphene.Int()
+    @classmethod
+    def from_model(cls, feed: models.Feed, **fields) -> Feed:
+        return cls(
+            id=feed.id,
+            url=feed.url,
+            title=feed.title,
+            user_title=feed.user_title,
+            link=feed.link,
+            favicon_url=feed.favicon_url,
+            http_etag=feed.http_etag,
+            http_last_modified=feed.http_last_modified,
+            update_mode=feed.update_mode,
+            last_update_time=feed.last_update_time,
+            last_update_message=feed.last_update_message,
+            next_update_time=feed.next_update_time,
+            next_update_retry=feed.next_update_retry,
+            **fields,
+        )
 
-    @staticmethod
-    def resolve_entries(session: SessionData, info, limit):
-        entry_ids = session.entry_ids[:limit]
-        entries = OrderedDict((entry_id, None) for entry_id in entry_ids)
-        for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
-            entries[entry.id] = entry
-        return entries.values()
+    @strawberry.field
+    def unread_entries(self) -> int:
+        if self.known_unread_entries is not None:
+            return self.known_unread_entries
+        return models.Entry.query.filter(models.Entry.feed_id == self.id, models.Entry.read_time.is_(None)).count()
 
-    @staticmethod
-    def resolve_feeds(session: SessionData, info):
-        feeds = OrderedDict()
-        for feed in Feed.query.order_by(coalesce(Feed.user_title, Feed.title)):
-            feed.unread_entries = 0
-            feeds[feed.id] = feed
-        unread_entries_query = db.session.query(Feed.id, count(Entry.id)).select_from(Feed).join(Entry).filter(Entry.read_time.is_(None)).group_by(Feed.id)
-        if session.publish_time:
-            unread_entries_query = unread_entries_query.filter(Entry.publish_time >= session.publish_time)
-        for feed_id, unread_entries in unread_entries_query:
-            feeds[feed_id].unread_entries = unread_entries
-        return feeds.values()
 
-    @staticmethod
-    def resolve_unread_entries(session: SessionData, info):
-        query = db.session.query(Entry.id).filter(Entry.read_time.is_(None))
-        if session.publish_time:
-            query = query.filter(Entry.publish_time >= session.publish_time)
+def entries_by_id(entry_ids: list[int | None]) -> list[Entry | None]:
+    entries = {entry.id: entry for entry in models.Entry.query.filter(models.Entry.id.in_(entry_ids))}
+    return [Entry.from_model(entries[entry_id]) if entry_id in entries else None for entry_id in entry_ids]
+
+
+@strawberry.type
+class Session:
+    entry_ids: list[int]
+    publish_time: strawberry.Private[datetime | None]
+
+    @strawberry.field
+    def entries(self, limit: int) -> list[Entry]:
+        return [entry for entry in entries_by_id(self.entry_ids[:limit]) if entry]
+
+    @strawberry.field
+    def feeds(self) -> list[Feed]:
+        unread_entries_query = (
+            db.session.query(models.Feed.id, count(models.Entry.id))
+            .select_from(models.Feed)
+            .join(models.Entry)
+            .filter(models.Entry.read_time.is_(None))
+            .group_by(models.Feed.id)
+        )
+        if self.publish_time:
+            unread_entries_query = unread_entries_query.filter(models.Entry.publish_time >= self.publish_time)
+        unread_entries = dict(unread_entries_query.all())
+        return [
+            Feed.from_model(feed, known_unread_entries=unread_entries.get(feed.id, 0))
+            for feed in models.Feed.query.order_by(coalesce(models.Feed.user_title, models.Feed.title))
+        ]
+
+    @strawberry.field
+    def unread_entries(self) -> int:
+        query = db.session.query(models.Entry.id).filter(models.Entry.read_time.is_(None))
+        if self.publish_time:
+            query = query.filter(models.Entry.publish_time >= self.publish_time)
         return query.count()
 
-    @staticmethod
-    def resolve_starred_entries(session: SessionData, info):
-        query = db.session.query(Entry.id).filter(Entry.star_time.is_not(None))
-        if session.publish_time:
-            query = query.filter(Entry.publish_time >= session.publish_time)
+    @strawberry.field
+    def starred_entries(self) -> int:
+        query = db.session.query(models.Entry.id).filter(models.Entry.star_time.is_not(None))
+        if self.publish_time:
+            query = query.filter(models.Entry.publish_time >= self.publish_time)
         return query.count()
 
 
-class CreateFeedMutation(graphene.Mutation):
-    class Arguments:
-        feed_url = graphene.String(name="url", required=True)
-        feed_user_title = graphene.String(name="userTitle")
-
-    ok = graphene.Boolean()
-    feed = graphene.Field(FeedType)
-    feed_id = graphene.Int()
-
-    @staticmethod
-    def mutate(source, info, feed_url: str, feed_user_title: str = None):
-        feed_url = feed_url.strip()
-
-        result = engine.add_feed(feed_url, feed_user_title=feed_user_title)
-
-        return dict(ok=True, feed_id=result["id"])
-
-    @staticmethod
-    def resolve_feed(result, info):
-        return db.session.get(Feed, result["feed_id"])
+@strawberry.type
+class CreateFeedResult:
+    ok: bool
+    feed: Feed
+    feed_id: int
 
 
-class UpdateFeedMutation(graphene.Mutation):
-    class Arguments:
-        feed_id = graphene.Int(name="id", required=True)
-        feed_url = graphene.String(name="url")
-        feed_user_title = graphene.String(name="userTitle")
-
-    ok = graphene.Boolean()
-    feed = graphene.Field(FeedType)
-
-    @staticmethod
-    def mutate(source, info, feed_id: int, feed_url: str = None, feed_user_title: str = None):
-        feed = db.session.get(Feed, feed_id)
-        if not feed:
-            return GraphQLError("No such feed")
-
-        feed_url = feed_url.strip() if feed_url else None
-        if feed_url and not engine.web_url_or_none(feed_url):
-            return GraphQLError(engine.NOT_A_WEB_URL_MESSAGE)
-        if feed_url:
-            if feed_url != feed.url:
-                feed.next_update_time = datetime.now(tz=timezone.utc)
-            feed.url = feed_url
-
-        feed_user_title = feed_user_title.strip() if feed_user_title else None
-        if feed_user_title:
-            feed.user_title = feed_user_title
-
-        db.session.commit()
-
-        return dict(ok=True, feed=feed)
+@strawberry.type
+class UpdateFeedResult:
+    ok: bool
+    feed: Feed
 
 
-class RefreshFeedMutation(graphene.Mutation):
-    class Arguments:
-        feed_id = graphene.Int(name="id", required=True)
-        forced = graphene.Boolean()
-
-    feed = graphene.Field(FeedType)
-
-    @staticmethod
-    def mutate(source, info, feed_id: int, forced: bool = False):
-        feed = db.session.get(Feed, feed_id)
-        if not feed:
-            return GraphQLError("No such feed")
-
-        engine.update_feed(feed, forced)
-
-        return dict(feed=feed)
+@strawberry.type
+class RefreshFeedResult:
+    feed: Feed
 
 
-class RefreshFeedFaviconMutation(graphene.Mutation):
-    class Arguments:
-        feed_id = graphene.Int(name="id", required=True)
+@strawberry.type
+class RefreshFeedFaviconResult:
+    feed: Feed
 
-    feed = graphene.Field(FeedType)
 
-    @staticmethod
-    def mutate(source, info, feed_id: int):
-        feed = db.session.get(Feed, feed_id)
-        if not feed:
-            return GraphQLError("No such feed")
+@strawberry.type
+class UpdateEntryStateResult:
+    entry: Entry
+
+
+def get_feed(id: int) -> models.Feed:
+    feed = db.session.get(models.Feed, id)
+    if not feed:
+        raise GraphQLError("No such feed")
+    return feed
+
+
+@strawberry.type
+class Mutations:
+    @strawberry.mutation
+    def refresh_feed(self, id: int, forced: bool = False) -> RefreshFeedResult | None:
+        feed = get_feed(id)
+
+        result = engine.update_feed(feed, forced)
+        entries = result["entries"] if result else {}
+
+        return RefreshFeedResult(feed=Feed.from_model(feed, entries_created=entries.get("created"), entries_updated=entries.get("updated")))
+
+    @strawberry.mutation
+    def refresh_feed_favicon(self, id: int) -> RefreshFeedFaviconResult | None:
+        feed = get_feed(id)
 
         engine.update_favicon(feed)
 
-        return dict(feed=feed)
+        return RefreshFeedFaviconResult(feed=Feed.from_model(feed))
 
+    @strawberry.mutation
+    def create_feed(self, url: str, user_title: str | None = None) -> CreateFeedResult | None:
+        result = engine.add_feed(url.strip(), feed_user_title=user_title)
 
-class UpdateEntryState(graphene.Mutation):
-    class Arguments:
-        entry_id = graphene.Int(name="id", required=True)
-        keep_time = graphene.DateTime()
-        read_time = graphene.DateTime()
-        star_time = graphene.DateTime()
+        return CreateFeedResult(ok=True, feed_id=result["id"], feed=Feed.from_model(get_feed(result["id"])))
 
-    entry = graphene.Field(EntryType)
+    @strawberry.mutation
+    def update_feed(self, id: int, url: str | None = None, user_title: str | None = None) -> UpdateFeedResult | None:
+        feed = get_feed(id)
 
-    @staticmethod
-    def mutate(source, info, entry_id: int, keep_time: datetime = None, read_time: datetime = None, star_time: datetime = None):
-        entry = db.session.get(Entry, entry_id)
+        url = url.strip() if url else None
+        if url and not engine.web_url_or_none(url):
+            raise GraphQLError(engine.NOT_A_WEB_URL_MESSAGE)
+        if url:
+            if url != feed.url:
+                feed.next_update_time = datetime.now(tz=timezone.utc)
+            feed.url = url
+
+        user_title = user_title.strip() if user_title else None
+        if user_title:
+            feed.user_title = user_title
+
+        db.session.commit()
+
+        return UpdateFeedResult(ok=True, feed=Feed.from_model(feed))
+
+    @strawberry.mutation
+    def update_entry_state(
+        self,
+        id: int,
+        keep_time: datetime | None = None,
+        read_time: datetime | None = None,
+        star_time: datetime | None = None,
+    ) -> UpdateEntryStateResult | None:
+        entry = db.session.get(models.Entry, id)
         if not entry:
-            return GraphQLError("No such entry")
+            raise GraphQLError("No such entry")
 
         entry.keep_time = keep_time
         entry.read_time = read_time
@@ -255,63 +290,46 @@ class UpdateEntryState(graphene.Mutation):
 
         db.session.commit()
 
-        return dict(entry=entry)
+        return UpdateEntryStateResult(entry=Entry.from_model(entry))
 
 
-class Query(graphene.ObjectType):
-    entries = graphene.List(EntryType, entry_ids=graphene.List(graphene.Int, required=True))
-    feeds = graphene.List(FeedType)
-    session = graphene.Field(
-        SessionType,
-        feed_id=graphene.Int(),
-        only_unread=graphene.Boolean(),
-        only_starred=graphene.Boolean(),
-        latest_first=graphene.Boolean(),
-        max_age=graphene.Int(),
-    )
+@strawberry.type
+class Query:
+    @strawberry.field
+    def entries(self, entry_ids: list[int | None]) -> list[Entry | None]:
+        return entries_by_id(entry_ids)
 
-    @staticmethod
-    def resolve_entries(source, info, entry_ids=None):
-        entries = OrderedDict((entry_id, None) for entry_id in entry_ids)
-        for entry in Entry.query.filter(Entry.id.in_(entry_ids)):
-            entries[entry.id] = entry
-        return entries.values()
+    @strawberry.field
+    def feeds(self) -> list[Feed]:
+        return [Feed.from_model(feed) for feed in models.Feed.query]
 
-    @staticmethod
-    def resolve_feeds(source, info):
-        return Feed.query
-
-    @staticmethod
-    def resolve_session(source, info, feed_id=None, only_unread=True, only_starred=False, latest_first=False, max_age=None):
-        entry_ids = db.session.query(Entry.id)
+    @strawberry.field
+    def session(
+        self,
+        feed_id: int | None = None,
+        only_unread: bool = True,
+        only_starred: bool = False,
+        latest_first: bool = False,
+        max_age: int | None = None,
+    ) -> Session:
+        entry_ids = db.session.query(models.Entry.id)
         if feed_id:
-            entry_ids = entry_ids.filter(Entry.feed_id == feed_id)
+            entry_ids = entry_ids.filter(models.Entry.feed_id == feed_id)
         if only_unread:
-            entry_ids = entry_ids.filter(Entry.read_time.is_(None))
+            entry_ids = entry_ids.filter(models.Entry.read_time.is_(None))
         if only_starred:
-            entry_ids = entry_ids.filter(Entry.star_time.is_not(None))
-        if isinstance(max_age, int):
+            entry_ids = entry_ids.filter(models.Entry.star_time.is_not(None))
+        if max_age is not None:
             publish_time = datetime.now(tz=timezone.utc) - timedelta(days=max_age)
-            entry_ids = entry_ids.filter(Entry.publish_time >= publish_time)
+            entry_ids = entry_ids.filter(models.Entry.publish_time >= publish_time)
         else:
             publish_time = None
-        entry_ids = entry_ids.order_by(Entry.publish_time.desc() if latest_first else Entry.publish_time.asc())
+        entry_ids = entry_ids.order_by(models.Entry.publish_time.desc() if latest_first else models.Entry.publish_time.asc())
 
-        return SessionData(
-            entry_ids=[entry_id for (entry_id,) in entry_ids],
-            publish_time=publish_time,
-        )
+        return Session(entry_ids=[entry_id for (entry_id,) in entry_ids], publish_time=publish_time)
 
 
-class Mutations(graphene.ObjectType):
-    refresh_feed = RefreshFeedMutation.Field()
-    refresh_feed_favicon = RefreshFeedFaviconMutation.Field()
-    create_feed = CreateFeedMutation.Field()
-    update_feed = UpdateFeedMutation.Field()
-    update_entry_state = UpdateEntryState.Field()
-
-
-schema = graphene.Schema(query=Query, mutation=Mutations)
+schema = strawberry.Schema(query=Query, mutation=Mutations)
 
 blueprint = Blueprint("graphql", __name__)
 
@@ -333,4 +351,4 @@ def reject_cross_site_requests():
     return None
 
 
-blueprint.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql", schema=schema, graphiql=True))
+blueprint.add_url_rule("/graphql", view_func=GraphQLView.as_view("graphql", schema=schema))
