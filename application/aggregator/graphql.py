@@ -350,7 +350,10 @@ class Query:
             entry_ids = entry_ids.filter(models.Entry.publish_time >= publish_time)
         else:
             publish_time = None
-        entry_ids = entry_ids.order_by(models.Entry.publish_time.desc() if latest_first else models.Entry.publish_time.asc())
+        if latest_first:
+            entry_ids = entry_ids.order_by(models.Entry.publish_time.desc(), models.Entry.id.desc())
+        else:
+            entry_ids = entry_ids.order_by(models.Entry.publish_time.asc(), models.Entry.id.asc())
 
         return Session(entry_ids=[entry_id for (entry_id,) in entry_ids], publish_time=publish_time)
 

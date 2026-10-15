@@ -380,3 +380,11 @@ def test_delete_feed_for_unknown_feed(client, data):
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
     assert Feed.query.count() == 2
+
+
+def test_session_orders_entries_with_the_same_publish_time_by_id(client, data):
+    db.session.get(Entry, 4).publish_time = data["e1"]
+    db.session.commit()
+
+    assert graphql(client, "{ session { entryIds } }")["session"]["entryIds"] == [1, 4, 3]
+    assert graphql(client, "{ session(latestFirst: true) { entryIds } }")["session"]["entryIds"] == [3, 4, 1]
