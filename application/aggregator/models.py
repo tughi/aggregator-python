@@ -79,7 +79,7 @@ class Entry(db.Model):
     content = Column(String, nullable=True)
     author = Column(String, nullable=True)
     publish_text = Column(String, nullable=True)
-    publish_time = Column(TimeStamp, nullable=True)
+    publish_time = Column(TimeStamp, nullable=False)
 
     insert_time = Column(TimeStamp, nullable=False)
     update_time = Column(TimeStamp, nullable=False)

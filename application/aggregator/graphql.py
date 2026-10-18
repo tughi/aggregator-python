@@ -57,7 +57,7 @@ class BaseEntry:
     link: str | None
     title: str | None
     publish_text: str | None
-    publish_time: datetime | None
+    publish_time: datetime
     insert_time: datetime
     update_time: datetime
     keep_time: datetime | None

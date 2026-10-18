@@ -12,9 +12,7 @@ import math
 import re
 from collections import Counter
 from collections import defaultdict
-from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 
 from aggregator.models import Entry, EntrySimilarityQueue
 from aggregator.models import EntrySimilarity
@@ -119,7 +117,7 @@ def update_similarities(entry_ids: list[int]):
         return
 
     entry_ids_by_day = defaultdict(set)
-    for entry_id, publish_time in db.session.query(Entry.id, Entry.publish_time).filter(Entry.id.in_(entry_ids), Entry.publish_time.is_not(None)):
+    for entry_id, publish_time in db.session.query(Entry.id, Entry.publish_time).filter(Entry.id.in_(entry_ids)):
         entry_ids_by_day[publish_time.date()].add(entry_id)
 
     matched_entries = sum(_update_similarities(day_entry_ids) for day_entry_ids in entry_ids_by_day.values())
@@ -189,7 +187,7 @@ def process_queue() -> None:
     while True:
         queued_entry = (
             db.session.query(EntrySimilarityQueue.entry_id, Entry.publish_time)
-            .filter(EntrySimilarityQueue.entry_id.not_in(seen_entry_ids), EntrySimilarityQueue.entry_id == Entry.id, Entry.publish_time.is_not(None))
+            .filter(EntrySimilarityQueue.entry_id.not_in(seen_entry_ids), EntrySimilarityQueue.entry_id == Entry.id)
             .first()
         )
         if not queued_entry:
