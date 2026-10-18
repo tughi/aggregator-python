@@ -104,16 +104,32 @@ def score_documents(vectors: dict[int, dict[str, float]], document_ids) -> dict[
 
 
 def update_similarities(entry_ids: list[int]):
-    """Finds the entries similar to `entry_ids` and stores the matches."""
+    """Finds the entries similar to `entry_ids` and stores the matches.
+
+    The entries are processed in groups published on the same day, so the entries they are compared with span at most a
+    day plus `WINDOW` on both sides, however far apart the given entries were published.
+    """
 
     entry_ids = set(entry_ids)
     if not entry_ids:
         return
 
-    publish_times = [publish_time for (publish_time,) in db.session.query(Entry.publish_time).filter(Entry.id.in_(entry_ids), Entry.publish_time.is_not(None))]
-    if not publish_times:
-        return
+    entry_ids_by_day = defaultdict(set)
+    for entry_id, publish_time in db.session.query(Entry.id, Entry.publish_time).filter(Entry.id.in_(entry_ids), Entry.publish_time.is_not(None)):
+        entry_ids_by_day[publish_time.date()].add(entry_id)
 
+    matched_entries = sum(_update_similarities(day_entry_ids) for day_entry_ids in entry_ids_by_day.values())
+
+    logger.info(f"Found similar entries for {matched_entries} of {len(entry_ids)} entries")
+
+
+def _update_similarities(entry_ids: set[int]) -> int:
+    """Finds the entries similar to `entry_ids`, which were published close to each other, and stores the matches.
+
+    Returns how many of `entry_ids` got matches.
+    """
+
+    publish_times = [publish_time for (publish_time,) in db.session.query(Entry.publish_time).filter(Entry.id.in_(entry_ids))]
     # Loads only the columns that are needed, since the content of an entry can be large
     rows = (
         db.session.query(Entry.id, Entry.publish_time, Entry.title, Entry.summary)
@@ -133,7 +149,7 @@ def update_similarities(entry_ids: list[int]):
 
     _save_matches(matches)
 
-    logger.info(f"Found similar entries for {sum(1 for entry_id in entry_ids if matches.get(entry_id))} of {len(entry_ids)} entries")
+    return sum(1 for entry_id in entry_ids if matches.get(entry_id))
 
 
 def _save_matches(matches: dict[int, dict[int, float]]):

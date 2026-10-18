@@ -97,6 +97,23 @@ def test_update_similarities_only_compares_entries_published_close_to_each_other
     assert stored_similarities() == {}
 
 
+def test_update_similarities_compares_entries_published_far_apart_separately(app, monkeypatch):
+    entries = list(STORY_ENTRIES)
+    # Publishes the Artemis story two months earlier than the others
+    entries[2] = entries[2][:4] + (timedelta(days=60), False)
+    entries[3] = entries[3][:4] + (timedelta(days=60, hours=1), True)
+    add_entries(*entries)
+    pools = []
+    vectorize = similarity.vectorize
+    monkeypatch.setattr(similarity, "vectorize", lambda documents: pools.append(set(documents)) or vectorize(documents))
+
+    similarity.update_similarities([1, 3])
+
+    assert set(stored_similarities()) == {(1, 2), (2, 1), (3, 4), (4, 3)}
+    # One pool per publish day, neither including the entries published two months apart
+    assert sorted(pools, key=len) == [{3, 4}, set(range(1, 3)) | set(range(10, 50))]
+
+
 def test_update_similarities_keeps_the_best_matches(app, monkeypatch):
     monkeypatch.setattr(similarity, "MAX_SIMILAR_ENTRIES", 1)
     entries = list(STORY_ENTRIES)
