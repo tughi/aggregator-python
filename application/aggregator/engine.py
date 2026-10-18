@@ -12,6 +12,7 @@ import feedparser
 import opml
 import requests
 
+from aggregator import similarity
 from aggregator.models import Entry
 from aggregator.models import Feed
 from aggregator.models import db
@@ -46,6 +47,7 @@ def delete_feed(feed_id: int):
 
     logger.info(f"Deleting feed: {feed.url}")
 
+    similarity.delete_similarities(db.session.query(Entry.id).filter(Entry.feed_id == feed_id))
     db.session.query(Entry).filter(Entry.feed_id == feed_id).delete()
     db.session.delete(feed)
     db.session.commit()
@@ -124,7 +126,8 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
         logger.info(f"Feed moved to: {feed.url}")
 
-    entries_created, entries_updated = _save_entries(feed, feed_data, update_time)
+    created_entry_ids, entries_updated = _save_entries(feed, feed_data, update_time)
+    entries_created = len(created_entry_ids)
 
     schedule_next_update(feed, update_time)
 
@@ -134,6 +137,13 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
     feed.http_last_modified = feed_data.get("modified")
 
     db.session.commit()
+
+    try:
+        similarity.update_similarities(created_entry_ids)
+    except Exception:
+        # The similar entries are a nice-to-have, they must not break the feed updates
+        logger.exception("Failed to update the similar entries")
+        db.session.rollback()
 
     feed.entries_created = entries_created
     feed.entries_updated = entries_updated
@@ -153,7 +163,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
 def _save_entries(feed: Feed, feed_data, update_time: datetime):
     entries_total = len(feed_data.entries)
-    entries_created = 0
+    created_entry_ids = []
     entries_updated = 0
 
     for entry_data in feed_data.entries:
@@ -161,9 +171,9 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
         entry_uid = entry_data.get("id") or entry_link
 
         entry = Entry.query.filter(Entry.feed_id == feed.id, Entry.uid == entry_uid).one_or_none()
-        if entry is None:
+        entry_created = entry is None
+        if entry_created:
             entry = Entry(feed_id=feed.id, uid=entry_uid, insert_time=update_time, update_time=update_time)
-            entries_created += 1
         else:
             entry.update_time = update_time
             entries_updated += 1
@@ -179,9 +189,12 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
         db.session.add(entry)
         db.session.commit()
 
-    logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
+        if entry_created:
+            created_entry_ids.append(entry.id)
 
-    return entries_created, entries_updated
+    logger.info(f"From {entries_total} entries, {entries_updated} were updated and {len(created_entry_ids)} new were created")
+
+    return created_entry_ids, entries_updated
 
 
 def web_url_or_none(url: str | None) -> str | None:

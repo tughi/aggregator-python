@@ -5,6 +5,7 @@ from flask import Blueprint
 
 from aggregator import content
 from aggregator import engine
+from aggregator import similarity
 from aggregator.models import db
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,13 @@ def restore(file):
 def update_feeds():
     logger.info("Updating feeds")
     engine.update_feeds()
+
+
+@blueprint.cli.command("update-similarities")
+@click.option("--days", default=30, show_default=True, help="Process the entries published in the last DAYS.")
+def update_similarities(days):
+    logger.info(f"Updating the similar entries of the last {days} days")
+    similarity.rebuild_similarities(days)
 
 
 @blueprint.cli.command("update-favicons")

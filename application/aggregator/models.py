@@ -5,6 +5,7 @@ from datetime import timezone
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column
 from sqlalchemy import DateTime
+from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -103,3 +104,11 @@ class Entry(db.Model):
 
 
 Entry.feed = relationship(Feed)
+
+
+class EntrySimilarity(db.Model):
+    __tablename__ = "entry_similarities"
+
+    entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
+    similar_entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True, index=True)
+    score = Column(Float, nullable=False)

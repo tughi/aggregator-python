@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from typing import Self
 from typing import TypedDict
 
 import strawberry
@@ -49,7 +50,7 @@ class Content:
 
 
 @strawberry.type
-class Entry:
+class BaseEntry:
     id: int
     feed_id: int
     uid: str
@@ -65,7 +66,7 @@ class Entry:
     model: strawberry.Private[models.Entry]
 
     @classmethod
-    def from_model(cls, entry: models.Entry) -> Entry:
+    def from_model(cls, entry: models.Entry) -> Self:
         return cls(
             id=entry.id,
             feed_id=entry.feed_id,
@@ -99,6 +100,28 @@ class Entry:
     @strawberry.field
     def feed(self) -> Feed:
         return Feed.from_model(self.model.feed)
+
+
+@strawberry.type
+class SimilarEntry(BaseEntry):
+    pass
+
+
+@strawberry.type
+class Entry(BaseEntry):
+    @strawberry.field(description="Unread entries that likely cover the same story as this one, most similar first. Runs a database query per entry.")
+    def similar_entries(self, limit: int = 5, min_score: float = 0.3) -> list[SimilarEntry]:
+        entries = (
+            models.Entry.query.join(models.EntrySimilarity, models.EntrySimilarity.similar_entry_id == models.Entry.id)
+            .filter(
+                models.EntrySimilarity.entry_id == self.id,
+                models.EntrySimilarity.score >= min_score,
+                models.Entry.read_time.is_(None),
+            )
+            .order_by(models.EntrySimilarity.score.desc())
+            .limit(limit)
+        )
+        return [SimilarEntry.from_model(entry) for entry in entries]
 
 
 @strawberry.type
