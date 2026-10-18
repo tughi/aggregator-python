@@ -112,3 +112,9 @@ class EntrySimilarity(db.Model):
     entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
     similar_entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True, index=True)
     score = Column(Float, nullable=False)
+
+
+class EntrySimilarityQueue(db.Model):
+    __tablename__ = "entry_similarities_queue"
+
+    entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)

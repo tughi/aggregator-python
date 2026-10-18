@@ -23,8 +23,9 @@ to 0.35.
 
 ## When entries are compared
 
-When a feed update adds new entries, each is compared with the entries published up to 14 days before or after it. The
-matches scoring at least 0.2 are stored in both directions, keeping the best 10 per entry.
+When a feed update adds new entries, they are queued, and a background job compares them within a few minutes. It
+compares the queued entries one publish day at a time, each with the entries published up to 14 days before or after
+it. The matches scoring at least 0.2 are stored in both directions, keeping the best 10 per entry.
 
 Storing both directions means existing entries learn about new ones: when a new entry N matches an existing entry A, N
 is added to A's matches too, if it ranks among A's best 10. A's other matches aren't recomputed.

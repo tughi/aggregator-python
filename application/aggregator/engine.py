@@ -1,5 +1,4 @@
 import calendar
-import http.client
 import json
 import logging
 from collections import OrderedDict
@@ -11,20 +10,19 @@ from urllib.parse import urlparse
 import feedparser
 import opml
 import requests
+from sqlalchemy import or_
 
-from aggregator import similarity
-from aggregator.models import Entry
+from aggregator.models import Entry, EntrySimilarityQueue, EntrySimilarity
 from aggregator.models import Feed
 from aggregator.models import db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-
 NOT_A_WEB_URL_MESSAGE = "The feed URL must be an http or https URL."
 
 
-def add_feed(feed_url: str, feed_user_title: str = None):
+def add_feed(feed_url: str, feed_user_title: str | None = None):
     if not web_url_or_none(feed_url):
         raise ValueError(NOT_A_WEB_URL_MESSAGE)
 
@@ -47,7 +45,11 @@ def delete_feed(feed_id: int):
 
     logger.info(f"Deleting feed: {feed.url}")
 
-    similarity.delete_similarities(db.session.query(Entry.id).filter(Entry.feed_id == feed_id))
+    feed_entry_ids = db.session.query(Entry.id).filter(Entry.feed_id == feed_id)
+    db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(feed_entry_ids)).delete(synchronize_session=False)
+    db.session.query(EntrySimilarity).filter(or_(EntrySimilarity.entry_id.in_(feed_entry_ids), EntrySimilarity.similar_entry_id.in_(feed_entry_ids))).delete(
+        synchronize_session=False
+    )
     db.session.query(Entry).filter(Entry.feed_id == feed_id).delete()
     db.session.delete(feed)
     db.session.commit()
@@ -126,8 +128,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
         logger.info(f"Feed moved to: {feed.url}")
 
-    created_entry_ids, entries_updated = _save_entries(feed, feed_data, update_time)
-    entries_created = len(created_entry_ids)
+    entries_created, entries_updated = _save_entries(feed, feed_data, update_time)
 
     schedule_next_update(feed, update_time)
 
@@ -137,13 +138,6 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
     feed.http_last_modified = feed_data.get("modified")
 
     db.session.commit()
-
-    try:
-        similarity.update_similarities(created_entry_ids)
-    except Exception:
-        # The similar entries are a nice-to-have, they must not break the feed updates
-        logger.exception("Failed to update the similar entries")
-        db.session.rollback()
 
     feed.entries_created = entries_created
     feed.entries_updated = entries_updated
@@ -161,9 +155,9 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
     )
 
 
-def _save_entries(feed: Feed, feed_data, update_time: datetime):
+def _save_entries(feed: Feed, feed_data, update_time: datetime) -> tuple[int, int]:
     entries_total = len(feed_data.entries)
-    created_entry_ids = []
+    entries_created = 0
     entries_updated = 0
 
     for entry_data in feed_data.entries:
@@ -187,14 +181,15 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime):
         entry.publish_time = _as_datetime(entry_data.get("published_parsed") or entry_data.get("updated_parsed")) or entry.publish_time or update_time
 
         db.session.add(entry)
+        db.session.flush()
+        if entry_created:
+            db.session.add(EntrySimilarityQueue(entry_id=entry.id))
+            entries_created += 1
         db.session.commit()
 
-        if entry_created:
-            created_entry_ids.append(entry.id)
+    logger.info(f"From {entries_total} entries, {entries_updated} were updated and {entries_created} new were created")
 
-    logger.info(f"From {entries_total} entries, {entries_updated} were updated and {len(created_entry_ids)} new were created")
-
-    return created_entry_ids, entries_updated
+    return entries_created, entries_updated
 
 
 def web_url_or_none(url: str | None) -> str | None:

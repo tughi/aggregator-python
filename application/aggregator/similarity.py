@@ -16,9 +16,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from sqlalchemy import or_
-
-from aggregator.models import Entry
+from aggregator.models import Entry, EntrySimilarityQueue
 from aggregator.models import EntrySimilarity
 from aggregator.models import db
 
@@ -41,7 +39,9 @@ WORD = re.compile(r"\w[\w.\-]*\w")
 
 
 def entry_text(title: str | None, summary: str | None) -> str:
-    """Returns the text an entry is compared by: its title, counted twice, followed by its summary as plain text."""
+    """
+    Returns the text an entry is compared by: its title, counted twice, followed by its summary as plain text.
+    """
 
     try:
         summary = json.loads(summary) if summary else None
@@ -58,7 +58,8 @@ def tokenize(text: str) -> list[str]:
 
 
 def vectorize(documents: dict[int, list[str]]) -> dict[int, dict[str, float]]:
-    """Turns each document's tokens into a unit-length vector of TF-IDF weights.
+    """
+    Turns each document's tokens into a unit-length vector of TF-IDF weights.
 
     Words found in a single document can't match anything, and words found in too many documents carry no meaning, so
     both are left out.
@@ -85,7 +86,9 @@ def vectorize(documents: dict[int, list[str]]) -> dict[int, dict[str, float]]:
 
 
 def score_documents(vectors: dict[int, dict[str, float]], document_ids) -> dict[int, dict[int, float]]:
-    """Scores each of `document_ids` against all the other vectors, returning only the pairs that share words."""
+    """
+    Scores each of `document_ids` against all the other vectors, returning only the pairs that share words.
+    """
 
     index = defaultdict(list)
     for document_id, vector in vectors.items():
@@ -104,7 +107,8 @@ def score_documents(vectors: dict[int, dict[str, float]], document_ids) -> dict[
 
 
 def update_similarities(entry_ids: list[int]):
-    """Finds the entries similar to `entry_ids` and stores the matches.
+    """
+    Finds the entries similar to `entry_ids` and stores the matches.
 
     The entries are processed in groups published on the same day, so the entries they are compared with span at most a
     day plus `WINDOW` on both sides, however far apart the given entries were published.
@@ -124,7 +128,8 @@ def update_similarities(entry_ids: list[int]):
 
 
 def _update_similarities(entry_ids: set[int]) -> int:
-    """Finds the entries similar to `entry_ids`, which were published close to each other, and stores the matches.
+    """
+    Finds the entries similar to `entry_ids`, which were published close to each other, and stores the matches.
 
     Returns how many of `entry_ids` got matches.
     """
@@ -153,7 +158,9 @@ def _update_similarities(entry_ids: set[int]) -> int:
 
 
 def _save_matches(matches: dict[int, dict[int, float]]):
-    """Merges `matches` into the stored similarities, keeping the best `MAX_SIMILAR_ENTRIES` per entry."""
+    """
+    Merges `matches` into the stored similarities, keeping the best `MAX_SIMILAR_ENTRIES` per entry.
+    """
 
     if not matches:
         return
@@ -170,21 +177,50 @@ def _save_matches(matches: dict[int, dict[int, float]]):
     db.session.commit()
 
 
-def rebuild_similarities(days: int):
-    """Finds the similar entries for everything published in the last `days` days, one day at a time."""
+def process_queue() -> None:
+    """
+    Processes the queued entries one publish day at a time.
+    """
 
-    now = datetime.now(tz=timezone.utc)
-    day_start = now - timedelta(days=days)
-    while day_start < now:
-        day_end = day_start + timedelta(days=1)
-        entry_ids = [entry_id for (entry_id,) in db.session.query(Entry.id).filter(Entry.publish_time >= day_start, Entry.publish_time < day_end)]
-        update_similarities(entry_ids)
-        day_start = day_end
+    logger.info("Starting to process queued entries")
 
+    seen_entry_ids = set()
 
-def delete_similarities(entry_ids):
-    """Deletes the similarities involving `entry_ids`, which can also be a query that selects entry IDs."""
+    while True:
+        queued_entry = (
+            db.session.query(EntrySimilarityQueue.entry_id, Entry.publish_time)
+            .filter(EntrySimilarityQueue.entry_id.not_in(seen_entry_ids), EntrySimilarityQueue.entry_id == Entry.id, Entry.publish_time.is_not(None))
+            .first()
+        )
+        if not queued_entry:
+            logger.info(f"Finished processing {len(seen_entry_ids)} queued entries")
+            return  # empty queue
 
-    db.session.query(EntrySimilarity).filter(or_(EntrySimilarity.entry_id.in_(entry_ids), EntrySimilarity.similar_entry_id.in_(entry_ids))).delete(
-        synchronize_session=False
-    )
+        # Load all entries from the same day
+        day = queued_entry[1].replace(hour=0, minute=0, second=0, microsecond=0)
+        entry_ids = set(
+            entry_id
+            for (entry_id,) in db.session.query(EntrySimilarityQueue.entry_id)
+            .join(Entry, EntrySimilarityQueue.entry_id == Entry.id)
+            .filter(
+                Entry.publish_time >= day,
+                Entry.publish_time < day + timedelta(days=1),
+            )
+        )
+
+        # Mark all day entries from queue as seen
+        seen_entry_ids.update(entry_ids)
+
+        # Process similarity for the day entries
+        try:
+            _update_similarities(entry_ids)
+        except Exception:
+            logger.exception("Failed to update the similar entries")
+            db.session.rollback()
+            continue
+
+        # Remove processed entries from queue
+        db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(entry_ids)).delete(synchronize_session=False)
+
+        # Persist changes
+        db.session.commit()
