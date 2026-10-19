@@ -248,3 +248,50 @@ def test_schedule_next_update_polls_feeds_with_many_new_entries_often(app):
 
     assert feed.update_mode == "EVERY_15_MINUTES"
     assert feed.next_update_time == (now + timedelta(minutes=15)).replace(microsecond=0)
+
+
+def test_update_feed_resets_the_retries_after_a_successful_update(app, fetch):
+    feed = create_feed("https://example.com/feed")
+    feed.next_update_retry = 3
+    fetch("https://example.com/feed")
+
+    engine.update_feed(feed)
+
+    assert feed.next_update_retry == 0
+
+
+def fail_to_connect(url, **kwargs):
+    raise ConnectionError("Connection refused")
+
+
+@pytest.mark.parametrize(
+    ("retries", "delay"),
+    [
+        (0, timedelta(minutes=15)),
+        (1, timedelta(minutes=30)),
+        (2, timedelta(hours=1)),
+        (5, timedelta(hours=6)),
+        # A feed that failed this often in a row must not overflow the delay
+        (40, timedelta(hours=6)),
+    ],
+)
+def test_update_feed_retries_later_after_a_connection_error(app, monkeypatch, retries, delay):
+    feed = create_feed("https://example.com/feed")
+    feed.next_update_retry = retries
+    monkeypatch.setattr(engine.feedparser, "parse", fail_to_connect)
+
+    engine.update_feed(feed)
+
+    assert feed.next_update_retry == retries + 1
+    assert feed.last_update_message == "Connection refused"
+    assert feed.next_update_time == (feed.last_update_time + delay).replace(microsecond=0)
+
+
+def test_update_feed_retries_later_after_a_parse_failure(app, monkeypatch):
+    feed = create_feed("https://example.com/feed")
+    monkeypatch.setattr(engine.feedparser, "parse", lambda url, **kwargs: {})
+
+    engine.update_feed(feed)
+
+    assert feed.next_update_retry == 1
+    assert feed.next_update_time == (feed.last_update_time + timedelta(minutes=15)).replace(microsecond=0)

@@ -91,6 +91,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
         feed.last_update_message = str(error)
         feed.next_update_retry += 1
+        schedule_retry(feed, update_time)
         db.session.commit()
 
         return
@@ -99,6 +100,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
         logger.warning("Failed to parse feed")
 
         feed.next_update_retry += 1
+        schedule_retry(feed, update_time)
         db.session.commit()
 
         return
@@ -132,6 +134,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     feed.http_etag = feed_data.get("etag")
     feed.http_last_modified = feed_data.get("modified")
+    feed.next_update_retry = 0
 
     db.session.commit()
 
@@ -258,6 +261,16 @@ def schedule_next_update(feed: Feed, update_time: datetime):
         feed.next_update_time = update_time + timedelta(hours=6)
 
     feed.next_update_time = feed.next_update_time.replace(microsecond=0)
+
+
+def schedule_retry(feed: Feed, update_time: datetime):
+    """
+    Schedules the next attempt after a failed update, doubling the delay with each failure in a row: 15 minutes,
+    30 minutes, 1 hour and so on, up to 6 hours.
+    """
+
+    delay = min(timedelta(minutes=15) * 2 ** min(feed.next_update_retry - 1, 5), timedelta(hours=6))
+    feed.next_update_time = (update_time + delay).replace(microsecond=0)
 
 
 def update_favicons():
