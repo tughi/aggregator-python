@@ -226,8 +226,13 @@ def _as_datetime(parsed_time):
 
 
 def schedule_next_update(feed: Feed, update_time: datetime):
-    day_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=1)).count()
-    week_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=7)).count()
+    """
+    Schedules the next update from how many new entries the feed added in the last day or week.
+
+    Counts entries by `insert_time`, since `update_time` is refreshed for every entry the feed still lists.
+    """
+    day_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.insert_time >= update_time - timedelta(days=1)).count()
+    week_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.insert_time >= update_time - timedelta(days=7)).count()
 
     poll_rate = 75600 / day_entries if day_entries else 259200 / week_entries if week_entries else 345600
 

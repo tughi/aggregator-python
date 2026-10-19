@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -218,3 +218,33 @@ def test_add_feed_rejects_urls_that_are_not_web_urls(app, fetch, no_favicons, ur
         engine.add_feed(url)
 
     assert db.session.query(Feed).count() == 0
+
+
+def add_entries_to(feed, count, inserted, updated):
+    for n in range(count):
+        db.session.add(
+            Entry(feed_id=feed.id, uid=f"entry-{inserted.timestamp()}-{n}", publish_time=inserted, insert_time=inserted, update_time=updated),
+        )
+    db.session.flush()
+
+
+def test_schedule_next_update_ignores_old_entries_the_feed_still_lists(app):
+    now = datetime.now(tz=UTC)
+    feed = create_feed("https://example.com/feed")
+    # Fetched again just now, but first stored a month ago
+    add_entries_to(feed, 100, inserted=now - timedelta(days=30), updated=now)
+
+    engine.schedule_next_update(feed, now)
+
+    assert feed.update_mode == "EVERY_6_HOURS"
+
+
+def test_schedule_next_update_polls_feeds_with_many_new_entries_often(app):
+    now = datetime.now(tz=UTC)
+    feed = create_feed("https://example.com/feed")
+    add_entries_to(feed, 100, inserted=now - timedelta(hours=12), updated=now)
+
+    engine.schedule_next_update(feed, now)
+
+    assert feed.update_mode == "EVERY_15_MINUTES"
+    assert feed.next_update_time == (now + timedelta(minutes=15)).replace(microsecond=0)
