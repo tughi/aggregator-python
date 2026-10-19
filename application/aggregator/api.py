@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from aggregator import engine
-from aggregator.models import Feed
+from aggregator.models import Feed, db
 
 blueprint = Blueprint("api", __name__)
 
@@ -21,7 +21,7 @@ def handle_api_exception(exception: ApiException):
 def get_feeds():
     feeds = []
 
-    for feed in Feed.query.all():
+    for feed in db.session.query(Feed).all():
         feeds.append(
             {
                 "id": feed.id,

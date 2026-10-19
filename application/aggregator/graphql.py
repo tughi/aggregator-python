@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Self, TypedDict
 
@@ -84,11 +85,11 @@ class BaseEntry:
 
     @strawberry.field
     def content(self) -> list[Content]:
-        return [Content.from_content(content) for content in self.model.sanitized_content]
+        return [Content.from_content(content) for content in self.model.sanitized_content or [] if content]
 
     @strawberry.field
     def author(self) -> Author | None:
-        author = json.loads(self.model.author)
+        author = json.loads(self.model.author) if self.model.author else None
         return Author.from_author(author) if author else None
 
     @strawberry.field
@@ -106,7 +107,8 @@ class Entry(BaseEntry):
     @strawberry.field(description="Unread entries that likely cover the same story as this one, most similar first. Runs a database query per entry.")
     def similar_entries(self, limit: int = 5, min_score: float = 0.3) -> list[SimilarEntry]:
         entries = (
-            models.Entry.query.join(models.EntrySimilarity, models.EntrySimilarity.similar_entry_id == models.Entry.id)
+            db.session.query(models.Entry)
+            .join(models.EntrySimilarity, models.EntrySimilarity.similar_entry_id == models.Entry.id)
             .filter(
                 models.EntrySimilarity.entry_id == self.id,
                 models.EntrySimilarity.score >= min_score,
@@ -160,11 +162,11 @@ class Feed:
     def unread_entries(self) -> int:
         if self.known_unread_entries is not None:
             return self.known_unread_entries
-        return models.Entry.query.filter(models.Entry.feed_id == self.id, models.Entry.read_time.is_(None)).count()
+        return db.session.query(models.Entry).filter(models.Entry.feed_id == self.id, models.Entry.read_time.is_(None)).count()
 
 
-def entries_by_id(entry_ids: list[int | None]) -> list[Entry | None]:
-    entries = {entry.id: entry for entry in models.Entry.query.filter(models.Entry.id.in_(entry_ids))}
+def entries_by_id(entry_ids: Sequence[int | None]) -> list[Entry | None]:
+    entries = {entry.id: entry for entry in db.session.query(models.Entry).filter(models.Entry.id.in_(entry_ids))}
     return [Entry.from_model(entries[entry_id]) if entry_id in entries else None for entry_id in entry_ids]
 
 
@@ -191,7 +193,7 @@ class Session:
         unread_entries = dict(unread_entries_query.all())
         return [
             Feed.from_model(feed, known_unread_entries=unread_entries.get(feed.id, 0))
-            for feed in models.Feed.query.order_by(coalesce(models.Feed.user_title, models.Feed.title))
+            for feed in db.session.query(models.Feed).order_by(coalesce(models.Feed.user_title, models.Feed.title))
         ]
 
     @strawberry.field
@@ -279,6 +281,8 @@ class Mutations:
     @strawberry.mutation
     def create_feed(self, url: str, user_title: str | None = None) -> CreateFeedResult | None:
         result = engine.add_feed(url.strip(), feed_user_title=user_title)
+        if result is None:
+            raise GraphQLError("The new feed could not be updated")
 
         return CreateFeedResult(ok=True, feed_id=result["id"], feed=Feed.from_model(get_feed(result["id"])))
 
@@ -331,13 +335,13 @@ class Query:
 
     @strawberry.field
     def feeds(self) -> list[Feed]:
-        return [Feed.from_model(feed) for feed in models.Feed.query]
+        return [Feed.from_model(feed) for feed in db.session.query(models.Feed)]
 
     @strawberry.field(description="A feed's entries, newest first. `read` limits them to read (true) or unread (false) entries.")
     def feed_entries(self, feed_id: int, read: bool | None = None, limit: int = 50, offset: int = 0) -> list[Entry]:
         get_feed(feed_id)
 
-        entries = models.Entry.query.filter(models.Entry.feed_id == feed_id)
+        entries = db.session.query(models.Entry).filter(models.Entry.feed_id == feed_id)
         if read is True:
             entries = entries.filter(models.Entry.read_time.is_not(None))
         elif read is False:

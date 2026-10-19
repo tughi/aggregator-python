@@ -4,8 +4,12 @@ from aggregator.sanitizer.entry_content import ContentData, sanitize_entry_conte
 
 
 def sanitize(value, base_url="https://example.com/posts/1"):
-    content: ContentData = {"type": "text/html", "language": "en", "value": value}
-    return sanitize_entry_content(content, base_url=base_url)["value"]
+    entry_content = sanitize_entry_content(
+        {"type": "text/html", "language": "en", "value": value},
+        base_url=base_url,
+    )
+    assert entry_content is not None
+    return entry_content["value"]
 
 
 def test_returns_none_without_content():

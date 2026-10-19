@@ -13,7 +13,7 @@ def restore(file):
     dump_version = dump.get("version")
 
     with db.session.begin():
-        Feed.query.delete()
+        db.session.query(Feed).delete()
 
         if dump_version == 1:
             restore_1(dump)

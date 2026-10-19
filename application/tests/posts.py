@@ -36,7 +36,7 @@ def add_entries(*entries):
 
 
 def stored_similarities():
-    return {(similarity.entry_id, similarity.similar_entry_id): round(similarity.score, 3) for similarity in EntrySimilarity.query}
+    return {(similarity.entry_id, similarity.similar_entry_id): round(similarity.score, 3) for similarity in db.session.query(EntrySimilarity)}
 
 
 def queue(*entry_ids):
@@ -45,7 +45,7 @@ def queue(*entry_ids):
 
 
 def queued_entry_ids():
-    return {queued.entry_id for queued in EntrySimilarityQueue.query}
+    return {queued.entry_id for queued in db.session.query(EntrySimilarityQueue)}
 
 
 # Two news posted by both feeds, plus unrelated filler posts that make the words they share rare

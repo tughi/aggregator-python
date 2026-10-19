@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, cast
 from urllib.parse import urljoin, urlparse
 
 from lxml import html
@@ -12,7 +12,7 @@ class ContentData(TypedDict):
 
 
 class Sanitizer(Cleaner):
-    def __init__(self, base_url=None):
+    def __init__(self, base_url: str | None = None):
         super().__init__(remove_tags=["a", "img"], kill_tags=["base"], style=True)
 
         self.base_url = base_url
@@ -32,11 +32,8 @@ class Sanitizer(Cleaner):
     def _make_absolute_url(self, el, attr):
         old_url = el.get(attr)
         if old_url and not urlparse(old_url).netloc:
-            new_url = urljoin(self.base_url, old_url)
+            new_url = urljoin(self.base_url or "", old_url)
             el.set(attr, new_url)
-
-    def clean_html(self, content_html):
-        return super().clean_html(content_html)
 
 
 def sanitize_entry_content(content: ContentData | None, base_url: str | None) -> ContentData | None:
@@ -44,12 +41,12 @@ def sanitize_entry_content(content: ContentData | None, base_url: str | None) ->
         return None
 
     content_value = content["value"]
-    content_html = html.fragment_fromstring(content_value, create_parent="div")
+    content_html = html.fragment_fromstring(content_value, create_parent=True)
 
     sanitizer = Sanitizer(base_url=base_url)
 
     sanitized_content_html = sanitizer.clean_html(content_html)
-    sanitized_content_value = html.tostring(sanitized_content_html, encoding="unicode")
+    sanitized_content_value = cast(str, html.tostring(sanitized_content_html, encoding="unicode"))
 
     return ContentData(
         type=content["type"],

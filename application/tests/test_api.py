@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from aggregator import engine
-from aggregator.models import Entry, Feed
+from aggregator.models import Entry, Feed, db
 
 SUBSCRIPTIONS_OPML = Path(__file__).parent.parent / "subscriptions.xml"
 
@@ -58,13 +58,13 @@ def test_get_feeds_prefers_user_title(client):
 
 def test_delete_feed_removes_its_entries(client):
     feed_id = add_feed(client, "https://example.com/feed")["id"]
-    assert Entry.query.filter(Entry.feed_id == feed_id).count() == 1
+    assert db.session.query(Entry).filter(Entry.feed_id == feed_id).count() == 1
 
     response = client.delete(f"/api/feeds/{feed_id}")
 
     assert response.status_code == 200
     assert client.get("/api/feeds").get_json() == []
-    assert Entry.query.filter(Entry.feed_id == feed_id).count() == 0
+    assert db.session.query(Entry).filter(Entry.feed_id == feed_id).count() == 0
 
 
 def test_update_feeds_skips_feeds_that_are_not_due(client):
@@ -81,9 +81,9 @@ def test_import_opml(app):
 
     # 43 RSS outlines, some nested in folders (one more is commented out)
     assert len(results) == 43
-    assert Feed.query.count() == 43
-    assert Feed.query.filter(Feed.url == "http://xkcd.com/atom.xml").one().user_title == "xkcd.com"
-    assert Feed.query.filter(Feed.url == "http://www.autoblog.com/category/paris-motor-show/rss.xml").one().user_title == "paris motor show"
+    assert db.session.query(Feed).count() == 43
+    assert db.session.query(Feed).filter(Feed.url == "http://xkcd.com/atom.xml").one().user_title == "xkcd.com"
+    assert db.session.query(Feed).filter(Feed.url == "http://www.autoblog.com/category/paris-motor-show/rss.xml").one().user_title == "paris motor show"
 
 
 def test_add_feed_rejects_urls_that_are_not_web_urls(client):
@@ -91,4 +91,4 @@ def test_add_feed_rejects_urls_that_are_not_web_urls(client):
 
     assert response.status_code == 400
     assert response.get_json() == {"error": engine.NOT_A_WEB_URL_MESSAGE}
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0

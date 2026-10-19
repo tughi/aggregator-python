@@ -1,9 +1,10 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import click
 from flask import Blueprint
-from sqlalchemy import select
+from sqlalchemy import CursorResult, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
@@ -51,7 +52,7 @@ def process_entry_similarities(enqueue_days: int) -> None:
             .on_conflict_do_nothing()
         )
 
-        result = db.session.execute(statement)
+        result = cast(CursorResult, db.session.execute(statement))
         db.session.commit()
 
         logger.info(f"Queued {result.rowcount} entries published in the last {enqueue_days} days")

@@ -37,7 +37,7 @@ def add_feed(feed_url: str, feed_user_title: str | None = None):
 
 
 def delete_feed(feed_id: int):
-    feed = db.session.get(Feed, feed_id)
+    feed = db.session.get_one(Feed, feed_id)
 
     logger.info(f"Deleting feed: {feed.url}")
 
@@ -53,7 +53,7 @@ def delete_feed(feed_id: int):
 
 def update_feeds():
     status = []
-    for feed in Feed.query.filter(Feed.next_update_time <= datetime.now(tz=UTC)):
+    for feed in db.session.query(Feed).filter(Feed.next_update_time <= datetime.now(tz=UTC)):
         status.append(update_feed(feed))
     logger.info(f"Updated {len(status)} feed{'s' if len(status) != 1 else ''}")
     return status
@@ -135,9 +135,6 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
 
     db.session.commit()
 
-    feed.entries_created = entries_created
-    feed.entries_updated = entries_updated
-
     return {
         "id": feed.id,
         "title": feed.title,
@@ -160,9 +157,9 @@ def _save_entries(feed: Feed, feed_data, update_time: datetime) -> tuple[int, in
         entry_link = entry_data.get("link")
         entry_uid = entry_data.get("id") or entry_link
 
-        entry = Entry.query.filter(Entry.feed_id == feed.id, Entry.uid == entry_uid).one_or_none()
+        entry = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.uid == entry_uid).one_or_none()
         entry_created = entry is None
-        if entry_created:
+        if entry is None:
             entry = Entry(feed_id=feed.id, uid=entry_uid, insert_time=update_time, update_time=update_time)
         else:
             entry.update_time = update_time
@@ -229,8 +226,8 @@ def _as_datetime(parsed_time):
 
 
 def schedule_next_update(feed: Feed, update_time: datetime):
-    day_entries = Entry.query.filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=1)).count()
-    week_entries = Entry.query.filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=7)).count()
+    day_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=1)).count()
+    week_entries = db.session.query(Entry).filter(Entry.feed_id == feed.id, Entry.update_time >= update_time - timedelta(days=7)).count()
 
     poll_rate = 75600 / day_entries if day_entries else 259200 / week_entries if week_entries else 345600
 
@@ -260,7 +257,7 @@ def schedule_next_update(feed: Feed, update_time: datetime):
 
 def update_favicons():
     logger.info("Updating favicons")
-    for feed in Feed.query.all():
+    for feed in db.session.query(Feed).all():
         update_favicon(feed)
 
 

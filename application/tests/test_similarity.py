@@ -91,19 +91,19 @@ def test_delete_feed_deletes_the_similarities_of_its_entries(app):
 def test_update_feed_queues_new_entries_instead_of_comparing_them(app, fetch):
     # Published a day before the entry in the fetched feed (see conftest.FEED_XML)
     add_entries((1, 1, "First post", "Hello", NOW - datetime(2026, 10, 11, 10, tzinfo=UTC), False))
-    feed = db.session.get(Feed, 2)
+    feed = db.session.get_one(Feed, 2)
     fetch("https://b.example/feed")
 
     engine.update_feed(feed)
 
-    new_entry = Entry.query.filter(Entry.feed_id == 2).one()
+    new_entry = db.session.query(Entry).filter(Entry.feed_id == 2).one()
     assert queued_entry_ids() == {new_entry.id}
     assert stored_similarities() == {}
 
 
 def test_update_feed_does_not_queue_updated_entries(app, fetch):
     add_entries()
-    feed = db.session.get(Feed, 1)
+    feed = db.session.get_one(Feed, 1)
     fetch("https://a.example/feed")
     engine.update_feed(feed)
     db.session.query(EntrySimilarityQueue).delete()

@@ -160,7 +160,7 @@ def _save_matches(matches: dict[int, dict[int, float]]):
     if not matches:
         return
 
-    stored = EntrySimilarity.query.filter(EntrySimilarity.entry_id.in_(matches.keys())).all()
+    stored = db.session.query(EntrySimilarity).filter(EntrySimilarity.entry_id.in_(matches.keys())).all()
     for similarity in stored:
         matches[similarity.entry_id].setdefault(similarity.similar_entry_id, similarity.score)
         db.session.delete(similarity)

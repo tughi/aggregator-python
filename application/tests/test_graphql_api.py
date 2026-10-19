@@ -226,7 +226,7 @@ def test_entries_by_id_return_null_for_unknown_ids(client, data):
 
 
 def test_entry_without_summary_content_or_author(client, data):
-    entry = db.session.get(Entry, 1)
+    entry = db.session.get_one(Entry, 1)
     entry.summary = json.dumps(None)
     entry.content = json.dumps([])
     entry.author = json.dumps(None)
@@ -244,7 +244,7 @@ def test_update_entry_state_marks_read(client, data):
     result = graphql(client, UPDATE_ENTRY_STATE_MUTATION, entryId=1, keepTime=None, readTime=read_time, starTime=None)["result"]
 
     assert result["entry"] == expected_entry(1, data, read_time=NOW)
-    assert db.session.get(Entry, 1).read_time == NOW
+    assert db.session.get_one(Entry, 1).read_time == NOW
 
 
 def test_update_entry_state_overwrites_all_three_times(client, data):
@@ -302,7 +302,7 @@ def test_update_feed(client, data):
 
     assert result["updateFeed"] == {"ok": True, "feed": {"id": 1, "url": "https://a.example/new-feed", "userTitle": "New A"}}
     # A changed URL is fetched on the next update
-    assert db.session.get(Feed, 1).next_update_time <= datetime.now(tz=UTC)
+    assert db.session.get_one(Feed, 1).next_update_time <= datetime.now(tz=UTC)
 
 
 def test_update_feed_for_unknown_feed(client, data):
@@ -365,20 +365,20 @@ def test_delete_feed_removes_the_feed_and_its_entries(client, data):
     result = graphql(client, "mutation { deleteFeed(id: 1) { ok } }")
 
     assert result["deleteFeed"] == {"ok": True}
-    assert [feed.id for feed in Feed.query] == [2]
-    assert Entry.query.filter(Entry.feed_id == 1).count() == 0
-    assert Entry.query.filter(Entry.feed_id == 2).count() == 2
+    assert [feed.id for feed in db.session.query(Feed)] == [2]
+    assert db.session.query(Entry).filter(Entry.feed_id == 1).count() == 0
+    assert db.session.query(Entry).filter(Entry.feed_id == 2).count() == 2
 
 
 def test_delete_feed_for_unknown_feed(client, data):
     response = client.post("/graphql", json={"query": "mutation { deleteFeed(id: 999) { ok } }"})
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
-    assert Feed.query.count() == 2
+    assert db.session.query(Feed).count() == 2
 
 
 def test_session_orders_entries_with_the_same_publish_time_by_id(client, data):
-    db.session.get(Entry, 4).publish_time = data["e1"]
+    db.session.get_one(Entry, 4).publish_time = data["e1"]
     db.session.commit()
 
     assert graphql(client, "{ session { entryIds } }")["session"]["entryIds"] == [1, 4, 3]

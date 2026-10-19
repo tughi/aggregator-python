@@ -24,7 +24,7 @@ def test_json_mutation(client):
 
     assert response.status_code == 200
     assert response.get_json() == {"data": {"createFeed": {"ok": True}}}
-    assert Feed.query.count() == 1
+    assert db.session.query(Feed).count() == 1
 
 
 @pytest.mark.parametrize(
@@ -37,7 +37,7 @@ def test_rejects_bodies_that_forms_can_send(client, content_type):
     response = client.post("/graphql", data={"query": CREATE_FEED_MUTATION}, content_type=content_type)
 
     assert response.status_code == 415
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0
 
 
 @pytest.mark.parametrize("sec_fetch_site", ["cross-site", "same-site"])
@@ -45,7 +45,7 @@ def test_rejects_requests_from_other_sites(client, sec_fetch_site):
     response = client.post("/graphql", json={"query": CREATE_FEED_MUTATION}, headers={"Sec-Fetch-Site": sec_fetch_site})
 
     assert response.status_code == 403
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0
 
 
 @pytest.mark.parametrize("sec_fetch_site", ["same-origin", "none", None], ids=["same-origin", "typed-by-user", "header-missing"])
@@ -62,21 +62,21 @@ def test_rejects_mutations_over_get(client):
 
     assert response.status_code == 400
     assert response.get_data(as_text=True) == "mutations are not allowed when using GET"
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0
 
 
 def test_create_feed_rejects_urls_that_are_not_web_urls(client):
     response = client.post("/graphql", json={"query": 'mutation { createFeed(url: "file:///etc/passwd") { ok } }'})
 
     assert [error["message"] for error in response.get_json()["errors"]] == [engine.NOT_A_WEB_URL_MESSAGE]
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0
 
 
 def test_update_feed_rejects_urls_that_are_not_web_urls(client):
     client.post("/graphql", json={"query": CREATE_FEED_MUTATION})
-    feed = Feed.query.one()
+    feed = db.session.query(Feed).one()
 
     response = client.post("/graphql", json={"query": f'mutation {{ updateFeed(id: {feed.id}, url: "file:///etc/passwd") {{ ok }} }}'})
 
     assert [error["message"] for error in response.get_json()["errors"]] == [engine.NOT_A_WEB_URL_MESSAGE]
-    assert db.session.get(Feed, feed.id).url == "https://attacker.example/feed.xml"
+    assert db.session.get_one(Feed, feed.id).url == "https://attacker.example/feed.xml"

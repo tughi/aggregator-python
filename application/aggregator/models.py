@@ -2,16 +2,10 @@ import json
 from datetime import UTC, datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, TypeDecorator, Unicode, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy import DateTime, Dialect, ForeignKey, TypeDecorator, UniqueConstraint
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, registry, relationship
 
 from aggregator.sanitizer.entry_content import sanitize_entry_content
-
-db = SQLAlchemy()
-
-
-def epoch_datetime() -> datetime:
-    return datetime.fromtimestamp(0).astimezone(UTC)
 
 
 class TimeStamp(TypeDecorator):
@@ -20,14 +14,14 @@ class TimeStamp(TypeDecorator):
 
     TIMEZONE = datetime.now().astimezone().tzinfo
 
-    def process_bind_param(self, value: datetime, dialect):
+    def process_bind_param(self, value: datetime | None, dialect: Dialect):
         if value is None:
             return None
         if value.tzinfo is None:
             value = value.astimezone(self.TIMEZONE)
         return value.astimezone(UTC)
 
-    def process_result_value(self, value: datetime, dialect):
+    def process_result_value(self, value: datetime | None, dialect: Dialect):
         if value is None:
             return None
         if value.tzinfo is None:
@@ -35,77 +29,92 @@ class TimeStamp(TypeDecorator):
         return value.astimezone(UTC)
 
 
-class Feed(db.Model):
+class BaseModel(DeclarativeBase):
+    registry = registry(type_annotation_map={datetime: TimeStamp})
+
+
+def epoch_datetime() -> datetime:
+    return datetime.fromtimestamp(0).astimezone(UTC)
+
+
+class Feed(BaseModel):
     __tablename__ = "feeds"
 
-    id = Column(Integer, primary_key=True, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
 
-    url = Column(String, unique=True, nullable=False)
-    title = Column(Unicode, nullable=False)
-    user_title = Column(Unicode, nullable=True)
-    link = Column(String, nullable=True)
-    favicon_url = Column(String, nullable=True)
+    url: Mapped[str] = mapped_column(unique=True)
+    title: Mapped[str] = mapped_column()
+    user_title: Mapped[str | None] = mapped_column()
+    link: Mapped[str | None] = mapped_column()
+    favicon_url: Mapped[str | None] = mapped_column()
 
-    http_etag = Column(String, nullable=True)
-    http_last_modified = Column(String, nullable=True)
+    http_etag: Mapped[str | None] = mapped_column()
+    http_last_modified: Mapped[str | None] = mapped_column()
 
-    update_mode = Column(String, nullable=False, default="AUTO")
-    last_update_time = Column(TimeStamp, nullable=False, default=epoch_datetime)
-    last_update_message = Column(String, nullable=True)
-    next_update_time = Column(TimeStamp, nullable=False, default=epoch_datetime)
-    next_update_retry = Column(Integer, nullable=False, default=0)
+    update_mode: Mapped[str] = mapped_column(default="AUTO")
+    last_update_time: Mapped[datetime] = mapped_column(default=epoch_datetime)
+    last_update_message: Mapped[str | None] = mapped_column()
+    next_update_time: Mapped[datetime] = mapped_column(default=epoch_datetime)
+    next_update_retry: Mapped[int] = mapped_column(default=0)
 
 
-class Entry(db.Model):
+class Entry(BaseModel):
     __tablename__ = "entries"
     __table_args__ = (UniqueConstraint("feed_id", "uid"),)
 
-    id = Column(Integer, primary_key=True, nullable=False)
-    feed_id = Column(Integer, ForeignKey(Feed.id, ondelete="CASCADE"), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    feed_id: Mapped[int] = mapped_column(ForeignKey(Feed.id, ondelete="CASCADE"))
+    feed: Mapped[Feed] = relationship()
 
-    uid = Column(String, nullable=False)
-    link = Column(String, nullable=True)
-    title = Column(String, nullable=True)
-    summary = Column(String, nullable=True)
-    content = Column(String, nullable=True)
-    author = Column(String, nullable=True)
-    publish_text = Column(String, nullable=True)
-    publish_time = Column(TimeStamp, nullable=False)
+    uid: Mapped[str] = mapped_column()
+    link: Mapped[str | None] = mapped_column()
+    title: Mapped[str | None] = mapped_column()
+    summary: Mapped[str | None] = mapped_column()
+    content: Mapped[str | None] = mapped_column()
+    author: Mapped[str | None] = mapped_column()
+    publish_text: Mapped[str | None] = mapped_column()
+    publish_time: Mapped[datetime] = mapped_column()
 
-    insert_time = Column(TimeStamp, nullable=False)
-    update_time = Column(TimeStamp, nullable=False)
+    insert_time: Mapped[datetime] = mapped_column()
+    update_time: Mapped[datetime] = mapped_column()
 
-    keep_time = Column(TimeStamp, nullable=True)
-    read_time = Column(TimeStamp, nullable=True)
-    star_time = Column(TimeStamp, nullable=True)
+    keep_time: Mapped[datetime | None] = mapped_column()
+    read_time: Mapped[datetime | None] = mapped_column()
+    star_time: Mapped[datetime | None] = mapped_column()
 
     @property
     def sanitized_summary(self):
         # TODO: Sanitize at aggregation time or leave it to the client. This operation has a big impact on performance.
-        summary = json.loads(self.summary)
+        summary = self.summary
+        if summary is None:
+            return None
+        summary = json.loads(summary)
         sanitized_summary = sanitize_entry_content(summary, base_url=self.link)
         return sanitized_summary
 
     @property
     def sanitized_content(self):
         # TODO: Sanitize at aggregation time or leave it to the client. This operation has a big impact on performance.
-        content = json.loads(self.content)
+        content = self.content
+        if content is None:
+            return None
+        content = json.loads(content)
         sanitized_content = [sanitize_entry_content(_, base_url=self.link) for _ in content]
         return sanitized_content
 
 
-Entry.feed = relationship(Feed)
-
-
-class EntrySimilarity(db.Model):
+class EntrySimilarity(BaseModel):
     __tablename__ = "entry_similarities"
 
-    entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
-    similar_entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True, index=True)
-    score = Column(Float, nullable=False)
+    entry_id: Mapped[int] = mapped_column(ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
+    similar_entry_id: Mapped[int] = mapped_column(ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True, index=True)
+    score: Mapped[float] = mapped_column()
 
 
-class EntrySimilarityQueue(db.Model):
+class EntrySimilarityQueue(BaseModel):
     __tablename__ = "entry_similarities_queue"
 
-    entry_id = Column(Integer, ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
+    entry_id: Mapped[int] = mapped_column(ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
+
+
+db = SQLAlchemy(model_class=BaseModel)

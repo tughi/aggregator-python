@@ -14,7 +14,7 @@ def create_feed(url):
 
 
 def count_entries(feed):
-    return Entry.query.filter(Entry.feed_id == feed.id).count()
+    return db.session.query(Entry).filter(Entry.feed_id == feed.id).count()
 
 
 @pytest.mark.parametrize(
@@ -41,6 +41,7 @@ def test_update_feed_ignores_redirect_to_different_site(app, fetch):
     assert feed.url == "https://example.com/feed"
     assert feed.title == "Original Title"
     assert count_entries(feed) == 0
+    assert feed.last_update_message is not None
     assert "https://spam.example.net/feed" in feed.last_update_message
     assert feed.next_update_retry == 1
     assert feed.next_update_time > datetime.now(tz=UTC)
@@ -83,6 +84,7 @@ def test_add_feed_follows_redirect_to_different_site(app, fetch, no_favicons):
 
     result = engine.add_feed("https://example.com/feed")
 
+    assert result is not None
     assert result["url"] == "https://feeds.example.net/feed"
     assert result["entries"]["created"] == 1
 
@@ -129,7 +131,7 @@ def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expect
 
     engine.update_feed(feed)
 
-    entry = Entry.query.filter(Entry.feed_id == feed.id).one()
+    entry = db.session.query(Entry).filter(Entry.feed_id == feed.id).one()
     assert entry.publish_time == expected_publish_time
 
 
@@ -175,7 +177,7 @@ def test_update_feed_drops_links_that_are_not_web_urls(app, fetch):
 
     engine.update_feed(feed)
 
-    entry = Entry.query.filter(Entry.feed_id == feed.id).one()
+    entry = db.session.query(Entry).filter(Entry.feed_id == feed.id).one()
     assert feed.link is None
     assert entry.link is None
     assert entry.uid == "javascript:alert(document.domain)"
@@ -215,4 +217,4 @@ def test_add_feed_rejects_urls_that_are_not_web_urls(app, fetch, no_favicons, ur
     with pytest.raises(ValueError, match=engine.NOT_A_WEB_URL_MESSAGE):
         engine.add_feed(url)
 
-    assert Feed.query.count() == 0
+    assert db.session.query(Feed).count() == 0
