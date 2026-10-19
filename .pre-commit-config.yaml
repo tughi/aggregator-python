@@ -1,0 +1,25 @@
+# Run by prek (or pre-commit) on each commit; set up with `prek install`.
+# The hooks use the tools pinned in application/uv.lock, through `uv run`.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --directory application ruff format
+        language: system
+        files: ^application/.*\.py$
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --directory application ruff check --fix
+        language: system
+        files: ^application/.*\.py$
+        pass_filenames: false
+
+      - id: pyright
+        name: pyright
+        entry: uv run --directory application pyright
+        language: system
+        files: ^application/.*\.py$
+        pass_filenames: false
