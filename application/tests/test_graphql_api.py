@@ -1,69 +1,64 @@
 """Records the GraphQL API as the React client (clients/web/src/reader/Session.js) and GraphiQL use it."""
 
 import json
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from aggregator import engine
-from aggregator.models import Entry
-from aggregator.models import Feed
-from aggregator.models import db
+from aggregator.models import Entry, Feed, db
 
 # Copied from clients/web/src/reader/Session.js
-ENTRY_FIELDS = """{
-   id
-   feedId
-   title
-   link
-   summary { value }
-   content { value }
-   author { name }
-   publishText
-   publishTime
-   keepTime
-   readTime
-   starTime
-}"""
+ENTRY_FIELDS = """
+    {
+       id
+       feedId
+       title
+       link
+       summary { value }
+       content { value }
+       author { name }
+       publishText
+       publishTime
+       keepTime
+       readTime
+       starTime
+    }
+"""
 
-SESSION_QUERY = (
-    """query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!, $latestFirst: Boolean, $maxAge: Int) {
-   session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred, latestFirst: $latestFirst, maxAge: $maxAge) {
-      entries(limit: $entriesLimit) %s
-      entryIds
-      feeds {
-         id
-         faviconUrl
-         title
-         userTitle
-         unreadEntries
-      }
-      unreadEntries
-      starredEntries
-   }
-}"""
-    % ENTRY_FIELDS
-)
+SESSION_QUERY = f"""
+    query ($feedId: Int, $onlyUnread: Boolean, $onlyStarred: Boolean, $entriesLimit: Int!, $latestFirst: Boolean, $maxAge: Int) {{
+       session(feedId: $feedId, onlyUnread: $onlyUnread, onlyStarred: $onlyStarred, latestFirst: $latestFirst, maxAge: $maxAge) {{
+          entries(limit: $entriesLimit) {ENTRY_FIELDS}
+          entryIds
+          feeds {{
+             id
+             faviconUrl
+             title
+             userTitle
+             unreadEntries
+          }}
+          unreadEntries
+          starredEntries
+       }}
+    }}
+"""
 
-ENTRIES_QUERY = (
-    """query ($entryIds: [Int]!) {
-   entries(entryIds: $entryIds) %s
-}"""
-    % ENTRY_FIELDS
-)
+ENTRIES_QUERY = f"""
+    query ($entryIds: [Int]!) {{
+       entries(entryIds: $entryIds) {ENTRY_FIELDS}
+    }}
+"""
 
-UPDATE_ENTRY_STATE_MUTATION = (
-    """mutation($entryId: Int!, $keepTime: DateTime, $readTime: DateTime, $starTime: DateTime) {
-   result: updateEntryState(id: $entryId, keepTime: $keepTime, readTime: $readTime, starTime: $starTime) {
-      entry %s
-   }
-}"""
-    % ENTRY_FIELDS
-)
+UPDATE_ENTRY_STATE_MUTATION = f"""
+    mutation($entryId: Int!, $keepTime: DateTime, $readTime: DateTime, $starTime: DateTime) {{
+       result: updateEntryState(id: $entryId, keepTime: $keepTime, readTime: $readTime, starTime: $starTime) {{
+          entry {ENTRY_FIELDS}
+       }}
+    }}
+"""
 
-NOW = datetime.now(tz=timezone.utc).replace(microsecond=0)
+NOW = datetime.now(tz=UTC).replace(microsecond=0)
 
 
 def iso(time):
@@ -84,9 +79,9 @@ def data(app):
             uid=f"entry-{id}",
             link=f"https://example.com/{id}",
             title=f"Entry {id}",
-            summary=json.dumps(dict(type="text/html", language="en", value=f"<p>Summary {id}</p>")),
-            content=json.dumps([dict(type="text/html", language="en", value=f'<p>Content {id}</p><script>alert({id})</script><a href="/more">more</a>')]),
-            author=json.dumps(dict(name=f"Author {id}", href=None, email=None)),
+            summary=json.dumps({"type": "text/html", "language": "en", "value": f"<p>Summary {id}</p>"}),
+            content=json.dumps([{"type": "text/html", "language": "en", "value": f'<p>Content {id}</p><script>alert({id})</script><a href="/more">more</a>'}]),
+            author=json.dumps({"name": f"Author {id}", "href": None, "email": None}),
             publish_text=f"published {id}",
             publish_time=published,
             insert_time=published,
@@ -94,15 +89,15 @@ def data(app):
             **states,
         )
 
-    times = dict(
-        e1=NOW - timedelta(hours=3),
-        e2=NOW - timedelta(hours=2),
-        e3=NOW - timedelta(hours=1),
-        e4=NOW - timedelta(days=40),
-        read=NOW - timedelta(minutes=30),
-        kept=NOW - timedelta(minutes=20),
-        starred=NOW - timedelta(minutes=10),
-    )
+    times = {
+        "e1": NOW - timedelta(hours=3),
+        "e2": NOW - timedelta(hours=2),
+        "e3": NOW - timedelta(hours=1),
+        "e4": NOW - timedelta(days=40),
+        "read": NOW - timedelta(minutes=30),
+        "kept": NOW - timedelta(minutes=20),
+        "starred": NOW - timedelta(minutes=10),
+    }
     db.session.add_all(
         [
             entry(1, feed_a, times["e1"]),
@@ -116,7 +111,7 @@ def data(app):
 
 
 def graphql(client, query, **variables):
-    response = client.post("/graphql", json=dict(query=query, variables=variables))
+    response = client.post("/graphql", json={"query": query, "variables": variables})
     assert response.status_code == 200
     result = response.get_json()
     assert "errors" not in result, result["errors"]
@@ -124,44 +119,44 @@ def graphql(client, query, **variables):
 
 
 def expected_entry(id, times, read_time=None, keep_time=None, star_time=None):
-    return dict(
-        id=id,
-        feedId=1 if id <= 2 else 2,
-        title=f"Entry {id}",
-        link=f"https://example.com/{id}",
-        summary=dict(value=f"<div><p>Summary {id}</p></div>"),
-        content=[dict(value=f'<div><p>Content {id}</p><a href="https://example.com/more">more</a></div>')],
-        author=dict(name=f"Author {id}"),
-        publishText=f"published {id}",
-        publishTime=iso(times[f"e{id}"]),
-        keepTime=keep_time and iso(keep_time),
-        readTime=read_time and iso(read_time),
-        starTime=star_time and iso(star_time),
-    )
+    return {
+        "id": id,
+        "feedId": 1 if id <= 2 else 2,
+        "title": f"Entry {id}",
+        "link": f"https://example.com/{id}",
+        "summary": {"value": f"<div><p>Summary {id}</p></div>"},
+        "content": [{"value": f'<div><p>Content {id}</p><a href="https://example.com/more">more</a></div>'}],
+        "author": {"name": f"Author {id}"},
+        "publishText": f"published {id}",
+        "publishTime": iso(times[f"e{id}"]),
+        "keepTime": keep_time and iso(keep_time),
+        "readTime": read_time and iso(read_time),
+        "starTime": star_time and iso(star_time),
+    }
 
 
 # The variables Controller.jsx sends for /reader/all, /reader/starred and /reader/feeds/:id
-ALL = dict(feedId=None, onlyUnread=True, onlyStarred=False, entriesLimit=50)
-STARRED = dict(feedId=None, onlyUnread=False, onlyStarred=True, entriesLimit=50)
+ALL = {"feedId": None, "onlyUnread": True, "onlyStarred": False, "entriesLimit": 50}
+STARRED = {"feedId": None, "onlyUnread": False, "onlyStarred": True, "entriesLimit": 50}
 
 
 def test_session_for_all_unread_entries(client, data):
     session = graphql(client, SESSION_QUERY, **ALL)["session"]
 
-    assert session == dict(
-        entries=[
+    assert session == {
+        "entries": [
             expected_entry(4, data),
             expected_entry(1, data),
             expected_entry(3, data, keep_time=data["kept"], star_time=data["starred"]),
         ],
-        entryIds=[4, 1, 3],
-        feeds=[
-            dict(id=1, faviconUrl="https://a.example/favicon.ico", title="Feed A", userTitle=None, unreadEntries=1),
-            dict(id=2, faviconUrl=None, title="Feed B", userTitle="My B", unreadEntries=2),
+        "entryIds": [4, 1, 3],
+        "feeds": [
+            {"id": 1, "faviconUrl": "https://a.example/favicon.ico", "title": "Feed A", "userTitle": None, "unreadEntries": 1},
+            {"id": 2, "faviconUrl": None, "title": "Feed B", "userTitle": "My B", "unreadEntries": 2},
         ],
-        unreadEntries=3,
-        starredEntries=1,
-    )
+        "unreadEntries": 3,
+        "starredEntries": 1,
+    }
 
 
 def test_session_for_starred_entries(client, data):
@@ -260,7 +255,7 @@ def test_update_entry_state_overwrites_all_three_times(client, data):
 
 
 def test_update_entry_state_for_unknown_entry(client, data):
-    response = client.post("/graphql", json=dict(query=UPDATE_ENTRY_STATE_MUTATION, variables=dict(entryId=999)))
+    response = client.post("/graphql", json={"query": UPDATE_ENTRY_STATE_MUTATION, "variables": {"entryId": 999}})
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such entry"]
 
@@ -269,28 +264,28 @@ def test_feeds(client, data):
     feeds = graphql(client, "{ feeds { id url title userTitle link faviconUrl updateMode lastUpdateMessage unreadEntries } }")["feeds"]
 
     assert sorted(feeds, key=lambda feed: feed["id"]) == [
-        dict(
-            id=1,
-            url="https://a.example/feed",
-            title="Feed A",
-            userTitle=None,
-            link=None,
-            faviconUrl="https://a.example/favicon.ico",
-            updateMode="AUTO",
-            lastUpdateMessage=None,
-            unreadEntries=1,
-        ),
-        dict(
-            id=2,
-            url="https://b.example/feed",
-            title="Feed B",
-            userTitle="My B",
-            link=None,
-            faviconUrl=None,
-            updateMode="AUTO",
-            lastUpdateMessage=None,
-            unreadEntries=2,
-        ),
+        {
+            "id": 1,
+            "url": "https://a.example/feed",
+            "title": "Feed A",
+            "userTitle": None,
+            "link": None,
+            "faviconUrl": "https://a.example/favicon.ico",
+            "updateMode": "AUTO",
+            "lastUpdateMessage": None,
+            "unreadEntries": 1,
+        },
+        {
+            "id": 2,
+            "url": "https://b.example/feed",
+            "title": "Feed B",
+            "userTitle": "My B",
+            "link": None,
+            "faviconUrl": None,
+            "updateMode": "AUTO",
+            "lastUpdateMessage": None,
+            "unreadEntries": 2,
+        },
     ]
 
 
@@ -299,19 +294,19 @@ def test_create_feed(client, app, fetch, no_favicons):
 
     result = graphql(client, 'mutation { createFeed(url: " https://c.example/feed ", userTitle: "My C") { ok feedId feed { id url title userTitle } } }')
 
-    assert result["createFeed"] == dict(ok=True, feedId=1, feed=dict(id=1, url="https://c.example/feed", title="Fetched Title", userTitle="My C"))
+    assert result["createFeed"] == {"ok": True, "feedId": 1, "feed": {"id": 1, "url": "https://c.example/feed", "title": "Fetched Title", "userTitle": "My C"}}
 
 
 def test_update_feed(client, data):
     result = graphql(client, 'mutation { updateFeed(id: 1, url: "https://a.example/new-feed", userTitle: " New A ") { ok feed { id url userTitle } } }')
 
-    assert result["updateFeed"] == dict(ok=True, feed=dict(id=1, url="https://a.example/new-feed", userTitle="New A"))
+    assert result["updateFeed"] == {"ok": True, "feed": {"id": 1, "url": "https://a.example/new-feed", "userTitle": "New A"}}
     # A changed URL is fetched on the next update
-    assert db.session.get(Feed, 1).next_update_time <= datetime.now(tz=timezone.utc)
+    assert db.session.get(Feed, 1).next_update_time <= datetime.now(tz=UTC)
 
 
 def test_update_feed_for_unknown_feed(client, data):
-    response = client.post("/graphql", json=dict(query='mutation { updateFeed(id: 999, userTitle: "X") { ok } }'))
+    response = client.post("/graphql", json={"query": 'mutation { updateFeed(id: 999, userTitle: "X") { ok } }'})
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
 
@@ -321,7 +316,7 @@ def test_refresh_feed(client, data, fetch):
 
     result = graphql(client, "mutation { refreshFeed(id: 1, forced: true) { feed { id title entriesCreated entriesUpdated } } }")
 
-    assert result["refreshFeed"] == dict(feed=dict(id=1, title="Fetched Title", entriesCreated=1, entriesUpdated=0))
+    assert result["refreshFeed"] == {"feed": {"id": 1, "title": "Fetched Title", "entriesCreated": 1, "entriesUpdated": 0}}
 
 
 def test_refresh_feed_favicon(client, data, monkeypatch):
@@ -332,11 +327,11 @@ def test_refresh_feed_favicon(client, data, monkeypatch):
 
     result = graphql(client, "mutation { refreshFeedFavicon(id: 1) { feed { id faviconUrl } } }")
 
-    assert result["refreshFeedFavicon"] == dict(feed=dict(id=1, faviconUrl="https://a.example/new-favicon.ico"))
+    assert result["refreshFeedFavicon"] == {"feed": {"id": 1, "faviconUrl": "https://a.example/new-favicon.ico"}}
 
 
 def feed_entry_ids(client, arguments):
-    return [entry["id"] for entry in graphql(client, "{ feedEntries(%s) { id } }" % arguments)["feedEntries"]]
+    return [entry["id"] for entry in graphql(client, f"{{ feedEntries({arguments}) {{ id }} }}")["feedEntries"]]
 
 
 def test_feed_entries_newest_first_including_read_entries(client, data):
@@ -355,13 +350,13 @@ def test_feed_entries_paging(client, data):
 
 
 def test_feed_entries_return_full_entries(client, data):
-    entries = graphql(client, "{ feedEntries(feedId: 1, read: true) %s }" % ENTRY_FIELDS)["feedEntries"]
+    entries = graphql(client, f"{{ feedEntries(feedId: 1, read: true) {ENTRY_FIELDS} }}")["feedEntries"]
 
     assert entries == [expected_entry(2, data, read_time=data["read"])]
 
 
 def test_feed_entries_for_unknown_feed(client, data):
-    response = client.post("/graphql", json=dict(query="{ feedEntries(feedId: 999) { id } }"))
+    response = client.post("/graphql", json={"query": "{ feedEntries(feedId: 999) { id } }"})
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
 
@@ -369,14 +364,14 @@ def test_feed_entries_for_unknown_feed(client, data):
 def test_delete_feed_removes_the_feed_and_its_entries(client, data):
     result = graphql(client, "mutation { deleteFeed(id: 1) { ok } }")
 
-    assert result["deleteFeed"] == dict(ok=True)
+    assert result["deleteFeed"] == {"ok": True}
     assert [feed.id for feed in Feed.query] == [2]
     assert Entry.query.filter(Entry.feed_id == 1).count() == 0
     assert Entry.query.filter(Entry.feed_id == 2).count() == 2
 
 
 def test_delete_feed_for_unknown_feed(client, data):
-    response = client.post("/graphql", json=dict(query="mutation { deleteFeed(id: 999) { ok } }"))
+    response = client.post("/graphql", json={"query": "mutation { deleteFeed(id: 999) { ok } }"})
 
     assert [error["message"] for error in response.get_json()["errors"]] == ["No such feed"]
     assert Feed.query.count() == 2

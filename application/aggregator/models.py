@@ -1,26 +1,17 @@
 import json
-from datetime import datetime
-from datetime import timezone
+from datetime import UTC, datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import Float
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import TypeDecorator
-from sqlalchemy import Unicode
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, TypeDecorator, Unicode, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from aggregator.sanitizer import sanitize_entry_content
+from aggregator.sanitizer.entry_content import sanitize_entry_content
 
 db = SQLAlchemy()
 
 
 def epoch_datetime() -> datetime:
-    return datetime.fromtimestamp(0).astimezone(timezone.utc)
+    return datetime.fromtimestamp(0).astimezone(UTC)
 
 
 class TimeStamp(TypeDecorator):
@@ -34,14 +25,14 @@ class TimeStamp(TypeDecorator):
             return None
         if value.tzinfo is None:
             value = value.astimezone(self.TIMEZONE)
-        return value.astimezone(timezone.utc)
+        return value.astimezone(UTC)
 
     def process_result_value(self, value: datetime, dialect):
         if value is None:
             return None
         if value.tzinfo is None:
-            return value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc)
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
 
 
 class Feed(db.Model):

@@ -3,6 +3,7 @@ import pytest
 
 from aggregator import engine
 from aggregator.app import create_app
+from aggregator.config import Config
 from aggregator.models import db
 
 FEED_XML = """
@@ -23,7 +24,7 @@ FEED_XML = """
 """
 
 
-class TestConfig(object):
+class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_LOG_LEVEL = None
@@ -31,7 +32,7 @@ class TestConfig(object):
 
 @pytest.fixture
 def app():
-    app = create_app(TestConfig())
+    app = create_app(TestConfig)
 
     with app.app_context():
         db.create_all()

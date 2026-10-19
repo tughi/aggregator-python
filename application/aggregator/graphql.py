@@ -1,24 +1,18 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-from typing import Self
-from typing import TypedDict
+from datetime import UTC, datetime, timedelta
+from typing import Self, TypedDict
 
 import strawberry
-from flask import Blueprint
-from flask import request
+from flask import Blueprint, request
 from graphql import GraphQLError
-from sqlalchemy.sql.functions import coalesce
-from sqlalchemy.sql.functions import count
+from sqlalchemy.sql.functions import coalesce, count
 from strawberry.flask.views import GraphQLView
 
-from aggregator import engine
-from aggregator import models
+from aggregator import engine, models
 from aggregator.models import db
-from aggregator.sanitizer import ContentData
+from aggregator.sanitizer.entry_content import ContentData
 
 
 class AuthorData(TypedDict, total=False):
@@ -297,7 +291,7 @@ class Mutations:
             raise GraphQLError(engine.NOT_A_WEB_URL_MESSAGE)
         if url:
             if url != feed.url:
-                feed.next_update_time = datetime.now(tz=timezone.utc)
+                feed.next_update_time = datetime.now(tz=UTC)
             feed.url = url
 
         user_title = user_title.strip() if user_title else None
@@ -369,7 +363,7 @@ class Query:
         if only_starred:
             entry_ids = entry_ids.filter(models.Entry.star_time.is_not(None))
         if max_age is not None:
-            publish_time = datetime.now(tz=timezone.utc) - timedelta(days=max_age)
+            publish_time = datetime.now(tz=UTC) - timedelta(days=max_age)
             entry_ids = entry_ids.filter(models.Entry.publish_time >= publish_time)
         else:
             publish_time = None
@@ -388,7 +382,8 @@ blueprint = Blueprint("graphql", __name__)
 
 @blueprint.before_request
 def reject_cross_site_requests():
-    """Protects mutations against CSRF.
+    """
+    Protects mutations against CSRF.
 
     Browsers let any site submit a form to this endpoint, with the user's credentials attached. Requiring a JSON body
     forces cross-site requests through a CORS preflight, which fails because the app doesn't allow other origins.
@@ -397,9 +392,9 @@ def reject_cross_site_requests():
     if request.method != "POST":
         return None
     if request.mimetype != "application/json":
-        return dict(errors=[dict(message="Content-Type must be application/json")]), 415
+        return {"errors": [{"message": "Content-Type must be application/json"}]}, 415
     if request.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
-        return dict(errors=[dict(message="Cross-site requests are not allowed")]), 403
+        return {"errors": [{"message": "Cross-site requests are not allowed"}]}, 403
     return None
 
 

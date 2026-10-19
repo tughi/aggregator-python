@@ -1,12 +1,9 @@
-from datetime import datetime
-from datetime import timezone
+from datetime import UTC, datetime
 
 import pytest
 
 from aggregator import engine
-from aggregator.models import Entry
-from aggregator.models import Feed
-from aggregator.models import db
+from aggregator.models import Entry, Feed, db
 
 
 def create_feed(url):
@@ -21,7 +18,7 @@ def count_entries(feed):
 
 
 @pytest.mark.parametrize(
-    "url_a, url_b, expected",
+    ("url_a", "url_b", "expected"),
     [
         ("https://example.com/feed", "https://example.com/rss", True),
         ("http://example.com/feed", "https://example.com/feed", True),
@@ -46,7 +43,7 @@ def test_update_feed_ignores_redirect_to_different_site(app, fetch):
     assert count_entries(feed) == 0
     assert "https://spam.example.net/feed" in feed.last_update_message
     assert feed.next_update_retry == 1
-    assert feed.next_update_time > datetime.now(tz=timezone.utc)
+    assert feed.next_update_time > datetime.now(tz=UTC)
 
 
 def test_update_feed_ignores_temporary_redirect_to_different_site(app, fetch):
@@ -119,10 +116,10 @@ ATOM_WITH_ONLY_UPDATED_XML = """
 
 
 @pytest.mark.parametrize(
-    "xml, expected_publish_time",
+    ("xml", "expected_publish_time"),
     [
-        (RSS_WITH_PUBLISHED_AND_UPDATED_XML, datetime(2026, 10, 12, 10, 0, tzinfo=timezone.utc)),
-        (ATOM_WITH_ONLY_UPDATED_XML, datetime(2026, 10, 13, 10, 0, tzinfo=timezone.utc)),
+        (RSS_WITH_PUBLISHED_AND_UPDATED_XML, datetime(2026, 10, 12, 10, 0, tzinfo=UTC)),
+        (ATOM_WITH_ONLY_UPDATED_XML, datetime(2026, 10, 13, 10, 0, tzinfo=UTC)),
     ],
     ids=["rss-with-published-and-updated", "atom-with-only-updated"],
 )
@@ -137,7 +134,7 @@ def test_update_feed_prefers_published_over_updated_time(app, fetch, xml, expect
 
 
 @pytest.mark.parametrize(
-    "url, expected",
+    ("url", "expected"),
     [
         ("https://example.com/post", "https://example.com/post"),
         ("http://example.com/post", "http://example.com/post"),
@@ -209,7 +206,7 @@ def test_update_feed_does_not_fetch_urls_that_are_not_web_urls(app, monkeypatch,
 
     assert feed.last_update_message == engine.NOT_A_WEB_URL_MESSAGE
     assert feed.next_update_retry == 1
-    assert feed.next_update_time > datetime.now(tz=timezone.utc)
+    assert feed.next_update_time > datetime.now(tz=UTC)
     assert count_entries(feed) == 0
 
 

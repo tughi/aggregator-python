@@ -2,9 +2,7 @@ import calendar
 import json
 import logging
 from collections import OrderedDict
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlparse
 
 import feedparser
@@ -12,9 +10,7 @@ import opml
 import requests
 from sqlalchemy import or_
 
-from aggregator.models import Entry, EntrySimilarityQueue, EntrySimilarity
-from aggregator.models import Feed
-from aggregator.models import db
+from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, Feed, db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -57,7 +53,7 @@ def delete_feed(feed_id: int):
 
 def update_feeds():
     status = []
-    for feed in Feed.query.filter(Feed.next_update_time <= datetime.now(tz=timezone.utc)):
+    for feed in Feed.query.filter(Feed.next_update_time <= datetime.now(tz=UTC)):
         status.append(update_feed(feed))
     logger.info(f"Updated {len(status)} feed{'s' if len(status) != 1 else ''}")
     return status
@@ -66,7 +62,7 @@ def update_feeds():
 def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = False):
     logger.info(f"Updating feed - {feed.user_title or feed.title} ({feed.url})")
 
-    update_time = datetime.now(tz=timezone.utc)
+    update_time = datetime.now(tz=UTC)
     feed.last_update_time = update_time
 
     feed.last_update_message = None
@@ -100,7 +96,7 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
         return
 
     if not feed_data:
-        logger.warning(f"Failed to parse feed")
+        logger.warning("Failed to parse feed")
 
         feed.next_update_retry += 1
         db.session.commit()
@@ -142,17 +138,17 @@ def update_feed(feed: Feed, forced: bool = False, allow_site_change: bool = Fals
     feed.entries_created = entries_created
     feed.entries_updated = entries_updated
 
-    return dict(
-        id=feed.id,
-        title=feed.title,
-        user_title=feed.user_title,
-        url=feed.url,
-        next_update=feed.next_update_time,
-        entries=dict(
-            created=entries_created,
-            updated=entries_updated,
-        ),
-    )
+    return {
+        "id": feed.id,
+        "title": feed.title,
+        "user_title": feed.user_title,
+        "url": feed.url,
+        "next_update": feed.next_update_time,
+        "entries": {
+            "created": entries_created,
+            "updated": entries_updated,
+        },
+    }
 
 
 def _save_entries(feed: Feed, feed_data, update_time: datetime) -> tuple[int, int]:
@@ -224,7 +220,7 @@ def _as_datetime(parsed_time):
     if parsed_time:
         timestamp = calendar.timegm(parsed_time)
         try:
-            result = datetime.fromtimestamp(timestamp)
+            result = datetime.fromtimestamp(timestamp, tz=UTC)
         except ValueError:
             logger.warning(f"Cannot convert {parsed_time} to datetime")
             result = None
@@ -269,7 +265,8 @@ def update_favicons():
 
 
 def update_favicon(feed: Feed):
-    feed_link = feed.link or "{0}://{1}".format(*urlparse(feed.url))
+    parsed_feed_url = urlparse(feed.url)
+    feed_link = feed.link or f"{parsed_feed_url.scheme}://{parsed_feed_url.netloc}"
 
     logger.info(f"Updating feed favicon - {feed.user_title or feed.title} ({feed_link})")
 
@@ -288,7 +285,8 @@ def update_favicon(feed: Feed):
                     break
 
     if not feed_favicon_url:
-        feed_favicon_url = "{0}://{1}/favicon.ico".format(*urlparse(feed_link))
+        parsed_feed_link = urlparse(feed_link)
+        feed_favicon_url = f"{parsed_feed_link.scheme}://{parsed_feed_link.netloc}/favicon.ico"
         if requests.head(feed_favicon_url).status_code != 200:
             feed_favicon_url = None
 

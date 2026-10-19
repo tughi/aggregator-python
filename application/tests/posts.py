@@ -1,21 +1,15 @@
 """Posts for the similarity tests: two news posted by both feeds, plus unrelated filler posts."""
 
 import json
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import UTC, datetime, timedelta
 
-from aggregator.models import Entry
-from aggregator.models import EntrySimilarity
-from aggregator.models import EntrySimilarityQueue
-from aggregator.models import Feed
-from aggregator.models import db
+from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, Feed, db
 
-NOW = datetime.now(tz=timezone.utc).replace(microsecond=0)
+NOW = datetime.now(tz=UTC).replace(microsecond=0)
 
 
 def summary(text):
-    return json.dumps(dict(type="text/html", language="en", value=f"<p>{text}</p>"))
+    return json.dumps({"type": "text/html", "language": "en", "value": f"<p>{text}</p>"})
 
 
 def add_entries(*entries):

@@ -10,13 +10,10 @@ import json
 import logging
 import math
 import re
-from collections import Counter
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import timedelta
 
-from aggregator.models import Entry, EntrySimilarityQueue
-from aggregator.models import EntrySimilarity
-from aggregator.models import db
+from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -112,17 +109,17 @@ def update_similarities(entry_ids: list[int]):
     day plus `WINDOW` on both sides, however far apart the given entries were published.
     """
 
-    entry_ids = set(entry_ids)
     if not entry_ids:
         return
+    entry_ids_set = set(entry_ids)
 
     entry_ids_by_day = defaultdict(set)
-    for entry_id, publish_time in db.session.query(Entry.id, Entry.publish_time).filter(Entry.id.in_(entry_ids)):
+    for entry_id, publish_time in db.session.query(Entry.id, Entry.publish_time).filter(Entry.id.in_(entry_ids_set)).all():
         entry_ids_by_day[publish_time.date()].add(entry_id)
 
     matched_entries = sum(_update_similarities(day_entry_ids) for day_entry_ids in entry_ids_by_day.values())
 
-    logger.info(f"Found similar entries for {matched_entries} of {len(entry_ids)} entries")
+    logger.info(f"Found similar entries for {matched_entries} of {len(entry_ids_set)} entries")
 
 
 def _update_similarities(entry_ids: set[int]) -> int:
@@ -196,7 +193,7 @@ def process_queue() -> None:
 
         # Load all entries from the same day
         day = queued_entry[1].replace(hour=0, minute=0, second=0, microsecond=0)
-        entry_ids = set(
+        entry_ids = {
             entry_id
             for (entry_id,) in db.session.query(EntrySimilarityQueue.entry_id)
             .join(Entry, EntrySimilarityQueue.entry_id == Entry.id)
@@ -204,7 +201,7 @@ def process_queue() -> None:
                 Entry.publish_time >= day,
                 Entry.publish_time < day + timedelta(days=1),
             )
-        )
+        }
 
         # Mark all day entries from queue as seen
         seen_entry_ids.update(entry_ids)

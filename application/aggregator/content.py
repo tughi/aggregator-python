@@ -1,12 +1,8 @@
 import json
 import logging
-from datetime import datetime
-from datetime import timezone
+from datetime import UTC, datetime
 
-from aggregator.models import Entry
-from aggregator.models import Feed
-from aggregator.models import db
-from aggregator.models import epoch_datetime
+from aggregator.models import Entry, Feed, db, epoch_datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -25,7 +21,7 @@ def restore(file):
 
 def restore_1(dump):
     def as_datetime(timestamp: int) -> datetime:
-        return datetime.fromtimestamp(timestamp).astimezone(timezone.utc)
+        return datetime.fromtimestamp(timestamp).astimezone(UTC)
 
     for feed in dump.get("feeds"):
         db.session.add(

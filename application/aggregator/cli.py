@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import click
 from flask import Blueprint
@@ -7,10 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
-from aggregator import content
-from aggregator import engine
-from aggregator import similarity
-from aggregator.models import db, Entry, EntrySimilarityQueue
+from aggregator import content, engine, similarity
+from aggregator.models import Entry, EntrySimilarityQueue, db
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -45,11 +43,11 @@ def process_entry_similarities(enqueue_days: int) -> None:
             case "sqlite":
                 insert = sqlite_insert
             case _:
-                raise Exception("Unsupported database dialect")
+                raise RuntimeError("Unsupported database dialect")
 
         statement = (
             insert(EntrySimilarityQueue)
-            .from_select(["entry_id"], select(Entry.id).where(Entry.publish_time >= datetime.now(tz=timezone.utc) - timedelta(days=enqueue_days)))
+            .from_select(["entry_id"], select(Entry.id).where(Entry.publish_time >= datetime.now(tz=UTC) - timedelta(days=enqueue_days)))
             .on_conflict_do_nothing()
         )
 

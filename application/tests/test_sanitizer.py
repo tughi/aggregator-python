@@ -1,10 +1,10 @@
 import pytest
 
-from aggregator.sanitizer import sanitize_entry_content
+from aggregator.sanitizer.entry_content import sanitize_entry_content, ContentData
 
 
 def sanitize(value, base_url="https://example.com/posts/1"):
-    content = dict(type="text/html", language="en", value=value)
+    content: ContentData = {"type": "text/html", "language": "en", "value": value}
     return sanitize_entry_content(content, base_url=base_url)["value"]
 
 
@@ -13,9 +13,9 @@ def test_returns_none_without_content():
 
 
 def test_keeps_type_and_language():
-    content = dict(type="text/html", language="en", value="<p>Hello</p>")
+    content: ContentData = {"type": "text/html", "language": "en", "value": "<p>Hello</p>"}
 
-    assert sanitize_entry_content(content, base_url=None) == dict(type="text/html", language="en", value="<div><p>Hello</p></div>")
+    assert sanitize_entry_content(content, base_url=None) == {"type": "text/html", "language": "en", "value": "<div><p>Hello</p></div>"}
 
 
 @pytest.mark.parametrize(

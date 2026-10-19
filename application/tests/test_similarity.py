@@ -1,21 +1,10 @@
 import json
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from datetime import UTC, datetime, timedelta
 
-from aggregator import engine
-from aggregator import similarity
-from aggregator.models import Entry
-from aggregator.models import EntrySimilarity
-from aggregator.models import EntrySimilarityQueue
-from aggregator.models import Feed
-from aggregator.models import db
-from posts import NOW
-from posts import POSTS
-from posts import add_entries
-from posts import queue
-from posts import queued_entry_ids
-from posts import stored_similarities
+from posts import NOW, POSTS, add_entries, queue, queued_entry_ids, stored_similarities
+
+from aggregator import engine, similarity
+from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, Feed, db
 
 SIMILAR_ENTRIES_QUERY = """query ($entryId: Int!) {
    entries(entryIds: [$entryId]) {
@@ -25,7 +14,7 @@ SIMILAR_ENTRIES_QUERY = """query ($entryId: Int!) {
 
 
 def test_entry_text_repeats_the_title_and_strips_html():
-    text = similarity.entry_text("Title", json.dumps(dict(value="<p>Some &amp; <b>bold</b> text</p>")))
+    text = similarity.entry_text("Title", json.dumps({"value": "<p>Some &amp; <b>bold</b> text</p>"}))
 
     assert text.split() == ["Title", "Title", "Some", "&", "bold", "text"]
 
@@ -54,7 +43,7 @@ def test_update_similarities_stores_matches_in_both_directions(app):
 
 def test_update_similarities_only_compares_entries_published_close_to_each_other(app):
     entries = list(POSTS)
-    entries[1] = entries[1][:4] + (similarity.WINDOW + timedelta(days=1), False)
+    entries[1] = (*entries[1][:4], similarity.WINDOW + timedelta(days=1), False)
     add_entries(*entries)
 
     similarity.update_similarities([1])
@@ -65,8 +54,8 @@ def test_update_similarities_only_compares_entries_published_close_to_each_other
 def test_update_similarities_compares_entries_published_far_apart_separately(app, monkeypatch):
     entries = list(POSTS)
     # Publishes the Artemis posts two months earlier than the others
-    entries[2] = entries[2][:4] + (timedelta(days=60), False)
-    entries[3] = entries[3][:4] + (timedelta(days=60, hours=1), True)
+    entries[2] = (*entries[2][:4], timedelta(days=60), False)
+    entries[3] = (*entries[3][:4], timedelta(days=60, hours=1), True)
     add_entries(*entries)
     pools = []
     vectorize = similarity.vectorize
@@ -101,7 +90,7 @@ def test_delete_feed_deletes_the_similarities_of_its_entries(app):
 
 def test_update_feed_queues_new_entries_instead_of_comparing_them(app, fetch):
     # Published a day before the entry in the fetched feed (see conftest.FEED_XML)
-    add_entries((1, 1, "First post", "Hello", NOW - datetime(2026, 10, 11, 10, tzinfo=timezone.utc), False))
+    add_entries((1, 1, "First post", "Hello", NOW - datetime(2026, 10, 11, 10, tzinfo=UTC), False))
     feed = db.session.get(Feed, 2)
     fetch("https://b.example/feed")
 
@@ -146,8 +135,8 @@ def test_process_queue_with_an_empty_queue(app):
 def test_process_queue_processes_entries_published_on_different_days(app):
     entries = list(POSTS)
     # Publishes the Artemis posts two months earlier than the others
-    entries[2] = entries[2][:4] + (timedelta(days=60), False)
-    entries[3] = entries[3][:4] + (timedelta(days=60, hours=1), True)
+    entries[2] = (*entries[2][:4], timedelta(days=60), False)
+    entries[3] = (*entries[3][:4], timedelta(days=60, hours=1), True)
     add_entries(*entries)
     queue(1, 3)
 
@@ -160,8 +149,8 @@ def test_process_queue_processes_entries_published_on_different_days(app):
 def test_process_queue_keeps_a_failing_day_queued_and_processes_the_other_days(app, monkeypatch):
     entries = list(POSTS)
     # Publishes the Artemis posts two months earlier than the others
-    entries[2] = entries[2][:4] + (timedelta(days=60), False)
-    entries[3] = entries[3][:4] + (timedelta(days=60, hours=1), True)
+    entries[2] = (*entries[2][:4], timedelta(days=60), False)
+    entries[3] = (*entries[3][:4], timedelta(days=60, hours=1), True)
     add_entries(*entries)
     queue(1, 3, 4)
     processed_days = []
@@ -205,18 +194,18 @@ def test_similar_entries_query_returns_unread_entries_most_similar_first(client)
     )
     db.session.commit()
 
-    response = client.post("/graphql", json=dict(query=SIMILAR_ENTRIES_QUERY, variables=dict(entryId=1)))
+    response = client.post("/graphql", json={"query": SIMILAR_ENTRIES_QUERY, "variables": {"entryId": 1}})
 
     # Entry 4 is read, and entry 10 scores below the default minimum
-    similar_entries = [dict(id=3, title="NASA delays Artemis III"), dict(id=2, title=POSTS[1][2])]
-    assert response.get_json() == dict(data=dict(entries=[dict(similarEntries=similar_entries)]))
+    similar_entries = [{"id": 3, "title": "NASA delays Artemis III"}, {"id": 2, "title": POSTS[1][2]}]
+    assert response.get_json() == {"data": {"entries": [{"similarEntries": similar_entries}]}}
 
 
 def test_similar_entries_cannot_be_nested(client):
     add_entries(*POSTS)
     query = "{ entries(entryIds: [1]) { similarEntries { similarEntries { id } } } }"
 
-    response = client.post("/graphql", json=dict(query=query))
+    response = client.post("/graphql", json={"query": query})
 
     result = response.get_json()
     assert "data" not in result or result["data"] is None

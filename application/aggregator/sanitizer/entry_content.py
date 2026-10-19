@@ -1,6 +1,5 @@
 from typing import TypedDict
-from urllib.parse import urljoin
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from lxml import html
 from lxml.html.clean import Cleaner

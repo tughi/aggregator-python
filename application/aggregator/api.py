@@ -1,6 +1,4 @@
-from flask import Blueprint
-from flask import jsonify
-from flask import request
+from flask import Blueprint, jsonify, request
 
 from aggregator import engine
 from aggregator.models import Feed
@@ -16,7 +14,7 @@ class ApiException(Exception):
 
 @blueprint.errorhandler(ApiException)
 def handle_api_exception(exception: ApiException):
-    return dict(error=exception.message), exception.code
+    return {"error": exception.message}, exception.code
 
 
 @blueprint.get("/feeds")
@@ -46,7 +44,7 @@ def add_feed():
     try:
         return jsonify(engine.add_feed(feed_url, feed_user_title=feed_title))
     except ValueError as error:
-        raise ApiException(400, str(error))
+        raise ApiException(400, str(error)) from error
 
 
 @blueprint.get("/update/feeds")

@@ -3,8 +3,7 @@ from pathlib import Path
 import pytest
 
 from aggregator import engine
-from aggregator.models import Entry
-from aggregator.models import Feed
+from aggregator.models import Entry, Feed
 
 SUBSCRIPTIONS_OPML = Path(__file__).parent.parent / "subscriptions.xml"
 
@@ -15,7 +14,7 @@ def offline(fetch, no_favicons):
 
 
 def add_feed(client, url, title=None):
-    data = dict(url=url)
+    data = {"url": url}
     if title:
         data["title"] = title
     response = client.post("/api/feeds", data=data)
@@ -35,14 +34,14 @@ def test_add_feed(client):
 
     assert result["url"] == "https://example.com/feed"
     assert result["title"] == "Fetched Title"
-    assert result["entries"] == dict(created=1, updated=0)
+    assert result["entries"] == {"created": 1, "updated": 0}
 
 
 def test_add_feed_requires_url(client):
     response = client.post("/api/feeds", data={})
 
     assert response.status_code == 400
-    assert response.get_json() == dict(error="The url parameter is required.")
+    assert response.get_json() == {"error": "The url parameter is required."}
 
 
 def test_get_feeds_prefers_user_title(client):
@@ -88,8 +87,8 @@ def test_import_opml(app):
 
 
 def test_add_feed_rejects_urls_that_are_not_web_urls(client):
-    response = client.post("/api/feeds", data=dict(url="file:///etc/passwd"))
+    response = client.post("/api/feeds", data={"url": "file:///etc/passwd"})
 
     assert response.status_code == 400
-    assert response.get_json() == dict(error=engine.NOT_A_WEB_URL_MESSAGE)
+    assert response.get_json() == {"error": engine.NOT_A_WEB_URL_MESSAGE}
     assert Feed.query.count() == 0

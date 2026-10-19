@@ -2,16 +2,14 @@ import logging
 
 from flask import Flask
 
-from aggregator import api
-from aggregator import cli
-from aggregator import graphql
+from aggregator import api, cli, graphql
 from aggregator.config import Config
 from aggregator.models import db
 
 logging.basicConfig()
 
 
-def create_app(config=Config()):
+def create_app(config=Config):
     app = Flask(__name__)
     app.config.from_object(config)
 
