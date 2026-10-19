@@ -185,6 +185,7 @@ def process_queue() -> None:
         queued_entry = (
             db.session.query(EntrySimilarityQueue.entry_id, Entry.publish_time)
             .filter(EntrySimilarityQueue.entry_id.not_in(seen_entry_ids), EntrySimilarityQueue.entry_id == Entry.id)
+            .order_by(Entry.publish_time.desc())
             .first()
         )
         if not queued_entry:
@@ -208,6 +209,7 @@ def process_queue() -> None:
 
         # Process similarity for the day entries
         try:
+            logger.info(f"Processing {len(entry_ids)} entries from {day.date()}")
             _update_similarities(entry_ids)
         except Exception:
             logger.exception("Failed to update the similar entries")

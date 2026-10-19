@@ -1,6 +1,6 @@
 import pytest
 
-from aggregator.sanitizer.entry_content import sanitize_entry_content, ContentData
+from aggregator.sanitizer.entry_content import ContentData, sanitize_entry_content
 
 
 def sanitize(value, base_url="https://example.com/posts/1"):
