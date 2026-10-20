@@ -4,6 +4,7 @@ import classNames from "classnames"
 import { useCallback, useEffect, useRef } from "react"
 import { ActionBar } from "./ActionBar"
 import { useController } from "./Controller"
+import { useSimilarEntries } from "./Session"
 import { formatFullEntryTime } from "../utils/date"
 import { range } from "../utils/array"
 
@@ -165,7 +166,7 @@ export const EntryViewer = () => {
                   className = 'active'
                }
                return (
-                  <Entry key={entry.id} className={className} entry={entry} feed={feedsById[entry.feedId]} />
+                  <Entry key={entry.id} className={className} entry={entry} feedsById={feedsById} />
                )
             })}
          </div>
@@ -184,7 +185,47 @@ const onLinkClick = event => {
    }
 }
 
-const Entry = ({ className, entry, feed }) => {
+const SimilarEntries = ({ entryId, feedsById }) => {
+   const [similarEntries, updateSimilarEntry] = useSimilarEntries(entryId)
+
+   return similarEntries.filter(similarEntry => feedsById[similarEntry.feedId]).map(similarEntry => (
+      <SimilarEntry key={similarEntry.id} entry={similarEntry} feed={feedsById[similarEntry.feedId]} onEntryUpdated={updateSimilarEntry} />
+   ))
+}
+
+const SimilarEntry = ({ entry, feed, onEntryUpdated }) => {
+   const { session } = useController()
+   const { toggleEntryReadState } = session
+
+   return (
+      <div className={classNames("similar", { unread: !entry.readTime })}>
+         <div className="header">
+            <div className="source">
+               <FeedIcon feed={feed} />
+               <span className="feed">{feed.userTitle || feed.title}</span>
+               {entry.author && (
+                  <span className="author">{entry.author.name}</span>
+               )}
+            </div>
+            <h2><a className="title" href={entry.link}>{entry.title}</a></h2>
+            <div>
+               <span className="date" title={entry.publishText}>{formatFullEntryTime(entry.publishTime)}</span>
+            </div>
+         </div>
+         <button className={classNames("state", { pinned: entry.keepTime, done: entry.readTime })} onClick={() => toggleEntryReadState(entry, onEntryUpdated)} />
+      </div>
+   )
+}
+
+const FeedIcon = ({ feed }) => feed.faviconUrl ? (
+   <span className="favicon" style={{ backgroundImage: `url(${feed.faviconUrl})` }} />
+) : (
+   <span className={`favicon rss-icon-${feed.id % 10/*sass:length($colors)*/ + 1}`} />
+)
+
+const Entry = ({ className, entry, feedsById }) => {
+   const feed = feedsById[entry.feedId]
+
    const contentRef = useRef(null)
    const onContentRef = useCallback(node => {
       if (node) {
@@ -201,6 +242,7 @@ const Entry = ({ className, entry, feed }) => {
             <div ref={onContentRef} className="content">
                <div className="header">
                   <div className="source">
+                     <FeedIcon feed={feed} />
                      <span className="feed">{feed.userTitle || feed.title}</span>
                      {entry.author && (
                         <span className="author">{entry.author.name}</span>
@@ -214,6 +256,7 @@ const Entry = ({ className, entry, feed }) => {
                {((entry?.content.length && entry.content) || (entry.summary && [entry.summary]) || []).map((content, index) => (
                   <div key={index} dangerouslySetInnerHTML={{ __html: content.value }}></div>
                ))}
+               <SimilarEntries entryId={entry.id} feedsById={feedsById} />
             </div>
          )}
       </div>

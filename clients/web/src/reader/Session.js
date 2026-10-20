@@ -36,7 +36,51 @@ const ENTRIES_QUERY = `query ($entryIds: [Int]!) {
    entries(entryIds: $entryIds) ${ENTRY_FIELDS}
 }`.replace(/([\n\t ]+)/g, ' ')
 
+const SIMILAR_ENTRIES_QUERY = `query ($entryId: Int!) {
+   entries(entryIds: [$entryId]) {
+      similarEntries {
+         id
+         feedId
+         title
+         link
+         author { name }
+         publishText
+         publishTime
+         keepTime
+         readTime
+         starTime
+      }
+   }
+}`.replace(/([\n\t ]+)/g, ' ')
+
 const ENTRIES_LIMIT = 50
+
+export const useSimilarEntries = (entryId) => {
+   const [similarEntries, setSimilarEntries] = useState([])
+
+   useEffect(() => {
+      setSimilarEntries([])
+   }, [entryId])
+
+   const variables = useMemo(() => ({ entryId }), [entryId])
+
+   const consumeData = useCallback(({ entries }) => {
+      setSimilarEntries(entries[0]?.similarEntries || [])
+   }, [])
+
+   useQuery({
+      query: SIMILAR_ENTRIES_QUERY,
+      variables,
+      consumeData,
+      ignore: entryId == null,
+   })
+
+   const updateSimilarEntry = useCallback(updatedEntry => {
+      setSimilarEntries(similarEntries => similarEntries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
+   }, [])
+
+   return [similarEntries, updateSimilarEntry]
+}
 
 export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFirst, maxAge }) => {
    const [feeds, setFeeds] = useState([])
@@ -98,7 +142,7 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
       }`
    })
 
-   const toggleEntryReadState = useCallback(entry => {
+   const toggleEntryReadState = useCallback((entry, onEntryUpdated) => {
       if (entry.keepTime || !entry.readTime) {
          updateEntryState({
             variables: {
@@ -112,6 +156,7 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
                setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
                setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries - 1 } : feed))
                setUnreadEntries(unreadEntries => unreadEntries - 1)
+               onEntryUpdated?.(updatedEntry)
             }
          })
       } else {
@@ -127,6 +172,7 @@ export const useSession = ({ revision, feedId, onlyUnread, onlyStarred, latestFi
                setEntries(entries => entries.map(entry => entry.id === updatedEntry.id ? updatedEntry : entry))
                setFeeds(feeds => feeds.map(feed => feed.id === updatedEntry.feedId ? { ...feed, unreadEntries: feed.unreadEntries + 1 } : feed))
                setUnreadEntries(unreadEntries => unreadEntries + 1)
+               onEntryUpdated?.(updatedEntry)
             }
          })
       }

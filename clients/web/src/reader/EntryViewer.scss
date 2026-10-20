@@ -1,3 +1,4 @@
+@use "sass:list";
 @use "./utils";
 
 $shadow-size: 1rem;
@@ -52,13 +53,79 @@ $shadow-size: 1rem;
                }
             }
 
-            > .header {
+            > .similar {
+               padding: 2rem 1rem;
+               display: flex;
+               align-items: center;
+               gap: 1rem;
+
+               &:last-child {
+                  border-bottom: 1px solid var(--secondary-color-5);
+               }
+
+               &:not(.unread) {
+                  opacity: .5;
+               }
+
+               > .header {
+                  flex-grow: 1;
+                  min-width: 0;
+                  font-size: .875rem;
+                  line-height: 1.25;
+
+                  > h2 {
+                     margin: .25rem 0;
+                     font-size: 1rem;
+                  }
+               }
+
+               > button.state {
+                  flex-shrink: 0;
+                  width: 1.5rem;
+                  height: 1.5rem;
+                  padding: 0;
+                  border: none;
+                  cursor: pointer;
+                  background-color: var(--secondary-color-5);
+                  mask: url('../icons/action/entry_new.svg') center / 1.5rem no-repeat;
+
+                  &.done {
+                     mask-image: url('../icons/action/entry_done.svg');
+                  }
+
+                  &.pinned {
+                     mask-image: url('../icons/action/entry_pinned.svg');
+                  }
+               }
+            }
+
+            .header {
                > .source {
+                  display: flex;
+                  align-items: center;
+
+                  > .favicon {
+                     flex-shrink: 0;
+                     width: 1rem;
+                     height: 1rem;
+                     margin-right: .5rem;
+                     background: transparent center / 1rem no-repeat;
+
+                     $colors: var(--red) var(--pink) var(--purple) var(--indigo) var(--blue) var(--cyan) var(--teal) var(--green) var(--yellow) var(--orange);
+                     @each $color in $colors {
+                        &.rss-icon-#{list.index($colors, $color)} {
+                           background-color: $color;
+                           mask: url('../icons/favicon/rss.svg') center / 1rem no-repeat;
+                        }
+                     }
+                  }
+
                   > .author {
                      color: var(--primary-color-5);
 
                      &::before {
                         content: ' :: ';
+                        white-space: pre;
                      }
                   }
                }
