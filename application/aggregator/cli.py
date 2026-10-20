@@ -8,7 +8,7 @@ from sqlalchemy import CursorResult, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
-from aggregator import content, engine, similarity
+from aggregator import engine, similarity
 from aggregator.models import Entry, EntrySimilarityQueue, db
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,6 @@ blueprint = Blueprint("cli", __name__, cli_group=None)
 def create_database():
     logger.debug("Creating database")
     db.create_all()
-
-
-@blueprint.cli.command("restore")
-@click.argument("file", type=click.File("r"))
-def restore(file):
-    content.restore(file)
 
 
 @blueprint.cli.command("update-feeds")

@@ -4,8 +4,6 @@ services:
       context: ./application
     environment:
       - DATABASE_URL
-    volumes:
-      - ./application/dumps:/app/dumps:rw
     restart: unless-stopped
   web:
     build: ./clients/web

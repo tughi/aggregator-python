@@ -194,13 +194,8 @@ def process_queue() -> None:
             .scalar()
         )
         if latest_publish_time is None:
-            match processed_entries:
-                case 0:
-                    logger.info("No queued entries")
-                case 1:
-                    logger.info("Processed 1 entry for similarities")
-                case _:
-                    logger.info(f"Processed {processed_entries} entries for similarities")
+            if processed_entries == 0:
+                logger.info("No queued entries")
             return  # empty queue
 
         day_start = latest_publish_time.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -218,13 +213,13 @@ def process_queue() -> None:
         )
 
         try:
-            logger.info(f"Processing {len(entry_ids)} entries from {day_start.date()}")
             _update_similarities(entry_ids)
 
             # Remove processed entries from queue
             db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(entry_ids)).delete(synchronize_session=False)
 
             # Increase counter
+            logger.info(f"Processed {len(entry_ids)} entries from {day_start.date()}")
             processed_entries += len(entry_ids)
         except Exception:
             logger.exception("Failed to update the similar entries")
