@@ -11,7 +11,9 @@ import logging
 import math
 import re
 from collections import Counter, defaultdict
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy import func, select
 
 from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, db
 
@@ -129,7 +131,10 @@ def _update_similarities(entry_ids: set[int]) -> int:
     Returns how many of `entry_ids` got matches.
     """
 
-    publish_times = [publish_time for (publish_time,) in db.session.query(Entry.publish_time).filter(Entry.id.in_(entry_ids))]
+    publish_times: list[datetime] = list(db.session.scalars(select(Entry.publish_time).filter(Entry.id.in_(entry_ids))))
+    if not publish_times:
+        return 0
+
     # Loads only the columns that are needed, since the content of an entry can be large
     rows = (
         db.session.query(Entry.id, Entry.publish_time, Entry.title, Entry.summary)
@@ -174,50 +179,64 @@ def _save_matches(matches: dict[int, dict[int, float]]):
 
 def process_queue() -> None:
     """
-    Processes the queued entries one publish day at a time.
+    Processes queued entries one publish day at a time.
     """
 
-    logger.info("Starting to process queued entries")
+    logger.debug("Starting to process queued entries")
 
-    seen_entry_ids = set()
+    processed_entries = 0
 
     while True:
-        queued_entry = (
-            db.session.query(EntrySimilarityQueue.entry_id, Entry.publish_time)
-            .filter(EntrySimilarityQueue.entry_id.not_in(seen_entry_ids), EntrySimilarityQueue.entry_id == Entry.id)
-            .order_by(Entry.publish_time.desc())
-            .first()
+        latest_publish_time: datetime | None = (
+            db.session.query(func.max(Entry.publish_time))
+            .join(EntrySimilarityQueue, EntrySimilarityQueue.entry_id == Entry.id)
+            .filter(EntrySimilarityQueue.ready_time <= datetime.now(UTC))
+            .scalar()
         )
-        if not queued_entry:
-            logger.info(f"Finished processing {len(seen_entry_ids)} queued entries")
+        if latest_publish_time is None:
+            match processed_entries:
+                case 0:
+                    logger.info("No queued entries")
+                case 1:
+                    logger.info("Processed 1 entry for similarities")
+                case _:
+                    logger.info(f"Processed {processed_entries} entries for similarities")
             return  # empty queue
 
-        # Load all entries from the same day
-        day = queued_entry[1].replace(hour=0, minute=0, second=0, microsecond=0)
-        entry_ids = {
-            entry_id
-            for (entry_id,) in db.session.query(EntrySimilarityQueue.entry_id)
-            .join(Entry, EntrySimilarityQueue.entry_id == Entry.id)
-            .filter(
-                Entry.publish_time >= day,
-                Entry.publish_time < day + timedelta(days=1),
+        day_start = latest_publish_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        entry_ids = set(
+            db.session.scalars(
+                select(EntrySimilarityQueue.entry_id)
+                .join(Entry, EntrySimilarityQueue.entry_id == Entry.id)
+                .filter(
+                    EntrySimilarityQueue.ready_time <= datetime.now(UTC),
+                    Entry.publish_time >= day_start,
+                    Entry.publish_time < day_end,
+                )
             )
-        }
+        )
 
-        # Mark all day entries from queue as seen
-        seen_entry_ids.update(entry_ids)
-
-        # Process similarity for the day entries
         try:
-            logger.info(f"Processing {len(entry_ids)} entries from {day.date()}")
+            logger.info(f"Processing {len(entry_ids)} entries from {day_start.date()}")
             _update_similarities(entry_ids)
+
+            # Remove processed entries from queue
+            db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(entry_ids)).delete(synchronize_session=False)
+
+            # Increase counter
+            processed_entries += len(entry_ids)
         except Exception:
             logger.exception("Failed to update the similar entries")
-            db.session.rollback()
-            continue
 
-        # Remove processed entries from queue
-        db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(entry_ids)).delete(synchronize_session=False)
+            # Revert any intermediary changes
+            db.session.rollback()
+
+            # Delay failed entries
+            db.session.query(EntrySimilarityQueue).filter(EntrySimilarityQueue.entry_id.in_(entry_ids)).update(
+                {EntrySimilarityQueue.ready_time: datetime.now(UTC) + timedelta(minutes=15)},
+                synchronize_session=False,
+            )
 
         # Persist changes
         db.session.commit()

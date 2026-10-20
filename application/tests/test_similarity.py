@@ -1,7 +1,7 @@
 import json
 from datetime import UTC, datetime, timedelta
 
-from posts import NOW, POSTS, add_entries, queue, queued_entry_ids, stored_similarities
+from posts import NOW, POSTS, add_entries, queue, queued_entry_ids, queued_ready_times, stored_similarities
 
 from aggregator import engine, similarity
 from aggregator.models import Entry, EntrySimilarity, EntrySimilarityQueue, Feed, db
@@ -210,3 +210,74 @@ def test_similar_entries_cannot_be_nested(client):
     result = response.get_json()
     assert "data" not in result or result["data"] is None
     assert "Cannot query field 'similarEntries' on type 'SimilarEntry'." in result["errors"][0]["message"]
+
+
+def posts_with_the_artemis_posts_published_earlier():
+    entries = list(POSTS)
+    entries[2] = (*entries[2][:4], timedelta(days=60), False)
+    entries[3] = (*entries[3][:4], timedelta(days=60, hours=1), True)
+    return entries
+
+
+def test_process_queue_delays_a_failing_day(app, monkeypatch):
+    add_entries(*posts_with_the_artemis_posts_published_earlier())
+    queue(1, 3, 4)
+    update_similarities = similarity._update_similarities
+
+    def failing_for_the_artemis_day(entry_ids):
+        if 3 in entry_ids:
+            raise RuntimeError("Simulated failure")
+        return update_similarities(entry_ids)
+
+    monkeypatch.setattr(similarity, "_update_similarities", failing_for_the_artemis_day)
+    before = datetime.now(tz=UTC)
+
+    similarity.process_queue()
+
+    after = datetime.now(tz=UTC)
+    ready_times = queued_ready_times()
+    # The failing day is tried again later; the other day was processed and left the queue
+    assert set(ready_times) == {3, 4}
+    for ready_time in ready_times.values():
+        assert before + timedelta(minutes=15) <= ready_time <= after + timedelta(minutes=15)
+
+
+def test_process_queue_skips_entries_that_are_not_ready_yet(app):
+    add_entries(*posts_with_the_artemis_posts_published_earlier())
+    queue(1)
+    queue(3, ready_time=datetime.now(tz=UTC) + timedelta(hours=1))
+
+    similarity.process_queue()
+
+    assert queued_entry_ids() == {3}
+    assert set(stored_similarities()) == {(1, 2), (2, 1)}
+
+
+def test_process_queue_processes_delayed_entries_once_they_are_ready(app):
+    add_entries(*posts_with_the_artemis_posts_published_earlier())
+    queue(3, ready_time=datetime.now(tz=UTC) - timedelta(minutes=1))
+
+    similarity.process_queue()
+
+    assert queued_entry_ids() == set()
+    assert set(stored_similarities()) == {(3, 4), (4, 3)}
+
+
+def test_process_queue_does_not_mix_delayed_entries_into_a_ready_day(app, monkeypatch):
+    add_entries(*posts_with_the_artemis_posts_published_earlier())
+    # Entries 3 and 4 were published on the same day, but only entry 4 is ready
+    queue(3, ready_time=datetime.now(tz=UTC) + timedelta(hours=1))
+    queue(4)
+    processed_days = []
+    update_similarities = similarity._update_similarities
+
+    def recording(entry_ids):
+        processed_days.append(set(entry_ids))
+        return update_similarities(entry_ids)
+
+    monkeypatch.setattr(similarity, "_update_similarities", recording)
+
+    similarity.process_queue()
+
+    assert processed_days == [{4}]
+    assert queued_entry_ids() == {3}

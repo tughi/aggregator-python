@@ -55,7 +55,13 @@ def update_feeds():
     status = []
     for feed in db.session.query(Feed).filter(Feed.next_update_time <= datetime.now(tz=UTC)):
         status.append(update_feed(feed))
-    logger.info(f"Updated {len(status)} feed{'s' if len(status) != 1 else ''}")
+    match len(status):
+        case 0:
+            logger.info("No pending feeds to update")
+        case 1:
+            logger.info("Updated 1 feed")
+        case _ as count:
+            logger.info(f"Updated {count} feeds")
     return status
 
 

@@ -19,6 +19,7 @@ blueprint = Blueprint("cli", __name__, cli_group=None)
 
 @blueprint.cli.command("create-database")
 def create_database():
+    logger.debug("Creating database")
     db.create_all()
 
 
@@ -30,7 +31,7 @@ def restore(file):
 
 @blueprint.cli.command("update-feeds")
 def update_feeds():
-    logger.info("Updating feeds")
+    logger.debug("Updating feeds")
     engine.update_feeds()
 
 
@@ -55,12 +56,13 @@ def process_entry_similarities(enqueue_days: int) -> None:
         result = cast(CursorResult, db.session.execute(statement))
         db.session.commit()
 
-        logger.info(f"Queued {result.rowcount} entries published in the last {enqueue_days} days")
+        logger.info(f"Queued {result.rowcount} entries")
 
+    logger.debug("Processing entry similarities")
     similarity.process_queue()
 
 
 @blueprint.cli.command("update-favicons")
 def update_favicons():
-    logger.info("Updating favicons")
+    logger.debug("Updating favicons")
     engine.update_favicons()

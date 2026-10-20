@@ -39,9 +39,17 @@ def stored_similarities():
     return {(similarity.entry_id, similarity.similar_entry_id): round(similarity.score, 3) for similarity in db.session.query(EntrySimilarity)}
 
 
-def queue(*entry_ids):
-    db.session.add_all(EntrySimilarityQueue(entry_id=entry_id) for entry_id in entry_ids)
+def queue(*entry_ids, ready_time=None):
+    """Queues the given entries, ready right away unless `ready_time` says otherwise."""
+    if ready_time is None:
+        db.session.add_all(EntrySimilarityQueue(entry_id=entry_id) for entry_id in entry_ids)
+    else:
+        db.session.add_all(EntrySimilarityQueue(entry_id=entry_id, ready_time=ready_time) for entry_id in entry_ids)
     db.session.commit()
+
+
+def queued_ready_times():
+    return {queued.entry_id: queued.ready_time for queued in db.session.query(EntrySimilarityQueue)}
 
 
 def queued_entry_ids():

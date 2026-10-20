@@ -115,6 +115,7 @@ class EntrySimilarityQueue(BaseModel):
     __tablename__ = "entry_similarities_queue"
 
     entry_id: Mapped[int] = mapped_column(ForeignKey(Entry.id, ondelete="CASCADE"), primary_key=True)
+    ready_time: Mapped[datetime] = mapped_column(default=epoch_datetime)
 
 
 db = SQLAlchemy(model_class=BaseModel)
