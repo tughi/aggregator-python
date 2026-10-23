@@ -2,7 +2,7 @@ import json
 from datetime import UTC, datetime
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import DateTime, Dialect, ForeignKey, TypeDecorator, UniqueConstraint
+from sqlalchemy import DateTime, Dialect, ForeignKey, Index, TypeDecorator, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, registry, relationship
 
 from aggregator.sanitizer.entry_content import sanitize_entry_content
@@ -60,7 +60,13 @@ class Feed(BaseModel):
 
 class Entry(BaseModel):
     __tablename__ = "entries"
-    __table_args__ = (UniqueConstraint("feed_id", "uid"),)
+    __table_args__ = (
+        UniqueConstraint("feed_id", "uid"),
+        # Indexes to speed-up the session queries
+        Index("entries_unread", "publish_time", "id", postgresql_where=text("read_time IS NULL"), sqlite_where=text("read_time IS NULL")),
+        Index("entries_unread_by_feed", "feed_id", "publish_time", "id", postgresql_where=text("read_time IS NULL"), sqlite_where=text("read_time IS NULL")),
+        Index("entries_starred", "publish_time", "id", postgresql_where=text("star_time IS NOT NULL"), sqlite_where=text("star_time IS NOT NULL")),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     feed_id: Mapped[int] = mapped_column(ForeignKey(Feed.id, ondelete="CASCADE"))

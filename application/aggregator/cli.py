@@ -4,7 +4,7 @@ from typing import cast
 
 import click
 from flask import Blueprint
-from sqlalchemy import CursorResult, select
+from sqlalchemy import CursorResult, create_mock_engine, select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
@@ -18,7 +18,18 @@ blueprint = Blueprint("cli", __name__, cli_group=None)
 
 
 @blueprint.cli.command("create-database")
-def create_database():
+@click.option("--sql", is_flag=True, help="Print the SQL for the database creation")
+def create_database(sql: bool):
+    if sql:
+        logger.debug("Printing the SQL for the database creation")
+
+        def print_statement(statement, *multiparams, **params):
+            click.echo(f"{str(statement.compile(dialect=mock_engine.dialect)).strip()};\n")
+
+        mock_engine = create_mock_engine(db.engine.url, print_statement)
+        db.metadata.create_all(mock_engine, checkfirst=False)
+        return
+
     logger.debug("Creating database")
     db.create_all()
 
